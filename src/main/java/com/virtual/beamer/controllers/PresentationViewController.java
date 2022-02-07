@@ -38,6 +38,8 @@ public class PresentationViewController implements Initializable {
     void exitSession() {
         presentationStatus.setVisible(false);
         slidePane.setBackground(slidePaneDefaultBackground);
+        nextSlideButton.setDisable(true);
+        previousSlideButton.setDisable(true);
 //        TODO: Implement when the default joining session view is added
     }
 
