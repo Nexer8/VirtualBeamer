@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+
+<BorderPane prefHeight="305.0" prefWidth="305.0" style="-fx-background-color: #32566b;"
+            stylesheets="@../styles/presentation_view.css" xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.virtual.beamer.controllers.PresentationViewController">
+    <top>
+        <MenuBar BorderPane.alignment="CENTER">
+            <Menu mnemonicParsing="false" text="Navigate">
+                <MenuItem mnemonicParsing="false" onAction="#loadPresentation"
+                          text="Load presentation"/>
+                <MenuItem mnemonicParsing="false" onAction="#exitSession"
+                          text="Exit session"/>
+            </Menu>
+        </MenuBar>
+    </top>
+    <center>
+        <Pane fx:id="slidePane" prefHeight="230.0" prefWidth="437.0" BorderPane.alignment="CENTER"/>
+    </center>
+    <left>
+        <Button fx:id="previousSlideButton" disable="true" mnemonicParsing="false" onMouseClicked="#previousSlide"
+                prefHeight="156.0" prefWidth="48.0" style="-fx-background-color: white;" text="&lt;"
+                BorderPane.alignment="CENTER"/>
+    </left>
+    <right>
+        <Button fx:id="nextSlideButton" disable="true" mnemonicParsing="false" onMouseClicked="#nextSlide"
+                prefHeight="156.0" prefWidth="48.0" style="-fx-background-color: white;" text="&gt;"
+                BorderPane.alignment="CENTER"/>
+    </right>
+    <bottom>
+        <HBox alignment="CENTER" prefHeight="65.0" prefWidth="305.0" style="-fx-background-color: #002d40;"
+              BorderPane.alignment="CENTER">
+            <TextField fx:id="presentationStatus" alignment="CENTER" disable="true" opacity="0.66" prefHeight="42.0"
+                       prefWidth="165.0" visible="false"/>
+        </HBox>
+    </bottom>
+</BorderPane>

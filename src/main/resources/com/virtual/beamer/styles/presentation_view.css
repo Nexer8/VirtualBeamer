@@ -1,0 +1,55 @@
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 300;
+    src: local('Open Sans Light'), local('OpenSans-Light'), url(https://fonts.gstatic.com/s/opensans/v13/DXI1ORHCpsQm3Vp6mXoaTXhCUOGz7vYGh680lGh-uXM.woff) format('woff');
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Open Sans'), local('OpenSans'), url(https://fonts.gstatic.com/s/opensans/v13/cJZKeOuBrn4kERxqtaUH3T8E0i7KZn-EPnyo3HZu7kw.woff) format('woff');
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 600;
+    src: local('Open Sans Semibold'), local('OpenSans-Semibold'), url(https://fonts.gstatic.com/s/opensans/v13/MTP_ySUJH_bn48VBG8sNSnhCUOGz7vYGh680lGh-uXM.woff) format('woff');
+}
+
+.root {
+    -fx-font-family: "OpenSans-Semibold", sans-serif;
+    -fx-font-size: 14;
+}
+
+.text-field {
+    -fx-background-color: #a9a9a9, white, white;
+    -fx-font-weight: 700;
+}
+
+.menu-bar,
+.menu,
+.menu-item,
+.context-menu {
+    -fx-background-color: #002d40;
+}
+
+.menu-bar > .label,
+.menu > .label,
+.menu-item > .label {
+    -fx-text-fill: white;
+}
+
+.menu:hover,
+.menu:showing,
+.menu-item:hover {
+    -fx-background-color: #32566b;
+}
+
+.menu:hover > .label,
+.menu:showing > .label,
+.menu-item:hover > .label {
+    -fx-text-fill: white;
+}
