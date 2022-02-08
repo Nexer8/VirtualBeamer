@@ -53,3 +53,8 @@
 .menu-item:hover > .label {
     -fx-text-fill: white;
 }
+
+.button {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}

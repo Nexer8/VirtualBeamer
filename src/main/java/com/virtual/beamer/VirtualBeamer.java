@@ -18,10 +18,10 @@ public class VirtualBeamer extends Application {
         stage.setMinWidth(MIN_WINDOW_WIDTH);
         stage.setMinHeight(MIN_WINDOW_HEIGHT);
 
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("views/presentation_view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/initial_view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
 
-        stage.getIcons().add(new Image(String.valueOf(getClass().getResource("icons/app_icon.png"))));
+        stage.getIcons().add(new Image(String.valueOf(getClass().getResource("/icons/app_icon.png"))));
         stage.setTitle(APP_TITLE);
         stage.setScene(scene);
         stage.show();

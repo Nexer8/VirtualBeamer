@@ -10,16 +10,14 @@
 <?import javafx.scene.layout.Pane?>
 
 <BorderPane prefHeight="305.0" prefWidth="305.0" style="-fx-background-color: #32566b;"
-            stylesheets="@../styles/presentation_view.css" xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml/1"
+            stylesheets="@../styles/base.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.virtual.beamer.controllers.PresentationViewController">
     <top>
         <MenuBar BorderPane.alignment="CENTER">
             <Menu mnemonicParsing="false" text="Navigate">
-                <MenuItem mnemonicParsing="false" onAction="#loadPresentation"
+                <MenuItem fx:id="loadPresentationButton" mnemonicParsing="false" onAction="#loadPresentation"
                           text="Load presentation"/>
-                <MenuItem mnemonicParsing="false" onAction="#exitSession"
-                          text="Exit session"/>
+                <MenuItem mnemonicParsing="false" onAction="#exitSession" text="Exit session"/>
             </Menu>
         </MenuBar>
     </top>
@@ -28,13 +26,11 @@
     </center>
     <left>
         <Button fx:id="previousSlideButton" disable="true" mnemonicParsing="false" onMouseClicked="#previousSlide"
-                prefHeight="156.0" prefWidth="48.0" style="-fx-background-color: white;" text="&lt;"
-                BorderPane.alignment="CENTER"/>
+                prefHeight="156.0" prefWidth="48.0" text="&lt;" BorderPane.alignment="CENTER"/>
     </left>
     <right>
         <Button fx:id="nextSlideButton" disable="true" mnemonicParsing="false" onMouseClicked="#nextSlide"
-                prefHeight="156.0" prefWidth="48.0" style="-fx-background-color: white;" text="&gt;"
-                BorderPane.alignment="CENTER"/>
+                prefHeight="156.0" prefWidth="48.0" text="&gt;" BorderPane.alignment="CENTER"/>
     </right>
     <bottom>
         <HBox alignment="CENTER" prefHeight="65.0" prefWidth="305.0" style="-fx-background-color: #002d40;"
