@@ -61,7 +61,7 @@
                         <Insets bottom="20.0" left="20.0" right="20.0"/>
                     </VBox.margin>
                 </ListView>
-                <HBox prefHeight="100.0" prefWidth="200.0">
+                <HBox alignment="TOP_CENTER" prefHeight="100.0" prefWidth="200.0">
                     <Button fx:id="joinButton" disable="true" mnemonicParsing="false" onMouseClicked="#joinSession"
                             prefHeight="30.0" prefWidth="115.0" text="Join">
                         <HBox.margin>
