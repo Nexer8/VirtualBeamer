@@ -1,5 +1,9 @@
 package com.virtual.beamer.controllers;
 
+import com.virtual.beamer.RuntimeTest;
+import com.virtual.beamer.Session;
+import com.virtual.beamer.User;
+import com.virtual.beamer.VirtualBeamer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -14,6 +18,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.ResourceBundle;
 
 
@@ -36,10 +41,6 @@ public class InitialViewController implements Initializable {
     @FXML
     public Button joinButton;
 
-    private void loadDummyData() {
-        list.addAll("Test1", "Test2", "Test3", "Test1", "Test2", "Test3", "Test1", "Test2", "Test3", "Test1", "Test2", "Test3");
-        ongoingSessions.getItems().addAll(list);
-    }
 
     private void goToPresentationView(MouseEvent mouseEvent, UserType userType) throws IOException {
         Stage stage = (Stage) ((Node) mouseEvent.getSource()).getScene().getWindow();
@@ -53,6 +54,7 @@ public class InitialViewController implements Initializable {
 
     @FXML
     public void joinSession(MouseEvent mouseEvent) throws IOException {
+        // to access the session: VirtualBeamer.getUser().getActiveSession().get(i) where i is the current index in the list session
         goToPresentationView(mouseEvent, VIEWER);
     }
 
@@ -60,6 +62,7 @@ public class InitialViewController implements Initializable {
     public void createSession(MouseEvent mouseEvent) throws IOException {
         if (!sessionNameEditTextField.getText().isEmpty()) {
             goToPresentationView(mouseEvent, PRESENTER);
+            VirtualBeamer.getUser().addSession(new Session(sessionNameEditTextField.getText()));
         } else {
             sessionNameEditTextField.requestFocus();
         }
@@ -78,7 +81,10 @@ public class InitialViewController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        loadDummyData();
+        VirtualBeamer.getUser().loadSessions();
+        for (int i = 0; i < VirtualBeamer.getUser().getActiveSession().size(); i++)
+            list.add(VirtualBeamer.getUser().getActiveSession().get(i).getSessionName());
+        ongoingSessions.getItems().addAll(list);
         sessionNameEditTextField.setFocusTraversable(false);
     }
 }

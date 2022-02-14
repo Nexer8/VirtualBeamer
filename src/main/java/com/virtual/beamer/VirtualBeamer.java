@@ -13,6 +13,9 @@ import java.io.IOException;
 import static com.virtual.beamer.constants.AppConstants.*;
 
 public class VirtualBeamer extends Application {
+
+    private static User user;
+
     @Override
     public void start(Stage stage) throws IOException {
         stage.setMinWidth(MIN_WINDOW_WIDTH);
@@ -29,7 +32,13 @@ public class VirtualBeamer extends Application {
         stage.setOnCloseRequest(e -> Platform.exit());
     }
 
-    public static void main(String[] args) {
+    public static void main(String args[])
+    {
+        user = new User();
         launch();
+    }
+    public static User getUser()
+    {
+        return user;
     }
 }
