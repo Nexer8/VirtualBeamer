@@ -42,6 +42,9 @@ public class PresentationViewController implements Initializable {
     private Pane slidePane;
 
     @FXML
+    private VBox progressIndicator;
+
+    @FXML
     private MenuItem loadPresentationButton;
 
     @FXML
@@ -91,6 +94,7 @@ public class PresentationViewController implements Initializable {
             loadPresentationButton.setVisible(false);
             nextSlideButton.setDisable(true);
             previousSlideButton.setDisable(true);
+            progressIndicator.setVisible(true);
         }
     }
 
