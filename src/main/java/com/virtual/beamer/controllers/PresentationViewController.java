@@ -1,5 +1,6 @@
 package com.virtual.beamer.controllers;
 
+import com.virtual.beamer.models.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -24,10 +25,8 @@ import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
 
 
 public class PresentationViewController implements Initializable {
-    private File[] slides;
-    private int currentSlide = 0;
+
     private Background slidePaneDefaultBackground;
-    private UserType userType;
 
     @FXML
     private TextField presentationStatus;
@@ -66,14 +65,14 @@ public class PresentationViewController implements Initializable {
         previousSlideButton.setDisable(true);
     }
 
-    private void updatePresentationStatus() {
-        presentationStatus.setText((currentSlide + 1) + " / " + slides.length);
+    private void updatePresentationStatus() throws IOException {
+        presentationStatus.setText((User.getInstance().getCurrentSlide() + 1) + " / " + User.getInstance().getSlides().length);
         presentationStatus.setVisible(true);
     }
 
-    private void setSlide() throws FileNotFoundException {
+    private void setSlide() throws IOException {
         Image slide = new Image(new FileInputStream(
-                slides[currentSlide]), slidePane.getWidth(), slidePane.getHeight(), true, true);
+                User.getInstance().getSlides()[User.getInstance().getCurrentSlide()]), slidePane.getWidth(), slidePane.getHeight(), true, true);
 
         BackgroundImage backgroundImage = new BackgroundImage(
                 slide,
@@ -87,10 +86,9 @@ public class PresentationViewController implements Initializable {
         updatePresentationStatus();
     }
 
-    public void setUserType(UserType userType) {
-        this.userType = userType;
+    public void setUserType(UserType userType) throws IOException {
 
-        if (userType == VIEWER) {
+        if (User.getInstance().getUserType() == VIEWER) {
             loadPresentationButton.setVisible(false);
             nextSlideButton.setDisable(true);
             previousSlideButton.setDisable(true);
@@ -99,47 +97,48 @@ public class PresentationViewController implements Initializable {
     }
 
     @FXML
-    public void loadPresentation() throws FileNotFoundException {
-        currentSlide = 0;
+    public void loadPresentation() throws IOException {
+        User.getInstance().setCurrentSlide(0);
+
 
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File directory = directoryChooser.showDialog(new Stage());
 
         try {
-            slides = directory.listFiles();
-            assert slides != null;
-
-            if (slides.length <= 1) {
+            User.getInstance().setSlides(directory.listFiles());
+            assert User.getInstance().getSlides() != null;
+            User.getInstance().multicastSlides();
+            if (User.getInstance().getSlides().length <= 1) {
                 nextSlideButton.setDisable(true);
                 previousSlideButton.setDisable(true);
             } else {
                 setSlide();
                 nextSlideButton.setDisable(false);
             }
-        } catch (NullPointerException e) {
+        } catch (NullPointerException | IOException e) {
             System.out.println("No data provided!");
 //            TODO: Implement error handling
         }
+
     }
 
     @FXML
-    public void nextSlide() throws FileNotFoundException {
-        currentSlide++;
-        setSlide();
+    public void nextSlide() throws IOException {
+        User.getInstance().nextSlide();
         previousSlideButton.setDisable(false);
 
-        if (currentSlide + 1 == slides.length) {
+        if (User.getInstance().getCurrentSlide() + 1 == User.getInstance().getSlides().length) {
             nextSlideButton.setDisable(true);
         }
     }
 
     @FXML
-    public void previousSlide() throws FileNotFoundException {
-        currentSlide--;
-        setSlide();
+    public void previousSlide() throws IOException {
+        User.getInstance().previousSlide();
+
         nextSlideButton.setDisable(false);
 
-        if (currentSlide == 0) {
+        if (User.getInstance().getCurrentSlide() == 0) {
             previousSlideButton.setDisable(true);
         }
     }

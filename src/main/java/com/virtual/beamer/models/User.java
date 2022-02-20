@@ -1,12 +1,20 @@
 package com.virtual.beamer.models;
 
+import com.virtual.beamer.constants.AppConstants;
 import com.virtual.beamer.utils.MessageType;
 import com.virtual.beamer.utils.MulticastReceiver;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.Stage;
 
-import java.io.IOException;
+import java.io.*;
+import java.util.Arrays;
 
 public class User {
     private static volatile User instance;
+    private File[] slides;
+    private int currentSlide = 0;
+    private AppConstants.UserType userType;
+
 
     private User() throws IOException {
         MulticastReceiver mr = new MulticastReceiver();
@@ -29,5 +37,44 @@ public class User {
     public void establishSession() throws IOException {
         Session session = new Session();
         session.multicast(new Message(MessageType.HELLO));
+    }
+
+    public void multicastSlides() throws IOException {
+        Session session = new Session();
+        session.multicast(new Message(MessageType.SEND_SLIDE,slides));
+    }
+
+    public void nextSlide()
+    {
+        currentSlide++;
+    }
+
+    public void previousSlide()
+    {
+        currentSlide--;
+    }
+
+    public int getCurrentSlide()
+    {
+        return currentSlide;
+    }
+
+    public File[] getSlides()
+    {
+        return slides;
+    }
+
+    public AppConstants.UserType getUserType() {
+        return userType;
+    }
+
+    public void setCurrentSlide(int currentSlide)
+    {
+        this.currentSlide = currentSlide;
+    }
+
+    public void setSlides(File[] slides)
+    {
+        this.slides = slides;
     }
 }

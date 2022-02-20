@@ -1,11 +1,11 @@
 package com.virtual.beamer.utils;
 
+import com.virtual.beamer.controllers.InitialViewController;
+import com.virtual.beamer.controllers.PresentationViewController;
 import com.virtual.beamer.models.Message;
+import com.virtual.beamer.models.User;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.net.*;
 
 import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
@@ -25,10 +25,12 @@ public class MulticastReceiver extends Thread {
     }
 
     // Just an example handling of the incoming message
-    private void handleMessage(Message message) {
+    private void handleMessage(Message message) throws IOException {
         switch (message.type) {
             case HELLO -> System.out.println(message.type.name());
-            case SEND_SLIDE -> System.out.println(message.type.name());
+            case SEND_SLIDE -> {
+                User.getInstance().setSlides(message.payload);
+            }
         }
     }
 
@@ -42,7 +44,7 @@ public class MulticastReceiver extends Thread {
     @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
         try {
-            byte[] buffer = new byte[256];
+            byte[] buffer = new byte[100000000];
             socket.joinGroup(inetSocketAddress, networkInterface);
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
