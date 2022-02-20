@@ -1,5 +1,6 @@
 package com.virtual.beamer;
 
+import com.virtual.beamer.utils.ServiceRegistrar;
 import javafx.application.Application;
 import javafx.application.Platform;
 
@@ -13,9 +14,6 @@ import java.io.IOException;
 import static com.virtual.beamer.constants.AppConstants.*;
 
 public class VirtualBeamer extends Application {
-
-    private static User user;
-
     @Override
     public void start(Stage stage) throws IOException {
         stage.setMinWidth(MIN_WINDOW_WIDTH);
@@ -32,13 +30,8 @@ public class VirtualBeamer extends Application {
         stage.setOnCloseRequest(e -> Platform.exit());
     }
 
-    public static void main(String args[])
-    {
-        user = new User();
+    public static void main(String[] args) throws IOException {
+        ServiceRegistrar.registerServices();
         launch();
-    }
-    public static User getUser()
-    {
-        return user;
     }
 }
