@@ -1,8 +1,6 @@
 package com.virtual.beamer.controllers;
 
 import com.virtual.beamer.models.User;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -23,8 +21,6 @@ import static com.virtual.beamer.constants.AppConstants.UserType.*;
 
 
 public class InitialViewController implements Initializable {
-    private ObservableList<String> list = FXCollections.observableArrayList("Test1");
-
     private User user;
 
     @FXML
@@ -41,8 +37,6 @@ public class InitialViewController implements Initializable {
 
 
     private void goToPresentationView(MouseEvent mouseEvent, UserType userType) throws IOException {
-        user.establishSession();
-
         Stage stage = (Stage) ((Node) mouseEvent.getSource()).getScene().getWindow();
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/presentation_view.fxml"));
 
@@ -60,7 +54,7 @@ public class InitialViewController implements Initializable {
     @FXML
     public void createSession(MouseEvent mouseEvent) throws IOException {
         if (!sessionNameEditTextField.getText().isEmpty()) {
-            user.setUserType(PRESENTER);
+            user.createSession(sessionNameEditTextField.getText());
             goToPresentationView(mouseEvent, PRESENTER);
         } else {
             sessionNameEditTextField.requestFocus();
@@ -80,11 +74,11 @@ public class InitialViewController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        ongoingSessions.getItems().addAll(list);
         sessionNameEditTextField.setFocusTraversable(false);
 
         try {
             user = User.getInstance();
+            ongoingSessions.setItems(user.getSessionsNames());
         } catch (IOException e) {
             e.printStackTrace();
         }

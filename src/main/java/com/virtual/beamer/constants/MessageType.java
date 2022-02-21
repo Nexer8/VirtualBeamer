@@ -1,8 +1,10 @@
 package com.virtual.beamer.constants;
 
 public enum MessageType {
+    DELETE_SESSION,
     HELLO,
-    SEND_SLIDES,
     NEXT_SLIDE,
-    PREVIOUS_SLIDE
+    PREVIOUS_SLIDE,
+    SESSION_DETAILS,
+    SEND_SLIDES
 }

@@ -6,6 +6,7 @@ import com.virtual.beamer.models.User;
 import java.io.*;
 import java.net.*;
 
+import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
 import static com.virtual.beamer.constants.SessionConstants.MULTICAST_PORT;
 
@@ -24,16 +25,20 @@ public class MulticastReceiver extends Thread {
         networkInterface = NetworkInterface.getByIndex(0);
     }
 
-    // Just an example handling of the incoming message
     private void handleMessage(Message message) throws IOException {
+        System.out.println(message.type.name());
+
         switch (message.type) {
-            case HELLO -> System.out.println(message.type.name());
-            case SEND_SLIDES -> {
-                User.getInstance().setSlides(message.payload);
-                System.out.print("Received!");
+            case DELETE_SESSION -> User.getInstance().deleteSession(message.session);
+            case HELLO -> {
+                if (User.getInstance().getUserType() == PRESENTER) {
+                    User.getInstance().sendSessionDetails();
+                }
             }
+            case SEND_SLIDES -> User.getInstance().setSlides(message.slides);
             case NEXT_SLIDE -> User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() + 1);
             case PREVIOUS_SLIDE -> User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() - 1);
+            case SESSION_DETAILS -> User.getInstance().addSessionData(message.session);
         }
     }
 

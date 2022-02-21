@@ -50,6 +50,7 @@ public class PresentationViewController implements Initializable {
 //        TODO: implement leader election
 //        if (userType == PRESENTER) {}
         cleanUpView();
+        user.multicastDeleteSession();
 
         Stage stage = (Stage) slidePane.getScene().getWindow();
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/initial_view.fxml"));
