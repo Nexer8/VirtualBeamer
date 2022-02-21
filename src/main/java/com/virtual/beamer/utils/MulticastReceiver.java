@@ -1,7 +1,5 @@
 package com.virtual.beamer.utils;
 
-import com.virtual.beamer.controllers.InitialViewController;
-import com.virtual.beamer.controllers.PresentationViewController;
 import com.virtual.beamer.models.Message;
 import com.virtual.beamer.models.User;
 
@@ -20,6 +18,8 @@ public class MulticastReceiver extends Thread {
 
     public MulticastReceiver() throws IOException {
         socket = new MulticastSocket(MULTICAST_PORT);
+//        TODO: uncomment when ready
+//        socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
         inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, INET_SOCKET_PORT);
         networkInterface = NetworkInterface.getByIndex(0);
     }
@@ -28,9 +28,12 @@ public class MulticastReceiver extends Thread {
     private void handleMessage(Message message) throws IOException {
         switch (message.type) {
             case HELLO -> System.out.println(message.type.name());
-            case SEND_SLIDE -> {
+            case SEND_SLIDES -> {
                 User.getInstance().setSlides(message.payload);
+                System.out.print("Received!");
             }
+            case NEXT_SLIDE -> User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() + 1);
+            case PREVIOUS_SLIDE -> User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() - 1);
         }
     }
 
@@ -44,7 +47,7 @@ public class MulticastReceiver extends Thread {
     @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
         try {
-            byte[] buffer = new byte[100000000];
+            byte[] buffer = new byte[10000];
             socket.joinGroup(inetSocketAddress, networkInterface);
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);

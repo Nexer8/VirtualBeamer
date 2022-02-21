@@ -15,16 +15,15 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-import static com.virtual.beamer.constants.AppConstants.UserType;
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
 
 
 public class PresentationViewController implements Initializable {
+    private User user;
 
     private Background slidePaneDefaultBackground;
 
@@ -65,14 +64,15 @@ public class PresentationViewController implements Initializable {
         previousSlideButton.setDisable(true);
     }
 
-    private void updatePresentationStatus() throws IOException {
-        presentationStatus.setText((User.getInstance().getCurrentSlide() + 1) + " / " + User.getInstance().getSlides().length);
+    private void updatePresentationStatus() {
+        presentationStatus.setText((user.getCurrentSlide() + 1) + " / " + user.getSlides().size());
         presentationStatus.setVisible(true);
     }
 
-    private void setSlide() throws IOException {
+    public void setSlide() throws IOException {
         Image slide = new Image(new FileInputStream(
-                User.getInstance().getSlides()[User.getInstance().getCurrentSlide()]), slidePane.getWidth(), slidePane.getHeight(), true, true);
+                user.getSlides().get(user.getCurrentSlide())),
+                slidePane.getWidth(), slidePane.getHeight(), true, true);
 
         BackgroundImage backgroundImage = new BackgroundImage(
                 slide,
@@ -86,29 +86,19 @@ public class PresentationViewController implements Initializable {
         updatePresentationStatus();
     }
 
-    public void setUserType(UserType userType) throws IOException {
-
-        if (User.getInstance().getUserType() == VIEWER) {
-            loadPresentationButton.setVisible(false);
-            nextSlideButton.setDisable(true);
-            previousSlideButton.setDisable(true);
-            progressIndicator.setVisible(true);
-        }
-    }
-
     @FXML
     public void loadPresentation() throws IOException {
-        User.getInstance().setCurrentSlide(0);
-
+        user.setCurrentSlide(0);
 
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File directory = directoryChooser.showDialog(new Stage());
+        File[] files = directory.listFiles();
 
         try {
-            User.getInstance().setSlides(directory.listFiles());
-            assert User.getInstance().getSlides() != null;
-            User.getInstance().multicastSlides();
-            if (User.getInstance().getSlides().length <= 1) {
+            user.setSlides(files);
+            assert user.getSlides() != null;
+            user.multicastSlides();
+            if (user.getSlides().size() <= 1) {
                 nextSlideButton.setDisable(true);
                 previousSlideButton.setDisable(true);
             } else {
@@ -119,26 +109,27 @@ public class PresentationViewController implements Initializable {
             System.out.println("No data provided!");
 //            TODO: Implement error handling
         }
-
     }
 
     @FXML
     public void nextSlide() throws IOException {
-        User.getInstance().nextSlide();
+        user.multicastNextSlide();
+        setSlide();
         previousSlideButton.setDisable(false);
 
-        if (User.getInstance().getCurrentSlide() + 1 == User.getInstance().getSlides().length) {
+        if (user.getCurrentSlide() + 1 == user.getSlides().size()) {
             nextSlideButton.setDisable(true);
         }
     }
 
     @FXML
     public void previousSlide() throws IOException {
-        User.getInstance().previousSlide();
+        user.multicastPreviousSlide();
+        setSlide();
 
         nextSlideButton.setDisable(false);
 
-        if (User.getInstance().getCurrentSlide() == 0) {
+        if (user.getCurrentSlide() == 0) {
             previousSlideButton.setDisable(true);
         }
     }
@@ -146,6 +137,25 @@ public class PresentationViewController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         slidePaneDefaultBackground = slidePane.getBackground();
+
+        try {
+            user = User.getInstance();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (user.getUserType() == VIEWER) {
+            loadPresentationButton.setVisible(false);
+            nextSlideButton.setDisable(true);
+            previousSlideButton.setDisable(true);
+            progressIndicator.setVisible(true);
+        }
+
+        user.setPvc(this);
+    }
+
+    public VBox getProgressIndicator() {
+        return progressIndicator;
     }
 }
 

@@ -1,13 +1,13 @@
 package com.virtual.beamer.models;
 
-import com.virtual.beamer.utils.MessageType;
+import com.virtual.beamer.constants.MessageType;
 
 import java.io.File;
 import java.io.Serializable;
 
 public class Message implements Serializable {
-    public MessageType type;
-    public File[] payload; // TODO: this will be used to send slides
+    final public MessageType type;
+    public File[] payload;
 
     public Message(MessageType type) {
         this.type = type;

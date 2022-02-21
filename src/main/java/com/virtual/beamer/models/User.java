@@ -1,20 +1,22 @@
 package com.virtual.beamer.models;
 
 import com.virtual.beamer.constants.AppConstants;
-import com.virtual.beamer.utils.MessageType;
+import com.virtual.beamer.constants.MessageType;
+import com.virtual.beamer.controllers.PresentationViewController;
 import com.virtual.beamer.utils.MulticastReceiver;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.Stage;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.io.*;
-import java.util.Arrays;
+
+import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
 
 public class User {
     private static volatile User instance;
-    private File[] slides;
+    private ObservableList<File> slides;
     private int currentSlide = 0;
     private AppConstants.UserType userType;
-
+    private PresentationViewController pvc;
 
     private User() throws IOException {
         MulticastReceiver mr = new MulticastReceiver();
@@ -22,11 +24,10 @@ public class User {
     }
 
     public static User getInstance() throws IOException {
-        User tmp = instance;
-        if (tmp != null) {
-            return tmp;
+        if (instance != null) {
+            return instance;
         }
-        synchronized(User.class) {
+        synchronized (User.class) {
             if (instance == null) {
                 instance = new User();
             }
@@ -41,26 +42,26 @@ public class User {
 
     public void multicastSlides() throws IOException {
         Session session = new Session();
-        session.multicast(new Message(MessageType.SEND_SLIDE,slides));
+        session.multicast(new Message(MessageType.SEND_SLIDES, slides.toArray(new File[]{})));
     }
 
-    public void nextSlide()
-    {
+    public void multicastNextSlide() throws IOException {
         currentSlide++;
+        Session session = new Session();
+        session.multicast(new Message(MessageType.NEXT_SLIDE));
     }
 
-    public void previousSlide()
-    {
+    public void multicastPreviousSlide() throws IOException {
         currentSlide--;
+        Session session = new Session();
+        session.multicast(new Message(MessageType.PREVIOUS_SLIDE));
     }
 
-    public int getCurrentSlide()
-    {
+    public int getCurrentSlide() {
         return currentSlide;
     }
 
-    public File[] getSlides()
-    {
+    public ObservableList<File> getSlides() {
         return slides;
     }
 
@@ -68,13 +69,30 @@ public class User {
         return userType;
     }
 
-    public void setCurrentSlide(int currentSlide)
-    {
+    public void setCurrentSlide(int currentSlide) throws IOException {
         this.currentSlide = currentSlide;
+
+        if (userType == VIEWER) {
+            pvc.setSlide();
+        }
     }
 
-    public void setSlides(File[] slides)
-    {
-        this.slides = slides;
+    public void setSlides(File[] slides) throws IOException {
+        this.slides = FXCollections.observableArrayList(slides);
+
+        if (userType == VIEWER) {
+            if (pvc.getProgressIndicator().isVisible()) {
+                pvc.getProgressIndicator().setVisible(false);
+            }
+            pvc.setSlide();
+        }
+    }
+
+    public void setUserType(AppConstants.UserType userType) {
+        this.userType = userType;
+    }
+
+    public void setPvc(PresentationViewController pvc) {
+        this.pvc = pvc;
     }
 }
