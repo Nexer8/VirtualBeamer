@@ -23,3 +23,9 @@ The nodes (including the leader) may crash. In such case the leader becomes the 
 Message complexity is *n* (number of nodes) but the time complexity is huge. If *m* is the minimum (or maximum) identifier it is $\Theta(m \cdot n)$.
 
 *Source: [Synchronous Ring](https://disco.ethz.ch/courses/podc_allstars/lecture/chapter3.pdf)*
+
+### Identify packet miss
+Each node in the network, either presenter or viewer, that must send a packet through multicast group communication hold an internal counter which trace how many packets has been sent.
+When the application load the counter is set to 0 and every time there is send operation the packet is marked with the counter. At the receiver side every time a packet arrives just check is the counter is sequential to the previous one, if so no miss occour during the communication. Otherwise, request a re-send.
+There should be a buffer on the sender side that saves the last n packets sent.
+There should be a buffer on the receiver side with at least the previous packet received.
