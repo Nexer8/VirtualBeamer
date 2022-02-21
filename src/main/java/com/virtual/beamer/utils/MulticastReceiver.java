@@ -32,12 +32,25 @@ public class MulticastReceiver extends Thread {
             case DELETE_SESSION -> User.getInstance().deleteSession(message.session);
             case HELLO -> {
                 if (User.getInstance().getUserType() == PRESENTER) {
+//                    TODO: Just respond to the user that sent the hello packet!
                     User.getInstance().sendSessionDetails();
                 }
             }
-            case SEND_SLIDES -> User.getInstance().setSlides(message.slides);
-            case NEXT_SLIDE -> User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() + 1);
-            case PREVIOUS_SLIDE -> User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() - 1);
+            case SEND_SLIDES -> {
+                if (User.getInstance().getUserType() != PRESENTER) {
+                    User.getInstance().setSlides(message.slides);
+                }
+            }
+            case NEXT_SLIDE -> {
+                if (User.getInstance().getUserType() != PRESENTER) {
+                    User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() + 1);
+                }
+            }
+            case PREVIOUS_SLIDE -> {
+                if (User.getInstance().getUserType() != PRESENTER) {
+                    User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() - 1);
+                }
+            }
             case SESSION_DETAILS -> User.getInstance().addSessionData(message.session);
         }
     }
