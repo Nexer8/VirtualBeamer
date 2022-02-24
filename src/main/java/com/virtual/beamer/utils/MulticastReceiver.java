@@ -9,6 +9,8 @@ import java.net.*;
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
 import static com.virtual.beamer.constants.SessionConstants.MULTICAST_PORT;
+import static com.virtual.beamer.models.Message.deserializeMessage;
+import static com.virtual.beamer.models.Message.handleMessage;
 
 public class MulticastReceiver extends Thread {
     public static final int INET_SOCKET_PORT = 1234;
@@ -25,43 +27,6 @@ public class MulticastReceiver extends Thread {
         networkInterface = NetworkInterface.getByIndex(0);
     }
 
-    private void handleMessage(Message message) throws IOException {
-        System.out.println(message.type.name());
-
-        switch (message.type) {
-            case DELETE_SESSION -> User.getInstance().deleteSession(message.session);
-            case HELLO -> {
-                if (User.getInstance().getUserType() == PRESENTER) {
-//                    TODO: Just respond to the user that sent the hello packet!
-                    User.getInstance().sendSessionDetails();
-                }
-            }
-            case SEND_SLIDES -> {
-                if (User.getInstance().getUserType() != PRESENTER) {
-                    User.getInstance().setSlides(message.slides);
-                }
-            }
-            case NEXT_SLIDE -> {
-                if (User.getInstance().getUserType() != PRESENTER) {
-                    User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() + 1);
-                }
-            }
-            case PREVIOUS_SLIDE -> {
-                if (User.getInstance().getUserType() != PRESENTER) {
-                    User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() - 1);
-                }
-            }
-            case SESSION_DETAILS -> User.getInstance().addSessionData(message.session);
-        }
-    }
-
-    private Message deserializeMessage(byte[] buffer) throws IOException, ClassNotFoundException {
-        ByteArrayInputStream byteStream = new ByteArrayInputStream(buffer);
-        ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(byteStream));
-
-        return (Message) is.readObject();
-    }
-
     @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
         try {
@@ -70,9 +35,11 @@ public class MulticastReceiver extends Thread {
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
+                InetAddress senderAddress = packet.getAddress();
+                System.out.println("Sender Socket address:" + senderAddress);
 
                 Message message = deserializeMessage(buffer);
-                handleMessage(message);
+                handleMessage(message, senderAddress);
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();

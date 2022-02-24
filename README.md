@@ -5,7 +5,6 @@ A *Java* application to share a set of slides and display them in a synchronous 
 ## Authors
 
 - *Lorenzo Poletti:* lorenzo1.poletti@mail.polimi.it
-
 - *Mariusz Wiśniewski:* mariuszkrzysztof.wisniewski@mail.polimi.it
 
 ## Requirements

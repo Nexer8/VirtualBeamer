@@ -6,8 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.*;
 
-import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
-import static com.virtual.beamer.constants.SessionConstants.MULTICAST_PORT;
+import static com.virtual.beamer.constants.SessionConstants.*;
 
 public class Session implements Serializable {
     private String name;
@@ -46,7 +45,7 @@ public class Session implements Serializable {
         socket.close();
     }
 
-    public void sendMessage(Message message, SocketAddress address) throws IOException {
+    public void sendMessage(Message message, InetAddress address) throws IOException {
         DatagramSocket socket = new DatagramSocket();
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream(6400);
@@ -54,8 +53,10 @@ public class Session implements Serializable {
         oos.writeObject(message);
         final byte[] data = baos.toByteArray();
 
-        DatagramPacket packet = new DatagramPacket(data, data.length, address);
+        DatagramPacket packet = new DatagramPacket(data, data.length, address, INDIVIDUAL_MESSAGE_PORT);
         socket.send(packet);
+        System.out.println("Responded to Hello message!");
+
         socket.close();
     }
 }

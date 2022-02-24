@@ -2,8 +2,11 @@ package com.virtual.beamer.models;
 
 import com.virtual.beamer.constants.MessageType;
 
-import java.io.File;
-import java.io.Serializable;
+import java.io.*;
+import java.net.InetAddress;
+import java.net.SocketAddress;
+
+import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 
 public class Message implements Serializable {
     final public MessageType type;
@@ -22,5 +25,41 @@ public class Message implements Serializable {
     public Message(MessageType type, Session session) {
         this.type = type;
         this.session = session;
+    }
+
+    public static Message deserializeMessage(byte[] buffer) throws IOException, ClassNotFoundException {
+        ByteArrayInputStream byteStream = new ByteArrayInputStream(buffer);
+        ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(byteStream));
+
+        return (Message) is.readObject();
+    }
+
+    public static void handleMessage(Message message, InetAddress senderAddress) throws IOException {
+        System.out.println(message.type.name());
+
+        switch (message.type) {
+            case DELETE_SESSION -> User.getInstance().deleteSession(message.session);
+            case HELLO -> {
+                if (User.getInstance().getUserType() == PRESENTER) {
+                    User.getInstance().sendSessionDetails(senderAddress);
+                }
+            }
+            case SEND_SLIDES -> {
+                if (User.getInstance().getUserType() != PRESENTER) {
+                    User.getInstance().setSlides(message.slides);
+                }
+            }
+            case NEXT_SLIDE -> {
+                if (User.getInstance().getUserType() != PRESENTER) {
+                    User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() + 1);
+                }
+            }
+            case PREVIOUS_SLIDE -> {
+                if (User.getInstance().getUserType() != PRESENTER) {
+                    User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() - 1);
+                }
+            }
+            case SESSION_DETAILS -> User.getInstance().addSessionData(message.session);
+        }
     }
 }
