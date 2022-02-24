@@ -6,5 +6,8 @@ public enum MessageType {
     NEXT_SLIDE,
     PREVIOUS_SLIDE,
     SESSION_DETAILS,
-    SEND_SLIDES
+    SEND_SLIDES,
+    COLLECT_PORTS,
+    SEND_SESSION_PORT,
+    JOIN_SESSION
 }

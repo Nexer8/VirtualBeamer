@@ -2,19 +2,25 @@ package com.virtual.beamer.models;
 
 import com.virtual.beamer.constants.AppConstants;
 import com.virtual.beamer.constants.MessageType;
+import com.virtual.beamer.constants.SessionConstants;
 import com.virtual.beamer.controllers.PresentationViewController;
+import com.virtual.beamer.utils.GroupReceiver;
 import com.virtual.beamer.utils.MessageReceiver;
 import com.virtual.beamer.utils.MulticastReceiver;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Group;
 
 import java.io.*;
-import java.net.InetAddress;
-import java.net.SocketAddress;
+import java.net.*;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
+import static com.virtual.beamer.models.Message.deserializeMessage;
+import static com.virtual.beamer.models.Message.handleMessage;
 
 public class User {
     private static volatile User instance;
@@ -22,9 +28,11 @@ public class User {
     private int currentSlide = 0;
     private AppConstants.UserType userType = VIEWER;
     private PresentationViewController pvc;
-    private final ObservableList<Session> sessions = FXCollections.observableArrayList();
-    private final ObservableList<String> sessionsNames = FXCollections.observableArrayList();
+    private final ObservableList<GroupSession> groupSessions = FXCollections.observableArrayList();
+    private final ObservableList<String> groupSessionNames = FXCollections.observableArrayList();
     private final Session session;
+    private GroupSession groupSession;
+    private ArrayList<Integer> groupPortList = new ArrayList<Integer>();
 
     private User() throws IOException {
         MulticastReceiver mr = new MulticastReceiver();
@@ -32,7 +40,7 @@ public class User {
 
         MessageReceiver rec = new MessageReceiver();
         rec.start();
-        session = new Session("");
+        session = new Session();
     }
 
     public static User getInstance() throws IOException {
@@ -50,8 +58,52 @@ public class User {
 
     public void createSession(String sessionName) throws IOException {
         userType = PRESENTER;
-        session.setName(sessionName);
+        groupSession.setName(sessionName);
+        session.multicast(new Message(MessageType.COLLECT_PORTS));
+        this.groupPortList.clear();
+        Thread thread = new Thread() {
+            public void run() {
+                try {
+                    DatagramSocket socket = new DatagramSocket();
+                    try {
+                        byte[] buffer = new byte[10000];
+                        socket.setSoTimeout(5000);
+                        while (true) {
+                            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                            socket.receive(packet);
+                            InetAddress senderAddress = packet.getAddress();
+
+                            Message message = deserializeMessage(buffer);
+                            handleMessage(message, senderAddress);
+                        }
+                    } catch (IOException | ClassNotFoundException e) {
+                        e.printStackTrace();
+                    } finally {
+                        socket.close();
+                    }
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        thread.start();
+
+        int groupPort;
+        if(groupPortList.isEmpty())
+            groupPort = SessionConstants.STARTING_GROUP_PORT;
+        else
+            groupPort = Collections.max(groupPortList)+1;
+
+        groupSession.setPort(groupPort);
+        GroupReceiver gr = new GroupReceiver(groupPort);
+        gr.start();
         multicastSessionDetails();
+    }
+
+    public void joinSession(String name) throws IOException {
+        GroupReceiver gr = new GroupReceiver(getGroupSession(name).getPort());
+        gr.start();
+        groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION));
     }
 
     public void sendHelloMessage() throws IOException {
@@ -59,30 +111,35 @@ public class User {
     }
 
     public void multicastSlides() throws IOException {
-        session.multicast(new Message(MessageType.SEND_SLIDES, slides.toArray(new File[]{})));
+        groupSession.sendGroupMessage(new Message(MessageType.SEND_SLIDES, slides.toArray(new File[]{})));
     }
 
     public void multicastSessionDetails() throws IOException {
-        session.multicast(new Message(MessageType.SESSION_DETAILS, session));
+        session.multicast(new Message(MessageType.SESSION_DETAILS, groupSession));
     }
 
     public void sendSessionDetails(InetAddress senderAddress) throws IOException {
-        session.sendMessage(new Message(MessageType.SESSION_DETAILS, session), senderAddress);
+        session.sendMessage(new Message(MessageType.SESSION_DETAILS, groupSession), senderAddress);
     }
 
     public void multicastDeleteSession() throws IOException {
-        session.multicast(new Message(MessageType.DELETE_SESSION, session));
+        session.multicast(new Message(MessageType.DELETE_SESSION, groupSession));
         userType = VIEWER;
     }
 
     public void multicastNextSlide() throws IOException {
         currentSlide++;
-        session.multicast(new Message(MessageType.NEXT_SLIDE));
+        groupSession.sendGroupMessage(new Message(MessageType.NEXT_SLIDE));
     }
 
     public void multicastPreviousSlide() throws IOException {
         currentSlide--;
-        session.multicast(new Message(MessageType.PREVIOUS_SLIDE));
+        groupSession.sendGroupMessage(new Message(MessageType.PREVIOUS_SLIDE));
+    }
+
+    public void sendGroupPort(InetAddress senderAddress) throws IOException {
+        if(groupSession.getPort() != 0)
+            session.sendMessage(new Message(MessageType.SEND_SESSION_PORT, groupSession.getPort()), senderAddress);
     }
 
     public int getCurrentSlide() {
@@ -124,24 +181,40 @@ public class User {
         this.pvc = pvc;
     }
 
-    public void addSessionData(Session session) {
-        sessions.add(session);
+    public void addSessionData(GroupSession session) {
+        groupSessions.add(session);
 
-        Platform.runLater(() -> sessionsNames.add(session.getName()));
+        Platform.runLater(() -> groupSessionNames.add(session.getName()));
         System.out.println(session.getName());
     }
 
-    public ObservableList<String> getSessionsNames() {
-        return sessionsNames;
+    public ObservableList<String> getGroupSessionNames() {
+        return groupSessionNames;
     }
 
-    public void deleteSession(Session session) {
-        int idx = sessions.indexOf(session);
+    public void deleteSession(GroupSession session) {
+        int idx = groupSessions.indexOf(session);
         if (idx != -1) {
-            String name = sessions.get(idx).getName();
-            sessions.remove(idx);
+            String name = groupSessions.get(idx).getName();
+            groupSessions.remove(idx);
 
-            Platform.runLater(() -> sessionsNames.remove(name));
+            Platform.runLater(() -> groupSessionNames.remove(name));
         }
+    }
+
+
+    public void addGroupPortToList(int groupPort)
+    {
+        groupPortList.add(groupPort);
+    }
+
+    public GroupSession getGroupSession(String name)
+    {
+        return groupSessions.stream().filter(item->item.getName().equals(name)).findFirst().orElse(null);
+    }
+
+    public GroupSession getGroupSession()
+    {
+        return groupSession;
     }
 }

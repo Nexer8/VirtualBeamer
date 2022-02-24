@@ -49,6 +49,8 @@ public class InitialViewController implements Initializable {
     public void joinSession(MouseEvent mouseEvent) throws IOException {
         user.setUserType(VIEWER);
         goToPresentationView(mouseEvent, VIEWER);
+        String session = ongoingSessions.getSelectionModel().getSelectedItem();
+        User.getInstance().joinSession(session);
     }
 
     @FXML
@@ -78,7 +80,7 @@ public class InitialViewController implements Initializable {
 
         try {
             user = User.getInstance();
-            ongoingSessions.setItems(user.getSessionsNames());
+            ongoingSessions.setItems(user.getGroupSessionNames());
         } catch (IOException e) {
             e.printStackTrace();
         }

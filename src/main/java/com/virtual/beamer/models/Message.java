@@ -11,7 +11,8 @@ import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 public class Message implements Serializable {
     final public MessageType type;
     public File[] slides;
-    public Session session;
+    public GroupSession session;
+    public int intVariable;
 
     public Message(MessageType type) {
         this.type = type;
@@ -22,9 +23,15 @@ public class Message implements Serializable {
         this.slides = slides;
     }
 
-    public Message(MessageType type, Session session) {
+    public Message(MessageType type, GroupSession session) {
         this.type = type;
         this.session = session;
+    }
+
+    public Message(MessageType type, int intVariable)
+    {
+        this.type = type;
+        this.intVariable = intVariable;
     }
 
     public static Message deserializeMessage(byte[] buffer) throws IOException, ClassNotFoundException {
@@ -60,6 +67,10 @@ public class Message implements Serializable {
                 }
             }
             case SESSION_DETAILS -> User.getInstance().addSessionData(message.session);
+            case COLLECT_PORTS -> User.getInstance().sendGroupPort(senderAddress);
+            case SEND_SESSION_PORT -> {
+                User.getInstance().addGroupPortToList(message.intVariable);
+            }
         }
     }
 }
