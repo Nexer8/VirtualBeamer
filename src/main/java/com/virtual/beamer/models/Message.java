@@ -4,7 +4,6 @@ import com.virtual.beamer.constants.MessageType;
 
 import java.io.*;
 import java.net.InetAddress;
-import java.net.SocketAddress;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 
@@ -28,8 +27,7 @@ public class Message implements Serializable {
         this.session = session;
     }
 
-    public Message(MessageType type, int intVariable)
-    {
+    public Message(MessageType type, int intVariable) {
         this.type = type;
         this.intVariable = intVariable;
     }
@@ -67,10 +65,12 @@ public class Message implements Serializable {
                 }
             }
             case SESSION_DETAILS -> User.getInstance().addSessionData(message.session);
-            case COLLECT_PORTS -> User.getInstance().sendGroupPort(senderAddress);
-            case SEND_SESSION_PORT -> {
-                User.getInstance().addGroupPortToList(message.intVariable);
+            case COLLECT_PORTS -> {
+                if (User.getInstance().getUserType() == PRESENTER) {
+                    User.getInstance().sendGroupPort(senderAddress);
+                }
             }
+            case SEND_SESSION_PORT -> User.getInstance().addGroupPortToList(message.intVariable);
         }
     }
 }

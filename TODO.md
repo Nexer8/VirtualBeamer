@@ -19,3 +19,5 @@
 6. Look at the Docker for testing purposes. (How to display the app running inside the docker. **Mariusz**)
 
 7. Think of creating and cleaning the sockets. Maybe use the same sockets for sending and deleting. **Mariusz**
+
+8. Add the users list inside the presentation view.

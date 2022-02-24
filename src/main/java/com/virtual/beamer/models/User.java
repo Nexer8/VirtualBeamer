@@ -10,7 +10,6 @@ import com.virtual.beamer.utils.MulticastReceiver;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.Group;
 
 import java.io.*;
 import java.net.*;
@@ -31,8 +30,8 @@ public class User {
     private final ObservableList<GroupSession> groupSessions = FXCollections.observableArrayList();
     private final ObservableList<String> groupSessionNames = FXCollections.observableArrayList();
     private final Session session;
-    private GroupSession groupSession;
-    private ArrayList<Integer> groupPortList = new ArrayList<Integer>();
+    private final GroupSession groupSession;
+    private final ArrayList<Integer> groupPortList = new ArrayList<>();
 
     private User() throws IOException {
         MulticastReceiver mr = new MulticastReceiver();
@@ -41,6 +40,7 @@ public class User {
         MessageReceiver rec = new MessageReceiver();
         rec.start();
         session = new Session();
+        groupSession = new GroupSession("");
     }
 
     public static User getInstance() throws IOException {
@@ -61,38 +61,30 @@ public class User {
         groupSession.setName(sessionName);
         session.multicast(new Message(MessageType.COLLECT_PORTS));
         this.groupPortList.clear();
-        Thread thread = new Thread() {
-            public void run() {
-                try {
-                    DatagramSocket socket = new DatagramSocket();
-                    try {
-                        byte[] buffer = new byte[10000];
-                        socket.setSoTimeout(5000);
-                        while (true) {
-                            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                            socket.receive(packet);
-                            InetAddress senderAddress = packet.getAddress();
 
-                            Message message = deserializeMessage(buffer);
-                            handleMessage(message, senderAddress);
-                        }
-                    } catch (IOException | ClassNotFoundException e) {
-                        e.printStackTrace();
-                    } finally {
-                        socket.close();
-                    }
-                } catch (SocketException e) {
-                    e.printStackTrace();
+//        TODO: Specify port
+        new Thread(() -> {
+            try (DatagramSocket socket = new DatagramSocket()) {
+                byte[] buffer = new byte[10000];
+                socket.setSoTimeout(5000);
+                while (true) {
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                    socket.receive(packet);
+                    InetAddress senderAddress = packet.getAddress();
+
+                    Message message = deserializeMessage(buffer);
+                    handleMessage(message, senderAddress);
                 }
+            } catch (IOException | ClassNotFoundException e) {
+                System.out.println("No ports received.");
             }
-        };
-        thread.start();
+        }).start();
 
         int groupPort;
-        if(groupPortList.isEmpty())
+        if (groupPortList.isEmpty())
             groupPort = SessionConstants.STARTING_GROUP_PORT;
         else
-            groupPort = Collections.max(groupPortList)+1;
+            groupPort = Collections.max(groupPortList) + 1;
 
         groupSession.setPort(groupPort);
         GroupReceiver gr = new GroupReceiver(groupPort);
@@ -138,7 +130,7 @@ public class User {
     }
 
     public void sendGroupPort(InetAddress senderAddress) throws IOException {
-        if(groupSession.getPort() != 0)
+        if (groupSession.getPort() != 0)
             session.sendMessage(new Message(MessageType.SEND_SESSION_PORT, groupSession.getPort()), senderAddress);
     }
 
@@ -203,18 +195,15 @@ public class User {
     }
 
 
-    public void addGroupPortToList(int groupPort)
-    {
+    public void addGroupPortToList(int groupPort) {
         groupPortList.add(groupPort);
     }
 
-    public GroupSession getGroupSession(String name)
-    {
-        return groupSessions.stream().filter(item->item.getName().equals(name)).findFirst().orElse(null);
+    public GroupSession getGroupSession(String name) {
+        return groupSessions.stream().filter(item -> item.getName().equals(name)).findFirst().orElse(null);
     }
 
-    public GroupSession getGroupSession()
-    {
+    public GroupSession getGroupSession() {
         return groupSession;
     }
 }

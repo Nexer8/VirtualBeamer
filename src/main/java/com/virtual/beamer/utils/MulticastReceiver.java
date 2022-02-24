@@ -1,12 +1,10 @@
 package com.virtual.beamer.utils;
 
 import com.virtual.beamer.models.Message;
-import com.virtual.beamer.models.User;
 
 import java.io.*;
 import java.net.*;
 
-import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
 import static com.virtual.beamer.constants.SessionConstants.MULTICAST_PORT;
 import static com.virtual.beamer.models.Message.deserializeMessage;
@@ -30,7 +28,7 @@ public class MulticastReceiver extends Thread {
     @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
         try {
-            byte[] buffer = new byte[10000];
+            byte[] buffer = new byte[1000];
             socket.joinGroup(inetSocketAddress, networkInterface);
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);

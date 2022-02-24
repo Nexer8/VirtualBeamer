@@ -94,7 +94,7 @@ public class PresentationViewController implements Initializable {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File directory = directoryChooser.showDialog(new Stage());
         File[] files = directory.listFiles();
-
+//(file, s) -> s.matches(".*\\.(png|jpg|jpeg)") && !file.isDirectory()
         try {
             user.setSlides(files);
             assert user.getSlides() != null;
