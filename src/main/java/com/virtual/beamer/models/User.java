@@ -15,6 +15,7 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
@@ -24,12 +25,13 @@ import static com.virtual.beamer.models.Message.handleMessage;
 public class User {
     private static volatile User instance;
     private ObservableList<File> slides;
+    private String userName;
     private int currentSlide = 0;
     private AppConstants.UserType userType = VIEWER;
     private PresentationViewController pvc;
     private final ObservableList<GroupSession> groupSessions = FXCollections.observableArrayList();
     private final ObservableList<String> groupSessionNames = FXCollections.observableArrayList();
-    private final ObservableList<String> participantsNames = FXCollections.observableArrayList("Test1", "Test2");
+    private final ObservableList<String> participantsNames = FXCollections.observableArrayList();
     private final Session session;
     private final GroupSession groupSession;
     private final ArrayList<Integer> groupPortList = new ArrayList<>();
@@ -42,6 +44,7 @@ public class User {
         rec.start();
         session = new Session();
         groupSession = new GroupSession("");
+        userName = "123";
     }
 
     public static User getInstance() throws IOException {
@@ -99,6 +102,10 @@ public class User {
         GroupReceiver gr = new GroupReceiver(getGroupSession(name).getPort());
         gr.start();
         groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION));
+    }
+
+    public void sendUserData(InetAddress senderAddress) throws IOException {
+        session.sendMessage(new Message(MessageType.SEND_USER_DATA, userName), senderAddress);
     }
 
     public void sendHelloMessage() throws IOException {
@@ -174,6 +181,16 @@ public class User {
 
     public void setPvc(PresentationViewController pvc) {
         this.pvc = pvc;
+    }
+
+    public void addParticipant(String name)
+    {
+        Platform.runLater(() -> participantsNames.add(name));
+    }
+
+    public void deleteParticipant(String name)
+    {
+        Platform.runLater(() -> participantsNames.remove(name));
     }
 
     public void addSessionData(GroupSession session) {

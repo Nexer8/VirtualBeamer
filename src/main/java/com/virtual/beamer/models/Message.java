@@ -12,6 +12,7 @@ public class Message implements Serializable {
     public File[] slides;
     public GroupSession session;
     public int intVariable;
+    public String stringVariable;
 
     public Message(MessageType type) {
         this.type = type;
@@ -30,6 +31,11 @@ public class Message implements Serializable {
     public Message(MessageType type, int intVariable) {
         this.type = type;
         this.intVariable = intVariable;
+    }
+
+    public Message(MessageType type, String stringVariable) {
+        this.type = type;
+        this.stringVariable = stringVariable;
     }
 
     public static Message deserializeMessage(byte[] buffer) throws IOException, ClassNotFoundException {
@@ -71,6 +77,10 @@ public class Message implements Serializable {
                 }
             }
             case SEND_SESSION_PORT -> User.getInstance().addGroupPortToList(message.intVariable);
+            case JOIN_SESSION -> User.getInstance().sendUserData(senderAddress);
+            case SEND_USER_DATA -> {
+                User.getInstance().addParticipant(message.stringVariable);
+            }
         }
     }
 }

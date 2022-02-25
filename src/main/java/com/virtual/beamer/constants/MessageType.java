@@ -9,5 +9,6 @@ public enum MessageType {
     SEND_SLIDES,
     COLLECT_PORTS,
     SEND_SESSION_PORT,
-    JOIN_SESSION
+    JOIN_SESSION,
+    SEND_USER_DATA
 }
