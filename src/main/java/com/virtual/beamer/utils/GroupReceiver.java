@@ -16,6 +16,7 @@ public class GroupReceiver extends Thread{
 
     public GroupReceiver(int port) throws IOException {
         socket = new MulticastSocket(port);
+        socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
         inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, port);
         networkInterface = Helpers.getNetworkInterface();
     }

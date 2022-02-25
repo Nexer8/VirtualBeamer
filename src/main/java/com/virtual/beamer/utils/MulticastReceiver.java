@@ -21,7 +21,7 @@ public class MulticastReceiver extends Thread {
     public MulticastReceiver() throws IOException {
         socket = new MulticastSocket(MULTICAST_PORT);
 //        TODO: uncomment when ready
-//        socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
+        socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
         inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, INET_SOCKET_PORT);
         networkInterface = Helpers.getNetworkInterface();
     }

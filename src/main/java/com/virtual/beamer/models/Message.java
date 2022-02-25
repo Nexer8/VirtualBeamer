@@ -77,9 +77,16 @@ public class Message implements Serializable {
                 }
             }
             case SEND_SESSION_PORT -> User.getInstance().addGroupPortToList(message.intVariable);
-            case JOIN_SESSION -> User.getInstance().sendUserData(senderAddress);
-            case SEND_USER_DATA -> {
+            case JOIN_SESSION -> {
                 User.getInstance().addParticipant(message.stringVariable);
+                User.getInstance().sendUserData(senderAddress);
+            }
+            case SEND_USER_DATA -> {
+                System.out.println(message.stringVariable);
+                User.getInstance().addParticipant(message.stringVariable);
+            }
+            case LEAVE_SESSION -> {
+                User.getInstance().deleteParticipant(message.stringVariable);
             }
         }
     }

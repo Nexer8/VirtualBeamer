@@ -31,10 +31,11 @@ public class User {
     private PresentationViewController pvc;
     private final ObservableList<GroupSession> groupSessions = FXCollections.observableArrayList();
     private final ObservableList<String> groupSessionNames = FXCollections.observableArrayList();
-    private final ObservableList<String> participantsNames = FXCollections.observableArrayList();
+    private final ObservableList<String> participantsNames = FXCollections.observableArrayList("c","c1");
     private final Session session;
     private final GroupSession groupSession;
     private final ArrayList<Integer> groupPortList = new ArrayList<>();
+    private GroupReceiver gr;
 
     private User() throws IOException {
         MulticastReceiver mr = new MulticastReceiver();
@@ -99,13 +100,18 @@ public class User {
 
     public void joinSession(String name) throws IOException {
         groupSession.setPort(getGroupSession(name).getPort());
-        GroupReceiver gr = new GroupReceiver(getGroupSession(name).getPort());
+        gr = new GroupReceiver(getGroupSession(name).getPort());
         gr.start();
-        groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION));
+        groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION, userName));
     }
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
         session.sendMessage(new Message(MessageType.SEND_USER_DATA, userName), senderAddress);
+    }
+
+    public void leaveSession() throws IOException {
+        groupSession.sendGroupMessage(new Message(MessageType.LEAVE_SESSION, userName));
+        gr.stop();
     }
 
     public void sendHelloMessage() throws IOException {
@@ -230,5 +236,9 @@ public class User {
     //    TODO: Where do we want to store the participants? Observable element is not serializable
     public ObservableList<String> getParticipantsNames() {
         return participantsNames;
+    }
+
+    public String getUserName() {
+        return userName;
     }
 }

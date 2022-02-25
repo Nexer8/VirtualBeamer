@@ -21,6 +21,7 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
+import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
 
 
@@ -53,9 +54,13 @@ public class PresentationViewController implements Initializable {
     @FXML
     private void exitSession() throws IOException {
 //        TODO: implement leader election
-//        if (userType == PRESENTER) {}
         cleanUpView();
-        user.multicastDeleteSession();
+
+        if (user.getUserType() == PRESENTER)
+            user.multicastDeleteSession();
+        else
+            user.leaveSession();
+
 
         Stage stage = (Stage) slidePane.getScene().getWindow();
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/initial_view.fxml"));

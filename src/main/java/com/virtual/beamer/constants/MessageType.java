@@ -10,5 +10,6 @@ public enum MessageType {
     COLLECT_PORTS,
     SEND_SESSION_PORT,
     JOIN_SESSION,
-    SEND_USER_DATA
+    SEND_USER_DATA,
+    LEAVE_SESSION
 }
