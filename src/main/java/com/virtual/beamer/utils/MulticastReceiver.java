@@ -4,6 +4,7 @@ import com.virtual.beamer.models.Message;
 
 import java.io.*;
 import java.net.*;
+import java.util.Enumeration;
 
 import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
 import static com.virtual.beamer.constants.SessionConstants.MULTICAST_PORT;
@@ -15,14 +16,14 @@ public class MulticastReceiver extends Thread {
 
     final private MulticastSocket socket;
     final private InetSocketAddress inetSocketAddress;
-    final private NetworkInterface networkInterface;
+    private NetworkInterface networkInterface;
 
     public MulticastReceiver() throws IOException {
         socket = new MulticastSocket(MULTICAST_PORT);
 //        TODO: uncomment when ready
 //        socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
         inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, INET_SOCKET_PORT);
-        networkInterface = NetworkInterface.getByIndex(0);
+        networkInterface = Helpers.getNetworkInterface();
     }
 
     @SuppressWarnings("InfiniteLoopStatement")

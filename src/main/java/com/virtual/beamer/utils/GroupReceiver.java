@@ -17,7 +17,7 @@ public class GroupReceiver extends Thread{
     public GroupReceiver(int port) throws IOException {
         socket = new MulticastSocket(port);
         inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, port);
-        networkInterface = NetworkInterface.getByIndex(0);
+        networkInterface = Helpers.getNetworkInterface();
     }
 
     @SuppressWarnings("InfiniteLoopStatement")

@@ -87,6 +87,7 @@ public class User {
         else
             groupPort = Collections.max(groupPortList) + 1;
 
+        System.out.println("Received port:" + groupPort);
         groupSession.setPort(groupPort);
         GroupReceiver gr = new GroupReceiver(groupPort);
         gr.start();
@@ -94,6 +95,7 @@ public class User {
     }
 
     public void joinSession(String name) throws IOException {
+        groupSession.setPort(getGroupSession(name).getPort());
         GroupReceiver gr = new GroupReceiver(getGroupSession(name).getPort());
         gr.start();
         groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION));

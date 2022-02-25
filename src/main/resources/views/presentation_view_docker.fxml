@@ -39,8 +39,8 @@
                     </BorderPane.margin>
                     <ComboBox fx:id="participants" prefHeight="30.0" prefWidth="305.0" promptText="Participants"/>
 
-                    <Button mnemonicParsing="false" onMousePressed="#giveControl" opacity="0.66" prefHeight="30.0"
-                            prefWidth="273.0" text="Give control">
+                    <Button mnemonicParsing="false" onMousePressed="#loadPresentation" opacity="0.66" prefHeight="30.0"
+                            prefWidth="273.0" text="Load">
                         <HBox.margin>
                             <Insets right="20.0"/>
                         </HBox.margin>
