@@ -27,7 +27,10 @@ public class VirtualBeamer extends Application {
         stage.setScene(scene);
         stage.show();
 
-        stage.setOnCloseRequest(e -> Platform.exit());
+        stage.setOnCloseRequest(e -> {
+            Platform.exit();
+            System.exit(0);
+        });
     }
 
     public static void main(String[] args) throws IOException {

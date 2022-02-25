@@ -9,7 +9,6 @@ import java.net.*;
 import static com.virtual.beamer.constants.SessionConstants.*;
 
 public class Session implements Serializable {
-
     public void multicast(Message message) throws IOException {
         DatagramSocket socket = new DatagramSocket();
 
@@ -38,6 +37,4 @@ public class Session implements Serializable {
 
         socket.close();
     }
-
-
 }

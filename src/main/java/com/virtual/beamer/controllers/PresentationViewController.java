@@ -4,9 +4,7 @@ import com.virtual.beamer.models.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 
 import javafx.scene.layout.*;
@@ -17,6 +15,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
@@ -93,9 +92,16 @@ public class PresentationViewController implements Initializable {
 
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File directory = directoryChooser.showDialog(new Stage());
-        File[] files = directory.listFiles();
-//(file, s) -> s.matches(".*\\.(png|jpg|jpeg)") && !file.isDirectory()
+
         try {
+            File[] files = directory.listFiles(
+                    file -> !file.isHidden()
+                            && !file.isDirectory()
+                            && (file.getName().matches(".*\\.(jpg|png|jpeg)"))
+            );
+            if (files.length == 0) {
+                throw new IOException();
+            }
             user.setSlides(files);
             assert user.getSlides() != null;
             user.multicastSlides();
@@ -107,8 +113,12 @@ public class PresentationViewController implements Initializable {
                 nextSlideButton.setDisable(false);
             }
         } catch (NullPointerException | IOException e) {
-            System.out.println("No data provided!");
-//            TODO: Implement error handling
+            Alert alert = new Alert(Alert.AlertType.WARNING, "No images found in the directory!");
+            alert.initOwner(slidePane.getScene().getWindow());
+            alert.getDialogPane().getStylesheets().add((
+                    Objects.requireNonNull(getClass().getResource("/styles/dialog.css"))).toExternalForm());
+            alert.setHeaderText("Nothing do display!");
+            alert.showAndWait();
         }
     }
 
