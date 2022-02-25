@@ -29,6 +29,7 @@ public class User {
     private PresentationViewController pvc;
     private final ObservableList<GroupSession> groupSessions = FXCollections.observableArrayList();
     private final ObservableList<String> groupSessionNames = FXCollections.observableArrayList();
+    private final ObservableList<String> participantsNames = FXCollections.observableArrayList("Test1", "Test2");
     private final Session session;
     private final GroupSession groupSession;
     private final ArrayList<Integer> groupPortList = new ArrayList<>();
@@ -205,5 +206,10 @@ public class User {
 
     public GroupSession getGroupSession() {
         return groupSession;
+    }
+
+    //    TODO: Where do we want to store the participants? Observable element is not serializable
+    public ObservableList<String> getParticipantsNames() {
+        return participantsNames;
     }
 }

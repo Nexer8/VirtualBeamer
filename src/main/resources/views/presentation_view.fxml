@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
@@ -14,17 +15,38 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="305.0" prefWidth="305.0" style="-fx-background-color: #32566b;"
+<BorderPane prefHeight="305.0" prefWidth="507.0" style="-fx-background-color: #32566b;"
             stylesheets="@../styles/base.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.virtual.beamer.controllers.PresentationViewController">
     <top>
-        <MenuBar BorderPane.alignment="CENTER">
-            <Menu mnemonicParsing="false" text="Navigate">
-                <MenuItem fx:id="loadPresentationButton" mnemonicParsing="false" onAction="#loadPresentation"
-                          text="Load presentation"/>
-                <MenuItem mnemonicParsing="false" onAction="#exitSession" text="Exit session"/>
-            </Menu>
-        </MenuBar>
+        <BorderPane style="-fx-background-color: #002d40;" BorderPane.alignment="CENTER">
+            <left>
+                <HBox>
+                    <MenuBar>
+                        <Menu mnemonicParsing="false" text="Navigate">
+                            <MenuItem fx:id="loadPresentationButton" mnemonicParsing="false"
+                                      onAction="#loadPresentation"
+                                      text="Load presentation"/>
+                            <MenuItem mnemonicParsing="false" onAction="#exitSession" text="Exit session"/>
+                        </Menu>
+                    </MenuBar>
+                </HBox>
+            </left>
+            <right>
+                <HBox alignment="CENTER_RIGHT" prefHeight="30.0" prefWidth="264.0" BorderPane.alignment="CENTER">
+                    <BorderPane.margin>
+                        <Insets left="20.0"/>
+                    </BorderPane.margin>
+                    <ComboBox fx:id="participants" prefHeight="30.0" prefWidth="305.0" promptText="Participants"/>
+                    <Button mnemonicParsing="false" onMousePressed="#giveControl" opacity="0.66" prefHeight="30.0"
+                            prefWidth="273.0" text="Give control">
+                        <HBox.margin>
+                            <Insets right="20.0"/>
+                        </HBox.margin>
+                    </Button>
+                </HBox>
+            </right>
+        </BorderPane>
     </top>
     <center>
         <StackPane BorderPane.alignment="CENTER">

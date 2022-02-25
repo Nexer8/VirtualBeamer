@@ -1,12 +1,15 @@
 package com.virtual.beamer.controllers;
 
 import com.virtual.beamer.models.User;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -31,6 +34,9 @@ public class PresentationViewController implements Initializable {
 
     @FXML
     private Button nextSlideButton;
+
+    @FXML
+    private ComboBox<String> participants;
 
     @FXML
     private Button previousSlideButton;
@@ -145,12 +151,36 @@ public class PresentationViewController implements Initializable {
         }
     }
 
+    @FXML
+    public void giveControl(MouseEvent mouseEvent) {
+//        TODO: Implement changing control (leader)
+        String userName = participants.getValue();
+    }
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         slidePaneDefaultBackground = slidePane.getBackground();
 
         try {
             user = User.getInstance();
+            participants.setItems(user.getParticipantsNames());
+
+            if (user.getUserType() == VIEWER) {
+                participants.setCellFactory(lv -> new ListCell<>() {
+                    @Override
+                    public void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty) {
+                            setText(null);
+                        } else {
+                            setText(item);
+                            if (user.getUserType() == VIEWER) {
+                                setDisable(true);
+                            }
+                        }
+                    }
+                });
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

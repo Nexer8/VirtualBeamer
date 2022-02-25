@@ -1,5 +1,8 @@
 package com.virtual.beamer.models;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -8,8 +11,8 @@ import java.net.InetAddress;
 import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
 
 public class GroupSession implements Serializable {
-
     private String name;
+
     private int port;
 
     public String getName() {
@@ -24,8 +27,7 @@ public class GroupSession implements Serializable {
         this.port = port;
     }
 
-    public int getPort()
-    {
+    public int getPort() {
         return port;
     }
 
@@ -42,7 +44,6 @@ public class GroupSession implements Serializable {
         GroupSession that = (GroupSession) o;
         return name.equals(that.name);
     }
-
 
     public void sendGroupMessage(Message message) throws IOException {
         DatagramSocket socket = new DatagramSocket();
