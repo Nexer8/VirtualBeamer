@@ -157,9 +157,10 @@ public class PresentationViewController implements Initializable {
     }
 
     @FXML
-    public void giveControl(MouseEvent mouseEvent) {
+    public void giveControl(MouseEvent mouseEvent) throws IOException {
 //        TODO: Implement changing control (leader)
         String userName = participants.getValue();
+        user.setGroupLeader(userName);
     }
 
     @Override

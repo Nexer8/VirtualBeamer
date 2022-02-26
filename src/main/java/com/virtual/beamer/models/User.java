@@ -11,11 +11,14 @@ import com.virtual.beamer.utils.MulticastReceiver;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Group;
 
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
@@ -32,6 +35,7 @@ public class User {
     private final ObservableList<GroupSession> groupSessions = FXCollections.observableArrayList();
     private final ObservableList<String> groupSessionsInfo = FXCollections.observableArrayList();
     private final ObservableList<String> participantsNames = FXCollections.observableArrayList();
+    private Map<String, InetAddress> participantsInfo = new HashMap<>();
     private final Session session;
     private GroupSession groupSession;
     private final ArrayList<Integer> groupPortList = new ArrayList<>();
@@ -101,15 +105,19 @@ public class User {
 
     public void joinSession(String name) throws IOException {
         groupSession = getGroupSession(name);
-//        groupSession.setPort(getGroupSession(name).getPort());
+        //groupSession.setPort(getGroupSession(name).getPort());
         System.out.println("Test print: " + groupSession.getLeaderInfo());
         gr = new GroupReceiver(getGroupSession(name).getPort());
         gr.start();
-        groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION, username));
+        groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION, username, Helpers.getInetAddress()));
     }
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
-        session.sendMessage(new Message(MessageType.SEND_USER_DATA, username), senderAddress);
+        session.sendMessage(new Message(MessageType.SEND_USER_DATA, username, Helpers.getInetAddress()), senderAddress);
+    }
+
+    public void setGroupLeader(String name) throws IOException {
+        session.multicast(new Message(MessageType.CHANGE_LEADER, groupSession, name));
     }
 
     public void leaveSession() throws IOException {
@@ -194,11 +202,13 @@ public class User {
         this.pvc = pvc;
     }
 
-    public void addParticipant(String name) {
+    public void addParticipant(String name, InetAddress ipAddress) {
+        participantsInfo.put(name, ipAddress);
         Platform.runLater(() -> participantsNames.add(name));
     }
 
     public void deleteParticipant(String name) {
+        participantsInfo.remove(name);
         System.out.println(name);
         Platform.runLater(() -> participantsNames.remove(name));
     }
@@ -207,6 +217,13 @@ public class User {
         groupSessions.add(session);
         Platform.runLater(() -> groupSessionsInfo.add(session.getName() + ": " + session.getLeaderInfo()));
         System.out.println(session.getName());
+    }
+
+    public void updateSessionData(GroupSession session, String leaderName)
+    {
+        deleteSession(session);
+        session.setLeaderData(leaderName, participantsInfo.get(leaderName));
+        addSessionData(session);
     }
 
     public ObservableList<String> getGroupSessionsInfo() {

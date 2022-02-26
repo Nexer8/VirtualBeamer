@@ -11,5 +11,6 @@ public enum MessageType {
     SEND_SESSION_PORT,
     JOIN_SESSION,
     SEND_USER_DATA,
-    LEAVE_SESSION
+    LEAVE_SESSION,
+    CHANGE_LEADER
 }
