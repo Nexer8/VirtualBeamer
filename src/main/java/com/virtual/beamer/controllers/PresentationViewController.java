@@ -1,6 +1,7 @@
 package com.virtual.beamer.controllers;
 
 import com.virtual.beamer.models.User;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -202,6 +203,50 @@ public class PresentationViewController implements Initializable {
         }
 
         user.setPvc(this);
+    }
+
+    public void changePresenterData(String leaderInfo)
+    {
+        if (user.getUserType() == VIEWER) {
+            loadPresentationButton.setVisible(false);
+            nextSlideButton.setDisable(true);
+            previousSlideButton.setDisable(true);
+            progressIndicator.setVisible(true);
+            giveControlButton.setVisible(false);
+            participants.getSelectionModel().clearSelection();
+            participants.setPromptText("Participants");
+        }
+
+        participants.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    if (user.getUserType() == VIEWER) {
+                        setDisable(true);
+                    }
+                    else
+                        setDisable(false);
+                }
+            }
+        });
+
+        if(user.getUserType() == PRESENTER)
+        {
+            loadPresentationButton.setVisible(true);
+            nextSlideButton.setDisable(true);
+            previousSlideButton.setDisable(true);
+            progressIndicator.setVisible(true);
+            giveControlButton.setVisible(true);
+        }
+
+        Platform.runLater(() -> {
+            presenterLabel.setText("Presenter: " + leaderInfo);
+
+        });
     }
 
     public VBox getProgressIndicator() {

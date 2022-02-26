@@ -51,6 +51,13 @@ public class Message implements Serializable {
         this.ipAddress = ipAddress;
     }
 
+    public Message(MessageType type, GroupSession session, String stringVariable, InetAddress ipAddress) {
+        this.type = type;
+        this.session = session;
+        this.stringVariable = stringVariable;
+        this.ipAddress = ipAddress;
+    }
+
     public static Message deserializeMessage(byte[] buffer) throws IOException, ClassNotFoundException {
         ByteArrayInputStream byteStream = new ByteArrayInputStream(buffer);
         ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(byteStream));
@@ -91,6 +98,7 @@ public class Message implements Serializable {
             }
             case SEND_SESSION_PORT -> User.getInstance().addGroupPortToList(message.intVariable);
             case JOIN_SESSION -> {
+                System.out.println(message.stringVariable);
                 User.getInstance().addParticipant(message.stringVariable,message.ipAddress);
                 User.getInstance().sendUserData(senderAddress);
             }
@@ -99,7 +107,7 @@ public class Message implements Serializable {
                 User.getInstance().addParticipant(message.stringVariable,message.ipAddress);
             }
             case LEAVE_SESSION -> User.getInstance().deleteParticipant(message.stringVariable);
-            case CHANGE_LEADER -> User.getInstance().updateSessionData(message.session, message.stringVariable);
+            case CHANGE_LEADER -> User.getInstance().updateSessionData(message.session, message.stringVariable, message.ipAddress);
         }
     }
 }

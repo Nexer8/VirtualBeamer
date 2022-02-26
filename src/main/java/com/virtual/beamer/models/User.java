@@ -105,7 +105,7 @@ public class User {
 
     public void joinSession(String name) throws IOException {
         groupSession = getGroupSession(name);
-        //groupSession.setPort(getGroupSession(name).getPort());
+        groupSession.setPort(getGroupSession(name).getPort());
         System.out.println("Test print: " + groupSession.getLeaderInfo());
         gr = new GroupReceiver(getGroupSession(name).getPort());
         gr.start();
@@ -117,7 +117,8 @@ public class User {
     }
 
     public void setGroupLeader(String name) throws IOException {
-        session.multicast(new Message(MessageType.CHANGE_LEADER, groupSession, name));
+        userType = VIEWER;
+        session.multicast(new Message(MessageType.CHANGE_LEADER, groupSession, name, participantsInfo.get(name)));
     }
 
     public void leaveSession() throws IOException {
@@ -203,6 +204,7 @@ public class User {
     }
 
     public void addParticipant(String name, InetAddress ipAddress) {
+        System.out.println(name + " " + ipAddress.getHostAddress());
         participantsInfo.put(name, ipAddress);
         Platform.runLater(() -> participantsNames.add(name));
     }
@@ -219,11 +221,19 @@ public class User {
         System.out.println(session.getName());
     }
 
-    public void updateSessionData(GroupSession session, String leaderName)
+    public void updateSessionData(GroupSession session, String leaderName, InetAddress addressIP)
     {
-        deleteSession(session);
-        session.setLeaderData(leaderName, participantsInfo.get(leaderName));
-        addSessionData(session);
+        if(leaderName.equals(username))
+            userType = PRESENTER;
+
+        groupSessions.get(groupSessions.indexOf(session)).setLeaderData(leaderName, addressIP);
+        if(groupSession.equals(session))
+            groupSession.setLeaderData(leaderName, addressIP);
+        Platform.runLater(() -> {
+            groupSessionsInfo.remove(session.getName() + ": " + session.getLeaderInfo());
+            groupSessionsInfo.add(groupSessions.get(groupSessions.indexOf(session)).getName() + ": " + groupSessions.get(groupSessions.indexOf(session)).getLeaderInfo());
+        });
+        pvc.changePresenterData(groupSessions.get(groupSessions.indexOf(session)).getLeaderInfo());
     }
 
     public ObservableList<String> getGroupSessionsInfo() {

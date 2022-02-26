@@ -26,10 +26,13 @@ public class MulticastReceiver extends Thread {
 
     @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
+
         try {
             byte[] buffer = new byte[1000];
+            System.out.println(networkInterface);
             socket.joinGroup(inetSocketAddress, networkInterface);
             while (true) {
+
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 InetAddress senderAddress = packet.getAddress();
@@ -48,5 +51,6 @@ public class MulticastReceiver extends Thread {
             }
             socket.close();
         }
+
     }
 }
