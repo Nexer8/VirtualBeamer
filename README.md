@@ -32,3 +32,40 @@ A *Java* application to share a set of slides and display them in a synchronous 
 - The nodes (including the leader) may crash. In such case the leader becomes the session creator, or the leader is elected if the session creator also crashed.
 
 Privilege a *plug&play* solution that leverages the LAN scenario to avoid the need of entering network addresses and similar information.
+
+## Installation Guide
+
+### Local Build
+
+#### Prerequisites
+
+- Install *OpenJDK 17* from the [official JDK website](https://jdk.java.net/17/).
+- Install *Apache Maven 3.8.x* following the [official tutorial](https://maven.apache.org/install.html). 
+
+#### Build and Run
+
+```bash
+mvn clean javafx:run
+```
+
+### Docker
+
+#### Create a network
+
+```bash
+docker network create -d bridge --subnet 192.168.1.0/24 --gateway 192.168.1.254 <network_name>
+```
+
+#### Build Docker image
+
+```bash
+docker build -t <image_name> .
+```
+
+#### Run app instance
+
+```bash
+docker run --expose 1000-15000 -d --network <network_name> --ip 192.168.1.10 <image_name>
+```
+
+It is possible to run multiple instances of the app by executing the above command, but it is important to change the IP address.

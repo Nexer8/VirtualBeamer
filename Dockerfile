@@ -8,10 +8,6 @@ ENV DISPLAY=host.docker.internal:0.0
 
 RUN \
   apt-get update && \
-  apt-get install -y libx11-dev libgl-dev xserver-xorg-dev xorg-dev libgtk-3-dev x11-xserver-utils
+  apt-get install -y libx11-dev libgl-dev libgtk-3-dev
 
-RUN xhost +
-
-RUN mvn compile
-
-CMD ["mvn", "javafx:run"]
+CMD ["mvn", "clean", "javafx:run"]

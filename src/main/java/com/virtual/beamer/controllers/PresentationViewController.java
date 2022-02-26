@@ -1,8 +1,6 @@
 package com.virtual.beamer.controllers;
 
 import com.virtual.beamer.models.User;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -52,15 +50,22 @@ public class PresentationViewController implements Initializable {
     private MenuItem loadPresentationButton;
 
     @FXML
+    private Button giveControlButton;
+
+    @FXML
+    private Label presenterLabel;
+
+
+    @FXML
     private void exitSession() throws IOException {
 //        TODO: implement leader election
         cleanUpView();
 
-        if (user.getUserType() == PRESENTER)
+        if (user.getUserType() == PRESENTER) {
             user.multicastDeleteSession();
-        else
+        } else {
             user.leaveSession();
-
+        }
 
         Stage stage = (Stage) slidePane.getScene().getWindow();
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/initial_view.fxml"));
@@ -81,8 +86,7 @@ public class PresentationViewController implements Initializable {
     }
 
     public void setSlide() throws IOException {
-        Image slide = new Image(new FileInputStream(
-                user.getSlides().get(user.getCurrentSlide())),
+        Image slide = new Image(new FileInputStream(user.getSlides().get(user.getCurrentSlide())),
                 slidePane.getWidth(), slidePane.getHeight(), true, true);
 
         BackgroundImage backgroundImage = new BackgroundImage(
@@ -90,8 +94,7 @@ public class PresentationViewController implements Initializable {
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.CENTER,
-                new BackgroundSize(1.0, 1.0, true, true, true, false)
-        );
+                new BackgroundSize(1.0, 1.0, true, true, true, false));
 
         slidePane.setBackground(new Background(backgroundImage));
         updatePresentationStatus();
@@ -105,11 +108,8 @@ public class PresentationViewController implements Initializable {
         File directory = directoryChooser.showDialog(new Stage());
 
         try {
-            File[] files = directory.listFiles(
-                    file -> !file.isHidden()
-                            && !file.isDirectory()
-                            && (file.getName().matches(".*\\.(jpg|png|jpeg)"))
-            );
+            File[] files = directory.listFiles(file ->
+                    !file.isHidden() && !file.isDirectory() && (file.getName().matches(".*\\.(jpg|png|jpeg)")));
             if (files.length == 0) {
                 throw new IOException();
             }
@@ -126,8 +126,8 @@ public class PresentationViewController implements Initializable {
         } catch (NullPointerException | IOException e) {
             Alert alert = new Alert(Alert.AlertType.WARNING, "No images found in the directory!");
             alert.initOwner(slidePane.getScene().getWindow());
-            alert.getDialogPane().getStylesheets().add((
-                    Objects.requireNonNull(getClass().getResource("/styles/dialog.css"))).toExternalForm());
+            alert.getDialogPane().getStylesheets().add((Objects.requireNonNull(
+                    getClass().getResource("/styles/dialog.css"))).toExternalForm());
             alert.setHeaderText("Nothing do display!");
             alert.showAndWait();
         }
@@ -190,11 +190,14 @@ public class PresentationViewController implements Initializable {
             e.printStackTrace();
         }
 
+        presenterLabel.setText("Presenter: " + user.getGroupSession().getLeaderInfo());
+
         if (user.getUserType() == VIEWER) {
             loadPresentationButton.setVisible(false);
             nextSlideButton.setDisable(true);
             previousSlideButton.setDisable(true);
             progressIndicator.setVisible(true);
+            giveControlButton.setVisible(false);
         }
 
         user.setPvc(this);

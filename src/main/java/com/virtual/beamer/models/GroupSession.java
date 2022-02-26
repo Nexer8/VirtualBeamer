@@ -1,8 +1,5 @@
 package com.virtual.beamer.models;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -12,8 +9,9 @@ import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
 
 public class GroupSession implements Serializable {
     private String name;
-
     private int port;
+    private String leaderName;
+    private String leaderIPAddress;
 
     public String getName() {
         return name;
@@ -32,9 +30,18 @@ public class GroupSession implements Serializable {
     }
 
     public GroupSession(String name) {
-
         this.name = name;
         this.port = 0;
+    }
+
+    public String getLeaderInfo() {
+        return leaderName + "(" + leaderIPAddress + ")";
+    }
+
+    //    TODO: Useful for leader election
+    public void setLeaderData(String leaderName, InetAddress leaderAddress) {
+        this.leaderName = leaderName;
+        this.leaderIPAddress = leaderAddress.getHostAddress();
     }
 
     @Override

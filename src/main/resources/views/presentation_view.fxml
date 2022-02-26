@@ -25,8 +25,7 @@
                     <MenuBar>
                         <Menu mnemonicParsing="false" text="Navigate">
                             <MenuItem fx:id="loadPresentationButton" mnemonicParsing="false"
-                                      onAction="#loadPresentation"
-                                      text="Load presentation"/>
+                                      onAction="#loadPresentation" text="Load presentation"/>
                             <MenuItem mnemonicParsing="false" onAction="#exitSession" text="Exit session"/>
                         </Menu>
                     </MenuBar>
@@ -39,14 +38,17 @@
                     </BorderPane.margin>
                     <ComboBox fx:id="participants" prefHeight="30.0" prefWidth="305.0" promptText="Participants"/>
 
-                    <Button mnemonicParsing="false" onMousePressed="#giveControl" opacity="0.66" prefHeight="30.0"
-                            prefWidth="273.0" text="Give control">
+                    <Button fx:id="giveControlButton" mnemonicParsing="false" onMousePressed="#giveControl"
+                            opacity="0.66" prefHeight="30.0" prefWidth="273.0" text="Give control">
                         <HBox.margin>
                             <Insets right="20.0"/>
                         </HBox.margin>
                     </Button>
                 </HBox>
             </right>
+            <center>
+                <Label fx:id="presenterLabel" text="Presenter: " textFill="WHITE" BorderPane.alignment="CENTER"/>
+            </center>
         </BorderPane>
     </top>
     <center>

@@ -9,7 +9,7 @@ import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
 import static com.virtual.beamer.models.Message.deserializeMessage;
 import static com.virtual.beamer.models.Message.handleMessage;
 
-public class GroupReceiver extends Thread{
+public class GroupReceiver extends Thread {
     final private MulticastSocket socket;
     final private InetSocketAddress inetSocketAddress;
     final private NetworkInterface networkInterface;

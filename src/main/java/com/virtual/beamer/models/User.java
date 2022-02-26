@@ -5,6 +5,7 @@ import com.virtual.beamer.constants.MessageType;
 import com.virtual.beamer.constants.SessionConstants;
 import com.virtual.beamer.controllers.PresentationViewController;
 import com.virtual.beamer.utils.GroupReceiver;
+import com.virtual.beamer.utils.Helpers;
 import com.virtual.beamer.utils.MessageReceiver;
 import com.virtual.beamer.utils.MulticastReceiver;
 import javafx.application.Platform;
@@ -15,7 +16,6 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Random;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
@@ -25,15 +25,15 @@ import static com.virtual.beamer.models.Message.handleMessage;
 public class User {
     private static volatile User instance;
     private ObservableList<File> slides;
-    private String userName;
+    private String username;
     private int currentSlide = 0;
     private AppConstants.UserType userType = VIEWER;
     private PresentationViewController pvc;
     private final ObservableList<GroupSession> groupSessions = FXCollections.observableArrayList();
-    private final ObservableList<String> groupSessionNames = FXCollections.observableArrayList();
-    private final ObservableList<String> participantsNames = FXCollections.observableArrayList("c","c1");
+    private final ObservableList<String> groupSessionsInfo = FXCollections.observableArrayList();
+    private final ObservableList<String> participantsNames = FXCollections.observableArrayList();
     private final Session session;
-    private final GroupSession groupSession;
+    private GroupSession groupSession;
     private final ArrayList<Integer> groupPortList = new ArrayList<>();
     private GroupReceiver gr;
 
@@ -45,7 +45,6 @@ public class User {
         rec.start();
         session = new Session();
         groupSession = new GroupSession("");
-        userName = "123";
     }
 
     public static User getInstance() throws IOException {
@@ -67,7 +66,6 @@ public class User {
         session.multicast(new Message(MessageType.COLLECT_PORTS));
         this.groupPortList.clear();
 
-//        TODO: Specify port
         new Thread(() -> {
             try (DatagramSocket socket = new DatagramSocket()) {
                 byte[] buffer = new byte[10000];
@@ -86,31 +84,37 @@ public class User {
         }).start();
 
         int groupPort;
-        if (groupPortList.isEmpty())
+        if (groupPortList.isEmpty()) {
             groupPort = SessionConstants.STARTING_GROUP_PORT;
-        else
+        } else {
             groupPort = Collections.max(groupPortList) + 1;
+        }
 
         System.out.println("Received port:" + groupPort);
         groupSession.setPort(groupPort);
+        System.out.println("Username: " + username);
+        groupSession.setLeaderData(username, Helpers.getInetAddress());
         GroupReceiver gr = new GroupReceiver(groupPort);
         gr.start();
         multicastSessionDetails();
     }
 
     public void joinSession(String name) throws IOException {
-        groupSession.setPort(getGroupSession(name).getPort());
+        groupSession = getGroupSession(name);
+//        groupSession.setPort(getGroupSession(name).getPort());
+        System.out.println("Test print: " + groupSession.getLeaderInfo());
         gr = new GroupReceiver(getGroupSession(name).getPort());
         gr.start();
-        groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION, userName));
+        groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION, username));
     }
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
-        session.sendMessage(new Message(MessageType.SEND_USER_DATA, userName), senderAddress);
+        session.sendMessage(new Message(MessageType.SEND_USER_DATA, username), senderAddress);
     }
 
     public void leaveSession() throws IOException {
-        groupSession.sendGroupMessage(new Message(MessageType.LEAVE_SESSION, userName));
+        participantsNames.clear();
+        groupSession.sendGroupMessage(new Message(MessageType.LEAVE_SESSION, username));
         gr.stop();
     }
 
@@ -133,6 +137,7 @@ public class User {
     public void multicastDeleteSession() throws IOException {
         session.multicast(new Message(MessageType.DELETE_SESSION, groupSession));
         userType = VIEWER;
+        participantsNames.clear();
     }
 
     public void multicastNextSlide() throws IOException {
@@ -189,25 +194,23 @@ public class User {
         this.pvc = pvc;
     }
 
-    public void addParticipant(String name)
-    {
+    public void addParticipant(String name) {
         Platform.runLater(() -> participantsNames.add(name));
     }
 
-    public void deleteParticipant(String name)
-    {
+    public void deleteParticipant(String name) {
+        System.out.println(name);
         Platform.runLater(() -> participantsNames.remove(name));
     }
 
     public void addSessionData(GroupSession session) {
         groupSessions.add(session);
-
-        Platform.runLater(() -> groupSessionNames.add(session.getName()));
+        Platform.runLater(() -> groupSessionsInfo.add(session.getName() + ": " + session.getLeaderInfo()));
         System.out.println(session.getName());
     }
 
-    public ObservableList<String> getGroupSessionNames() {
-        return groupSessionNames;
+    public ObservableList<String> getGroupSessionsInfo() {
+        return groupSessionsInfo;
     }
 
     public void deleteSession(GroupSession session) {
@@ -216,10 +219,10 @@ public class User {
             String name = groupSessions.get(idx).getName();
             groupSessions.remove(idx);
 
-            Platform.runLater(() -> groupSessionNames.remove(name));
+            System.out.println("Session name: " + name);
+            Platform.runLater(() -> groupSessionsInfo.remove(name + ": " + session.getLeaderInfo()));
         }
     }
-
 
     public void addGroupPortToList(int groupPort) {
         groupPortList.add(groupPort);
@@ -233,12 +236,15 @@ public class User {
         return groupSession;
     }
 
-    //    TODO: Where do we want to store the participants? Observable element is not serializable
     public ObservableList<String> getParticipantsNames() {
         return participantsNames;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

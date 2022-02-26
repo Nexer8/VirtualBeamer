@@ -1,23 +1,23 @@
 # TO DO
 
-1. Another multicast just for the group inside the presentation. **Lorenzo**
+1. What if messages do not arrive in order? How do we handle that? **Lorenzo**
 
-   The leader gets all used ports and creates a new one just for the session! That happens before the session is created. >= 1024
+   Send a *NACK* when identified a miss (**identify packet miss** from *Remarks.md*)
 
-   The port should be the session's attribute.
+2. Bully election (or any other) - identifiers for each user. **Mariusz**
 
-2. What if messages do not arrive in order? How do we handle that?
+3. Users (nodes) may join while the presentation is ongoing. In such case they choose the node from which to download the presentation in a way to share the load. **Mariusz**
 
-   Send a NACK when identified a miss (**identify packet miss** from _Remarks.md_)
+   Agreement.
 
-3. Bully election (or any other) - identifiers for each user.
+4. During a session the leader may pass its role to another user, which subsequently becomes the new leader. *Remember to multicast leader change to everybody (not just the group).* **Lorenzo**
 
-4. Users (nodes) may join while the presentation is ongoing. In such case they choose the node from which to download the presentation in a way to share the load.
+5. Crash detection. Everyone has a random timer and when the time is over, the first one that finishes, sends a multicast `CRASH_CHECK`. If the receiver is the *VIEWER* then stop the timer. Otherwise, (PRESENTER is the receiver), respond with a multicast saying *I'm alive*. **Lorenzo**
 
-5. During a session the leader may pass its role to another user, which subsequently becomes the new leader.
+6. Think of creating and cleaning the sockets. Maybe use the same sockets for sending and deleting. **Mariusz** ✅
 
-6. Look at the Docker for testing purposes. (How to display the app running inside the docker. **Mariusz**)
+7. Add username text field. **Mariusz** ✅
 
-7. Think of creating and cleaning the sockets. Maybe use the same sockets for sending and deleting. **Mariusz**
+8. Add leader name and IP address to the session name (it will make it unique). The desired syntax: `<Session name>: <Leader name>(<IP address>)` **Mariusz** ✅
 
-8. Add the users list inside the presentation view.
+9. Maybe add a label to see who is the presenter. **Mariusz** ✅

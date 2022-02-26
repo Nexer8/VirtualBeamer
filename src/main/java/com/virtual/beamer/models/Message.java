@@ -85,9 +85,7 @@ public class Message implements Serializable {
                 System.out.println(message.stringVariable);
                 User.getInstance().addParticipant(message.stringVariable);
             }
-            case LEAVE_SESSION -> {
-                User.getInstance().deleteParticipant(message.stringVariable);
-            }
+            case LEAVE_SESSION -> User.getInstance().deleteParticipant(message.stringVariable);
         }
     }
 }
