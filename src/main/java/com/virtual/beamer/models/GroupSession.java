@@ -13,7 +13,6 @@ public class GroupSession implements Serializable {
     private int port;
     private String leaderName;
     private String leaderIPAddress;
-    private final DatagramSocket socket;
 
     public String getName() {
         return name;
@@ -34,7 +33,6 @@ public class GroupSession implements Serializable {
     public GroupSession(String name) throws SocketException {
         this.name = name;
         this.port = 0;
-        socket = new DatagramSocket();
     }
 
     public String getLeaderInfo() {
@@ -55,6 +53,7 @@ public class GroupSession implements Serializable {
     }
 
     public void sendGroupMessage(Message message) throws IOException {
+        DatagramSocket socket = new DatagramSocket();
         final ByteArrayOutputStream baos = new ByteArrayOutputStream(6400);
         final ObjectOutputStream oos = new ObjectOutputStream(baos);
         oos.writeObject(message);

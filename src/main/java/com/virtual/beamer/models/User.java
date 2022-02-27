@@ -18,12 +18,12 @@ import java.util.*;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
-import static com.virtual.beamer.constants.SessionConstants.AGREEMENT_PROCESS_TIMEOUT;
-import static com.virtual.beamer.constants.SessionConstants.LEADER_ELECTION_TIMEOUT;
+import static com.virtual.beamer.constants.SessionConstants.*;
 import static com.virtual.beamer.models.Message.deserializeMessage;
 import static com.virtual.beamer.models.Message.handleMessage;
 
 public class User {
+
     private static volatile User instance;
     private ObservableList<File> slides;
     private String username;
@@ -43,6 +43,7 @@ public class User {
     private Timer agreementTimer;
     private boolean agreementMessageSent = false;
     private int ID;
+    private final ArrayList<Integer> groupIDs = new ArrayList<>();
 
     private User() throws IOException {
         MulticastReceiver mr = new MulticastReceiver();
@@ -69,27 +70,27 @@ public class User {
 
     public void createSession(String sessionName) throws IOException {
         userType = PRESENTER;
+        setID(0);
         groupSession.setName(sessionName);
         session.multicast(new Message(MessageType.COLLECT_PORTS));
         this.groupPortList.clear();
 
-        new Thread(() -> {
-            try (DatagramSocket socket = new DatagramSocket()) {
-                byte[] buffer = new byte[10000];
+        try (DatagramSocket socket = new DatagramSocket(UNICAST_COLLECT_PORTS_PORT)) {
+            byte[] buffer = new byte[10000];
 //                TODO: add a constant with the timeout value
-                socket.setSoTimeout(5000);
-                while (true) {
-                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                    socket.receive(packet);
-                    InetAddress senderAddress = packet.getAddress();
+            socket.setSoTimeout(5000);
+            while (true) {
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                socket.receive(packet);
+                InetAddress senderAddress = packet.getAddress();
 
-                    Message message = deserializeMessage(buffer);
-                    handleMessage(message, senderAddress);
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                System.out.println("No ports received.");
+                Message message = deserializeMessage(buffer);
+                //if(message.type == MessageType.SEND_SESSION_PORT)
+                handleMessage(message, senderAddress);
             }
-        }).start();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("No ports received.");
+        }
 
         int groupPort;
         if (groupPortList.isEmpty()) {
@@ -108,18 +109,49 @@ public class User {
     }
 
     public void joinSession(String name) throws IOException {
+        this.groupIDs.clear();
         groupSession = getGroupSession(name);
         groupSession.setPort(getGroupSession(name).getPort());
-        System.out.println("Test print: " + groupSession.getLeaderInfo());
+        //System.out.println("Test print: " + groupSession.getLeaderInfo() + " "+getGroupSession(name).getPort() );
         gr = new GroupReceiver(getGroupSession(name).getPort());
         gr.start();
         groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION,
                 username, Helpers.getInetAddress()));
+
+        // Collects IDs
+        try (DatagramSocket socket = new DatagramSocket(UNICAST_SEND_USER_DATA_PORT)) {
+            byte[] buffer = new byte[10000];
+//                TODO: add a constant with the timeout value
+            socket.setSoTimeout(5000);
+            while (true) {
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                socket.receive(packet);
+                InetAddress senderAddress = packet.getAddress();
+
+                Message message = deserializeMessage(buffer);
+                handleMessage(message, senderAddress);
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("No ids received.");
+        }
+
+        int id = 0;
+        if(!this.groupIDs.isEmpty())
+        {
+            Collections.sort(groupIDs);
+            id = groupIDs.get(groupIDs.size()-1)+1;
+        }
+        else
+            id = 1;
+
+
+        setID(id);
+        System.out.println("ID set: "+ id);
     }
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
         session.sendMessage(new Message(MessageType.SEND_USER_DATA,
-                username, Helpers.getInetAddress()), senderAddress);
+                username, getID(), Helpers.getInetAddress()), senderAddress, UNICAST_SEND_USER_DATA_PORT);
     }
 
     public void setGroupLeader(String name) throws IOException {
@@ -181,7 +213,7 @@ public class User {
     public void sendGroupPort(InetAddress senderAddress) throws IOException {
         if (groupSession.getPort() != 0) {
             session.sendMessage(new Message(MessageType.SEND_SESSION_PORT,
-                    groupSession.getPort()), senderAddress);
+                    groupSession.getPort()), senderAddress, UNICAST_COLLECT_PORTS_PORT);
         }
     }
 
@@ -225,7 +257,7 @@ public class User {
     }
 
     public void addParticipant(String name, InetAddress ipAddress) {
-        System.out.println(name + " " + ipAddress.getHostAddress());
+        //System.out.println(name + " " + ipAddress.getHostAddress());
         participantsInfo.put(name, ipAddress);
         Platform.runLater(() -> participantsNames.add(name));
     }
@@ -368,4 +400,11 @@ public class User {
         agreementTimer.cancel();
         agreementMessageSent = false;
     }
+
+    public void addListGroupID(int id)
+    {
+        groupIDs.add(id);
+    }
+
+
 }

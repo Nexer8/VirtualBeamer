@@ -7,4 +7,6 @@ public class SessionConstants {
     public static final int STARTING_GROUP_PORT = 10000;
     public static final int LEADER_ELECTION_TIMEOUT = 3000;
     public static final int AGREEMENT_PROCESS_TIMEOUT = 3000;
+    public static final int UNICAST_SEND_USER_DATA_PORT = 5556;
+    public static final int UNICAST_COLLECT_PORTS_PORT = 5557;
 }

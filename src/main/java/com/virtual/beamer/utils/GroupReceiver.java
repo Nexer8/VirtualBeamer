@@ -16,7 +16,7 @@ public class GroupReceiver extends Thread {
 
     public GroupReceiver(int port) throws IOException {
         socket = new MulticastSocket(port);
-        socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
+        //socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
         inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, port);
         networkInterface = Helpers.getNetworkInterface();
     }
@@ -30,7 +30,7 @@ public class GroupReceiver extends Thread {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 InetAddress senderAddress = packet.getAddress();
-                System.out.println("Sender Socket address:" + senderAddress);
+                System.out.println("Groupcast received packet from " + senderAddress + ":" +inetSocketAddress.getPort());
 
                 Message message = deserializeMessage(buffer);
                 handleMessage(message, senderAddress);

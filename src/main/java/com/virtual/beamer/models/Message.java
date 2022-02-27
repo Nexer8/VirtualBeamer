@@ -52,6 +52,13 @@ public class Message implements Serializable {
         this.ipAddress = ipAddress;
     }
 
+    public Message(MessageType type, String stringVariable,int intVariable, InetAddress ipAddress) {
+        this.type = type;
+        this.stringVariable = stringVariable;
+        this.intVariable = intVariable;
+        this.ipAddress = ipAddress;
+    }
+
     public Message(MessageType type, GroupSession session, String stringVariable, InetAddress ipAddress) {
         this.type = type;
         this.session = session;
@@ -100,17 +107,23 @@ public class Message implements Serializable {
             }
             case SEND_SESSION_PORT -> User.getInstance().addGroupPortToList(message.intVariable);
             case JOIN_SESSION -> {
-                System.out.println(message.stringVariable);
-                User.getInstance().addParticipant(message.stringVariable, message.ipAddress);
-                User.getInstance().sendUserData(senderAddress);
+                if(!User.getInstance().getUsername().equals(message.stringVariable))
+                {
+                    System.out.println(message.stringVariable + " joined the session.");
+                    User.getInstance().addParticipant(message.stringVariable, message.ipAddress);
+                    User.getInstance().sendUserData(senderAddress);
 
-                if (!User.getInstance().getSlides().isEmpty()) {
-                    User.getInstance().agreeOnSlidesSender(senderAddress);
+                    if (!User.getInstance().getSlides().isEmpty()) {
+                        User.getInstance().agreeOnSlidesSender(senderAddress);
+                    }
                 }
+
             }
             case SEND_USER_DATA -> {
-                System.out.println(message.stringVariable);
+
+                System.out.println(User.getInstance().getUsername()+ " added " + message.stringVariable + " to participants list.");
                 User.getInstance().addParticipant(message.stringVariable, message.ipAddress);
+                User.getInstance().addListGroupID(message.intVariable);
             }
             case LEAVE_SESSION -> User.getInstance().deleteParticipant(message.stringVariable);
             case COORD -> User.getInstance().updateSessionData(

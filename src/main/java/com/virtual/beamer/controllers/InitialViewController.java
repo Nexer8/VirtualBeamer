@@ -60,6 +60,7 @@ public class InitialViewController implements Initializable {
                 substring(0, ongoingSessions.getSelectionModel().getSelectedItem().indexOf(":"));
         User.getInstance().joinSession(session);
         goToPresentationView(mouseEvent, VIEWER);
+
     }
 
     @FXML
