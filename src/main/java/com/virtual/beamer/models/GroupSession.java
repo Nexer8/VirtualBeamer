@@ -59,8 +59,10 @@ public class GroupSession implements Serializable {
         oos.writeObject(message);
         final byte[] data = baos.toByteArray();
 
+        System.out.println("Sending group message to port: " + User.getInstance().getGroupSession().getPort());
         DatagramPacket packet = new DatagramPacket(data, data.length,
                 InetAddress.getByName(GROUP_ADDRESS), User.getInstance().getGroupSession().getPort());
         socket.send(packet);
+        socket.close();
     }
 }

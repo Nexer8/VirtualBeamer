@@ -38,12 +38,14 @@ public class User {
     private GroupSession groupSession;
     private final ArrayList<Integer> groupPortList = new ArrayList<>();
     private GroupReceiver gr;
-    private boolean electSent = true;
+    private boolean electSent = false;
     private Timer electionTimer;
     private Timer agreementTimer;
+    private Timer crashDetectionTimer;
     private boolean agreementMessageSent = false;
     private int ID;
     private final ArrayList<Integer> groupIDs = new ArrayList<>();
+    private CrashDetection crashDetectionThread;
 
     private User() throws IOException {
         MulticastReceiver mr = new MulticastReceiver();
@@ -103,7 +105,7 @@ public class User {
         groupSession.setPort(groupPort);
         System.out.println("Username: " + username);
         groupSession.setLeaderData(username, Helpers.getInetAddress());
-        GroupReceiver gr = new GroupReceiver(groupPort);
+        gr = new GroupReceiver(groupPort);
         gr.start();
         multicastSessionDetails();
     }
@@ -112,7 +114,7 @@ public class User {
         this.groupIDs.clear();
         groupSession = getGroupSession(name);
         groupSession.setPort(getGroupSession(name).getPort());
-        //System.out.println("Test print: " + groupSession.getLeaderInfo() + " "+getGroupSession(name).getPort() );
+        System.out.println("Test print: " + groupSession.getLeaderInfo() + " "+getGroupSession(name).getPort() );
         gr = new GroupReceiver(getGroupSession(name).getPort());
         gr.start();
         groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION,
@@ -147,6 +149,8 @@ public class User {
 
         setID(id);
         System.out.println("ID set: "+ id);
+        crashDetectionThread = new CrashDetection();
+        crashDetectionThread.start();
     }
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
@@ -406,5 +410,85 @@ public class User {
         groupIDs.add(id);
     }
 
+    public void sendCrashDetectionCheck(int delay) throws IOException {
+        crashDetectionTimer = new Timer(false);
+        System.out.println("Sending crash detection message in " + delay);
+
+        crashDetectionTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    User.getInstance().groupSession.sendGroupMessage(new Message(MessageType.CRASH_DETECT, getUsername()));
+
+                    boolean leaderCrashed = true;
+
+                    try (DatagramSocket socket = new DatagramSocket(UNICAST_IM_ALIVE_PORT)) {
+                        byte[] buffer = new byte[10000];
+//                TODO: add a constant with the timeout value
+                        socket.setSoTimeout(1000);
+                        while (true) {
+                            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                            socket.receive(packet);
+                            InetAddress senderAddress = packet.getAddress();
+
+                            Message message = deserializeMessage(buffer);
+                            handleMessage(message, senderAddress);
+                            leaderCrashed = false;
+                        }
+                    } catch (IOException | ClassNotFoundException e) {
+                        System.out.println("Stop waiting for IM ALIVE.");
+                    }
+
+                    if(leaderCrashed)
+                    {
+                        System.out.println("Leader crashed.");
+                        electLeader();
+                    }
+                    else
+                    {
+                        System.out.println("Leader online.");
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, delay);
+    }
+
+    public void stopCrashDetectionTimer()
+    {
+        crashDetectionTimer.cancel();
+    }
+
+    public void stopCrashChecking()
+    {
+        crashDetectionThread.stop();
+    }
+
+    public void startCrashChecking()
+    {
+        crashDetectionThread.start();
+    }
+
+    public void sendImAlive(InetAddress address) throws IOException {
+        session.sendMessage(new Message(MessageType.IM_ALIVE), address, UNICAST_IM_ALIVE_PORT);
+    }
+
+    public static class CrashDetection extends Thread {
+
+        public void run(){
+            while(true)
+            {
+                try {
+                    int delay = CRASH_DETECTION_LOWER_BOUND_TIMEOUT+(int)(Math.random()*5000);
+                    User.getInstance().sendCrashDetectionCheck(delay);
+                    sleep((long)delay + 1500);
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 
 }

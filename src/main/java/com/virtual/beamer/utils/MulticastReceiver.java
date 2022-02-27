@@ -19,7 +19,7 @@ public class MulticastReceiver extends Thread {
 
     public MulticastReceiver() throws IOException {
         socket = new MulticastSocket(MULTICAST_PORT);
-        //socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
+        socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
         inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, INET_SOCKET_PORT);
         networkInterface = Helpers.getNetworkInterface();
     }
@@ -32,7 +32,6 @@ public class MulticastReceiver extends Thread {
             System.out.println(networkInterface);
             socket.joinGroup(inetSocketAddress, networkInterface);
             while (true) {
-
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 InetAddress senderAddress = packet.getAddress();

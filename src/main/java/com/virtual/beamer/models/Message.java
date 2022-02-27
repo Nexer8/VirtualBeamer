@@ -6,6 +6,7 @@ import java.io.*;
 import java.net.InetAddress;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
+import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
 
 public class Message implements Serializable {
     final public MessageType type;
@@ -113,7 +114,7 @@ public class Message implements Serializable {
                     User.getInstance().addParticipant(message.stringVariable, message.ipAddress);
                     User.getInstance().sendUserData(senderAddress);
 
-                    if (!User.getInstance().getSlides().isEmpty()) {
+                    if (User.getInstance().getSlides() != null && User.getInstance().getSlides().isEmpty()) {
                         User.getInstance().agreeOnSlidesSender(senderAddress);
                     }
                 }
@@ -126,20 +127,41 @@ public class Message implements Serializable {
                 User.getInstance().addListGroupID(message.intVariable);
             }
             case LEAVE_SESSION -> User.getInstance().deleteParticipant(message.stringVariable);
-            case COORD -> User.getInstance().updateSessionData(
-                    message.session, message.stringVariable, message.ipAddress);
+            case COORD -> {
+                User.getInstance().updateSessionData(
+                        message.session, message.stringVariable, message.ipAddress);
+               // User.getInstance().startCrashChecking();
+            }
             case ELECT -> {
+                User.getInstance().stopCrashChecking();
                 if (User.getInstance().getID() < message.intVariable) {
                     User.getInstance().sendStopElection(senderAddress);
                 }
             }
-            case STOP_ELECT -> User.getInstance().stopElection();
+            case STOP_ELECT -> {
+                User.getInstance().stopCrashChecking();
+
+                User.getInstance().stopElection();
+            }
             case START_AGREEMENT_PROCESS -> {
                 if (User.getInstance().getID() < message.intVariable) {
                     User.getInstance().sendStopAgreementProcess(senderAddress);
                 }
             }
             case STOP_AGREEMENT_PROCESS -> User.getInstance().stopAgreementProcess();
+            case CRASH_DETECT -> {
+                if(!User.getInstance().getUsername().equals(message.stringVariable))
+                {
+                    if(User.getInstance().getUserType() == VIEWER)
+                    {
+                        System.out.println("Crash timer stopped.");
+                        User.getInstance().stopCrashDetectionTimer();
+                    }
+                    else
+                        User.getInstance().sendImAlive(senderAddress);
+                }
+
+            }
         }
     }
 }

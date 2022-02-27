@@ -16,7 +16,7 @@ public class GroupReceiver extends Thread {
 
     public GroupReceiver(int port) throws IOException {
         socket = new MulticastSocket(port);
-        //socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
+        socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
         inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, port);
         networkInterface = Helpers.getNetworkInterface();
     }
@@ -27,6 +27,7 @@ public class GroupReceiver extends Thread {
             byte[] buffer = new byte[10000];
             socket.joinGroup(inetSocketAddress, networkInterface);
             while (true) {
+                System.out.println("Waiting for groupcast request..");
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 InetAddress senderAddress = packet.getAddress();
