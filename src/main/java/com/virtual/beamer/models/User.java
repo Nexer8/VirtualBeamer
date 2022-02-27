@@ -11,17 +11,14 @@ import com.virtual.beamer.utils.MulticastReceiver;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.Group;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
+import static com.virtual.beamer.constants.SessionConstants.LEADER_ELECTION_TIMEOUT;
 import static com.virtual.beamer.models.Message.deserializeMessage;
 import static com.virtual.beamer.models.Message.handleMessage;
 
@@ -35,11 +32,14 @@ public class User {
     private final ObservableList<GroupSession> groupSessions = FXCollections.observableArrayList();
     private final ObservableList<String> groupSessionsInfo = FXCollections.observableArrayList();
     private final ObservableList<String> participantsNames = FXCollections.observableArrayList();
-    private Map<String, InetAddress> participantsInfo = new HashMap<>();
+    private final Map<String, InetAddress> participantsInfo = new HashMap<>();
     private final Session session;
     private GroupSession groupSession;
     private final ArrayList<Integer> groupPortList = new ArrayList<>();
     private GroupReceiver gr;
+    private boolean electSent = true;
+    private Timer electionTimer;
+    private int ID;
 
     private User() throws IOException {
         MulticastReceiver mr = new MulticastReceiver();
@@ -73,6 +73,7 @@ public class User {
         new Thread(() -> {
             try (DatagramSocket socket = new DatagramSocket()) {
                 byte[] buffer = new byte[10000];
+//                TODO: add a constant with the timeout value
                 socket.setSoTimeout(5000);
                 while (true) {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -109,16 +110,19 @@ public class User {
         System.out.println("Test print: " + groupSession.getLeaderInfo());
         gr = new GroupReceiver(getGroupSession(name).getPort());
         gr.start();
-        groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION, username, Helpers.getInetAddress()));
+        groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION,
+                username, Helpers.getInetAddress()));
     }
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
-        session.sendMessage(new Message(MessageType.SEND_USER_DATA, username, Helpers.getInetAddress()), senderAddress);
+        session.sendMessage(new Message(MessageType.SEND_USER_DATA,
+                username, Helpers.getInetAddress()), senderAddress);
     }
 
     public void setGroupLeader(String name) throws IOException {
         userType = VIEWER;
-        session.multicast(new Message(MessageType.CHANGE_LEADER, groupSession, name, participantsInfo.get(name)));
+        session.multicast(new Message(MessageType.COORD,
+                groupSession, name, participantsInfo.get(name)));
     }
 
     public void leaveSession() throws IOException {
@@ -160,8 +164,10 @@ public class User {
     }
 
     public void sendGroupPort(InetAddress senderAddress) throws IOException {
-        if (groupSession.getPort() != 0)
-            session.sendMessage(new Message(MessageType.SEND_SESSION_PORT, groupSession.getPort()), senderAddress);
+        if (groupSession.getPort() != 0) {
+            session.sendMessage(new Message(MessageType.SEND_SESSION_PORT,
+                    groupSession.getPort()), senderAddress);
+        }
     }
 
     public int getCurrentSlide() {
@@ -221,17 +227,20 @@ public class User {
         System.out.println(session.getName());
     }
 
-    public void updateSessionData(GroupSession session, String leaderName, InetAddress addressIP)
-    {
-        if(leaderName.equals(username))
+    public void updateSessionData(GroupSession session, String leaderName, InetAddress addressIP) {
+        if (leaderName.equals(username)) {
             userType = PRESENTER;
+        }
 
         groupSessions.get(groupSessions.indexOf(session)).setLeaderData(leaderName, addressIP);
-        if(groupSession.equals(session))
+        if (groupSession.equals(session)) {
             groupSession.setLeaderData(leaderName, addressIP);
+        }
         Platform.runLater(() -> {
             groupSessionsInfo.remove(session.getName() + ": " + session.getLeaderInfo());
-            groupSessionsInfo.add(groupSessions.get(groupSessions.indexOf(session)).getName() + ": " + groupSessions.get(groupSessions.indexOf(session)).getLeaderInfo());
+            groupSessionsInfo.add(groupSessions.get(
+                    groupSessions.indexOf(session)).getName() + ": " +
+                    groupSessions.get(groupSessions.indexOf(session)).getLeaderInfo());
         });
         pvc.changePresenterData(groupSessions.get(groupSessions.indexOf(session)).getLeaderInfo());
     }
@@ -256,7 +265,8 @@ public class User {
     }
 
     public GroupSession getGroupSession(String name) {
-        return groupSessions.stream().filter(item -> item.getName().equals(name)).findFirst().orElse(null);
+        return groupSessions.stream().filter(item ->
+                item.getName().equals(name)).findFirst().orElse(null);
     }
 
     public GroupSession getGroupSession() {
@@ -273,5 +283,45 @@ public class User {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public int getID() {
+        return ID;
+    }
+
+    public void setID(int ID) {
+        this.ID = ID;
+    }
+
+    //    We start the ID with 0 and increment it for each new member of the session. The lower, the better.
+    public void electLeader() throws IOException {
+        if (!electSent) {
+            groupSession.sendGroupMessage(new Message(MessageType.ELECT));
+            electSent = true;
+
+            electionTimer = new Timer(true);
+            electionTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        groupSession.sendGroupMessage(new Message(MessageType.COORD,
+                                groupSession, username, Helpers.getInetAddress()));
+                        userType = PRESENTER;
+                        electSent = false;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }, LEADER_ELECTION_TIMEOUT);
+        }
+    }
+
+    public void sendStopElection(InetAddress senderAddress) throws IOException {
+        session.sendMessage(new Message(MessageType.STOP_ELECT), senderAddress);
+    }
+
+    public void stopElection() {
+        electionTimer.cancel();
+        electSent = false;
     }
 }

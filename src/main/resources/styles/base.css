@@ -125,3 +125,31 @@
 .combo-box-base:disabled {
     -fx-opacity: .4;
 }
+
+.combo-box .scroll-bar {
+    -fx-background-color: #5f8399;
+    -fx-pref-width: 12;
+    -fx-pref-height: 12;
+    -fx-padding: 2;
+}
+
+.combo-box .scroll-bar .thumb {
+    -fx-background-color: rgba(0, 0, 0, .2);
+    -fx-background-radius: 1000;
+    -fx-pref-width: 12;
+    -fx-pref-height: 12;
+}
+
+.combo-box .scroll-bar:vertical .thumb {
+    -fx-background-insets: 0 2 0 0;
+}
+
+.combo-box .scroll-bar:horizontal .thumb {
+    -fx-background-insets: 0 0 2 0;
+}
+
+.combo-box .scroll-bar .decrement-arrow,
+.combo-box .scroll-bar .increment-arrow {
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+}

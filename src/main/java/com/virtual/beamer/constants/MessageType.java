@@ -12,5 +12,7 @@ public enum MessageType {
     JOIN_SESSION,
     SEND_USER_DATA,
     LEAVE_SESSION,
-    CHANGE_LEADER
+    ELECT,
+    COORD,
+    STOP_ELECT
 }

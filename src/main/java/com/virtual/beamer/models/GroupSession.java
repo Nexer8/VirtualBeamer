@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 
 import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
 
@@ -12,6 +13,7 @@ public class GroupSession implements Serializable {
     private int port;
     private String leaderName;
     private String leaderIPAddress;
+    private final DatagramSocket socket;
 
     public String getName() {
         return name;
@@ -29,16 +31,16 @@ public class GroupSession implements Serializable {
         return port;
     }
 
-    public GroupSession(String name) {
+    public GroupSession(String name) throws SocketException {
         this.name = name;
         this.port = 0;
+        socket = new DatagramSocket();
     }
 
     public String getLeaderInfo() {
         return leaderName + "(" + leaderIPAddress + ")";
     }
 
-    //    TODO: Useful for leader election
     public void setLeaderData(String leaderName, InetAddress leaderAddress) {
         this.leaderName = leaderName;
         this.leaderIPAddress = leaderAddress.getHostAddress();
@@ -53,8 +55,6 @@ public class GroupSession implements Serializable {
     }
 
     public void sendGroupMessage(Message message) throws IOException {
-        DatagramSocket socket = new DatagramSocket();
-
         final ByteArrayOutputStream baos = new ByteArrayOutputStream(6400);
         final ObjectOutputStream oos = new ObjectOutputStream(baos);
         oos.writeObject(message);
@@ -63,6 +63,5 @@ public class GroupSession implements Serializable {
         DatagramPacket packet = new DatagramPacket(data, data.length,
                 InetAddress.getByName(GROUP_ADDRESS), User.getInstance().getGroupSession().getPort());
         socket.send(packet);
-        socket.close();
     }
 }

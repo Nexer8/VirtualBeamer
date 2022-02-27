@@ -40,7 +40,7 @@ Privilege a *plug&play* solution that leverages the LAN scenario to avoid the ne
 #### Prerequisites
 
 - Install *OpenJDK 17* from the [official JDK website](https://jdk.java.net/17/).
-- Install *Apache Maven 3.8.x* following the [official tutorial](https://maven.apache.org/install.html). 
+- Install *Apache Maven 3.8.x* following the [official tutorial](https://maven.apache.org/install.html).
 
 #### Build and Run
 

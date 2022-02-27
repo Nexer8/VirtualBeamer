@@ -5,4 +5,5 @@ public class SessionConstants {
     public static final int MULTICAST_PORT = 2244;
     public static final int INDIVIDUAL_MESSAGE_PORT = 5555;
     public static final int STARTING_GROUP_PORT = 10000;
+    public static final int LEADER_ELECTION_TIMEOUT = 3000;
 }

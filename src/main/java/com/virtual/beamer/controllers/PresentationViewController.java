@@ -8,7 +8,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -111,7 +110,7 @@ public class PresentationViewController implements Initializable {
         try {
             File[] files = directory.listFiles(file ->
                     !file.isHidden() && !file.isDirectory() && (file.getName().matches(".*\\.(jpg|png|jpeg)")));
-            if (files.length == 0) {
+            if (Objects.requireNonNull(files).length == 0) {
                 throw new IOException();
             }
             user.setSlides(files);
@@ -158,8 +157,7 @@ public class PresentationViewController implements Initializable {
     }
 
     @FXML
-    public void giveControl(MouseEvent mouseEvent) throws IOException {
-//        TODO: Implement changing control (leader)
+    public void giveControl() throws IOException {
         String userName = participants.getValue();
         user.setGroupLeader(userName);
     }
@@ -177,13 +175,11 @@ public class PresentationViewController implements Initializable {
                     @Override
                     public void updateItem(String item, boolean empty) {
                         super.updateItem(item, empty);
-                        if (empty) {
-                            setText(null);
+                        if (empty || item == null) {
+                            setText("Participants");
                         } else {
                             setText(item);
-                            if (user.getUserType() == VIEWER) {
-                                setDisable(true);
-                            }
+                            setDisable(user.getUserType() == VIEWER);
                         }
                     }
                 });
@@ -205,48 +201,39 @@ public class PresentationViewController implements Initializable {
         user.setPvc(this);
     }
 
-    public void changePresenterData(String leaderInfo)
-    {
+    public void changePresenterData(String leaderInfo) {
         if (user.getUserType() == VIEWER) {
             loadPresentationButton.setVisible(false);
             nextSlideButton.setDisable(true);
             previousSlideButton.setDisable(true);
             progressIndicator.setVisible(true);
             giveControlButton.setVisible(false);
-            participants.getSelectionModel().clearSelection();
-            participants.setPromptText("Participants");
+
+            Platform.runLater(() -> participants.getSelectionModel().clearSelection());
         }
 
         participants.setCellFactory(lv -> new ListCell<>() {
             @Override
             public void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
-                    setText(null);
+                if (empty || item == null) {
+                    setText("Participants");
                 } else {
                     setText(item);
-                    if (user.getUserType() == VIEWER) {
-                        setDisable(true);
-                    }
-                    else
-                        setDisable(false);
+                    setDisable(user.getUserType() == VIEWER);
                 }
             }
         });
 
-        if(user.getUserType() == PRESENTER)
-        {
+        if (user.getUserType() == PRESENTER) {
             loadPresentationButton.setVisible(true);
             nextSlideButton.setDisable(true);
             previousSlideButton.setDisable(true);
-            progressIndicator.setVisible(true);
+            progressIndicator.setVisible(false);
             giveControlButton.setVisible(true);
         }
 
-        Platform.runLater(() -> {
-            presenterLabel.setText("Presenter: " + leaderInfo);
-
-        });
+        Platform.runLater(() -> presenterLabel.setText("Presenter: " + leaderInfo));
     }
 
     public VBox getProgressIndicator() {
