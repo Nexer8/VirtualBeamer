@@ -120,6 +120,8 @@ public class User {
         groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION,
                 username, Helpers.getInetAddress()));
 
+        session.receiveFiles(9999);
+
         // Collects IDs
         try (DatagramSocket socket = new DatagramSocket(UNICAST_SEND_USER_DATA_PORT)) {
             byte[] buffer = new byte[10000];
@@ -181,14 +183,17 @@ public class User {
         session.multicast(new Message(MessageType.HELLO));
     }
 
-    public void multicastSlides() throws IOException {
-        groupSession.sendGroupMessage(new Message(MessageType.SEND_SLIDES,
-                slides.toArray(new File[]{}), currentSlide));
-    }
+//    public void multicastSlides() throws IOException {
+//        groupSession.sendGroupMessage(new Message(MessageType.SEND_SLIDES,
+//                slides.toArray(new File[]{}), currentSlide));
+//    }
 
     public void sendSlides(InetAddress senderAddress) throws IOException {
-        session.sendMessage(new Message(MessageType.SEND_SLIDES,
+        session.sendFiles(new Message(MessageType.SEND_SLIDES,
                 slides.toArray(new File[]{}), currentSlide), senderAddress);
+
+//        session.sendMessage(new Message(MessageType.SEND_SLIDES,
+//                slides.toArray(new File[]{}), currentSlide), senderAddress);
     }
 
     public void multicastSessionDetails() throws IOException {
@@ -491,4 +496,7 @@ public class User {
         }
     }
 
+    public Map<String, InetAddress> getParticipantsInfo() {
+        return participantsInfo;
+    }
 }
