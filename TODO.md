@@ -6,7 +6,7 @@
 
 2. Bully election (or any other) - identifiers for each user. **Mariusz** ✅
 
-3. Users (nodes) may join while the presentation is ongoing. In such case they choose the node from which to download the presentation in a way to share the load. **Mariusz**
+3. Users (nodes) may join while the presentation is ongoing. In such case they choose the node from which to download the presentation in a way to share the load. **Mariusz** ✅
 
    Agreement.
 

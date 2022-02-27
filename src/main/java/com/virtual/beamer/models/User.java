@@ -18,6 +18,7 @@ import java.util.*;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
+import static com.virtual.beamer.constants.SessionConstants.AGREEMENT_PROCESS_TIMEOUT;
 import static com.virtual.beamer.constants.SessionConstants.LEADER_ELECTION_TIMEOUT;
 import static com.virtual.beamer.models.Message.deserializeMessage;
 import static com.virtual.beamer.models.Message.handleMessage;
@@ -39,6 +40,8 @@ public class User {
     private GroupReceiver gr;
     private boolean electSent = true;
     private Timer electionTimer;
+    private Timer agreementTimer;
+    private boolean agreementMessageSent = false;
     private int ID;
 
     private User() throws IOException {
@@ -125,10 +128,17 @@ public class User {
                 groupSession, name, participantsInfo.get(name)));
     }
 
-    public void leaveSession() throws IOException {
+    private void cleanUpSessionData() {
         participantsNames.clear();
-        groupSession.sendGroupMessage(new Message(MessageType.LEAVE_SESSION, username));
+        slides.clear();
+        currentSlide = 0;
+        userType = VIEWER;
         gr.stop();
+    }
+
+    public void leaveSession() throws IOException {
+        groupSession.sendGroupMessage(new Message(MessageType.LEAVE_SESSION, username));
+        cleanUpSessionData();
     }
 
     public void sendHelloMessage() throws IOException {
@@ -136,7 +146,13 @@ public class User {
     }
 
     public void multicastSlides() throws IOException {
-        groupSession.sendGroupMessage(new Message(MessageType.SEND_SLIDES, slides.toArray(new File[]{})));
+        groupSession.sendGroupMessage(new Message(MessageType.SEND_SLIDES,
+                slides.toArray(new File[]{}), currentSlide));
+    }
+
+    public void sendSlides(InetAddress senderAddress) throws IOException {
+        session.sendMessage(new Message(MessageType.SEND_SLIDES,
+                slides.toArray(new File[]{}), currentSlide), senderAddress);
     }
 
     public void multicastSessionDetails() throws IOException {
@@ -149,8 +165,7 @@ public class User {
 
     public void multicastDeleteSession() throws IOException {
         session.multicast(new Message(MessageType.DELETE_SESSION, groupSession));
-        userType = VIEWER;
-        participantsNames.clear();
+        cleanUpSessionData();
     }
 
     public void multicastNextSlide() throws IOException {
@@ -296,7 +311,7 @@ public class User {
     //    We start the ID with 0 and increment it for each new member of the session. The lower, the better.
     public void electLeader() throws IOException {
         if (!electSent) {
-            groupSession.sendGroupMessage(new Message(MessageType.ELECT));
+            groupSession.sendGroupMessage(new Message(MessageType.ELECT, ID));
             electSent = true;
 
             electionTimer = new Timer(true);
@@ -323,5 +338,34 @@ public class User {
     public void stopElection() {
         electionTimer.cancel();
         electSent = false;
+    }
+
+    public void agreeOnSlidesSender(InetAddress senderAddress) throws IOException {
+        if (!agreementMessageSent) {
+            groupSession.sendGroupMessage(new Message(MessageType.START_AGREEMENT_PROCESS, ID));
+            agreementMessageSent = true;
+
+            agreementTimer = new Timer(true);
+            agreementTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        sendSlides(senderAddress);
+                        agreementMessageSent = false;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }, AGREEMENT_PROCESS_TIMEOUT);
+        }
+    }
+
+    public void sendStopAgreementProcess(InetAddress senderAddress) throws IOException {
+        session.sendMessage(new Message(MessageType.STOP_AGREEMENT_PROCESS), senderAddress);
+    }
+
+    public void stopAgreementProcess() {
+        agreementTimer.cancel();
+        agreementMessageSent = false;
     }
 }

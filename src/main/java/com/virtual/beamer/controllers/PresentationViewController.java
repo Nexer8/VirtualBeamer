@@ -58,7 +58,6 @@ public class PresentationViewController implements Initializable {
 
     @FXML
     private void exitSession() throws IOException {
-//        TODO: implement leader election
         cleanUpView();
 
         if (user.getUserType() == PRESENTER) {
@@ -114,7 +113,6 @@ public class PresentationViewController implements Initializable {
                 throw new IOException();
             }
             user.setSlides(files);
-            assert user.getSlides() != null;
             user.multicastSlides();
             if (user.getSlides().size() <= 1) {
                 nextSlideButton.setDisable(true);

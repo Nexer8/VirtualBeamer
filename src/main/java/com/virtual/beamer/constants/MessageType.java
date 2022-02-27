@@ -14,5 +14,7 @@ public enum MessageType {
     LEAVE_SESSION,
     ELECT,
     COORD,
-    STOP_ELECT
+    STOP_ELECT,
+    START_AGREEMENT_PROCESS,
+    STOP_AGREEMENT_PROCESS
 }

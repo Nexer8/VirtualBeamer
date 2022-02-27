@@ -19,9 +19,10 @@ public class Message implements Serializable {
         this.type = type;
     }
 
-    public Message(MessageType type, File[] slides) {
+    public Message(MessageType type, File[] slides, int currentSlide) {
         this.type = type;
         this.slides = slides;
+        this.intVariable = currentSlide;
     }
 
     public Message(MessageType type, GroupSession session) {
@@ -78,6 +79,7 @@ public class Message implements Serializable {
             case SEND_SLIDES -> {
                 if (User.getInstance().getUserType() != PRESENTER) {
                     User.getInstance().setSlides(message.slides);
+                    User.getInstance().setCurrentSlide(message.intVariable);
                 }
             }
             case NEXT_SLIDE -> {
@@ -101,19 +103,30 @@ public class Message implements Serializable {
                 System.out.println(message.stringVariable);
                 User.getInstance().addParticipant(message.stringVariable, message.ipAddress);
                 User.getInstance().sendUserData(senderAddress);
+
+                if (!User.getInstance().getSlides().isEmpty()) {
+                    User.getInstance().agreeOnSlidesSender(senderAddress);
+                }
             }
             case SEND_USER_DATA -> {
                 System.out.println(message.stringVariable);
                 User.getInstance().addParticipant(message.stringVariable, message.ipAddress);
             }
             case LEAVE_SESSION -> User.getInstance().deleteParticipant(message.stringVariable);
-            case COORD -> User.getInstance().updateSessionData(message.session, message.stringVariable, message.ipAddress);
+            case COORD -> User.getInstance().updateSessionData(
+                    message.session, message.stringVariable, message.ipAddress);
             case ELECT -> {
                 if (User.getInstance().getID() < message.intVariable) {
                     User.getInstance().sendStopElection(senderAddress);
                 }
             }
             case STOP_ELECT -> User.getInstance().stopElection();
+            case START_AGREEMENT_PROCESS -> {
+                if (User.getInstance().getID() < message.intVariable) {
+                    User.getInstance().sendStopAgreementProcess(senderAddress);
+                }
+            }
+            case STOP_AGREEMENT_PROCESS -> User.getInstance().stopAgreementProcess();
         }
     }
 }
