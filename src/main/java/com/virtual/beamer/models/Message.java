@@ -15,6 +15,7 @@ public class Message implements Serializable {
     public int intVariable;
     public String stringVariable;
     public InetAddress ipAddress;
+    public int packetID;
 
     public Message(MessageType type) {
         this.type = type;
@@ -159,7 +160,12 @@ public class Message implements Serializable {
                     else
                         User.getInstance().sendImAlive(senderAddress);
                 }
-
+            }
+            case NACK_PACKET -> {
+                if(User.getInstance().getUserType() == PRESENTER)
+                    User.getInstance().resendPacket(message.packetID);
+                else
+                    User.getInstance().stopNackTimer(message.packetID);
             }
         }
     }

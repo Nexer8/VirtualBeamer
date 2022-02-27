@@ -18,5 +18,6 @@ public enum MessageType {
     START_AGREEMENT_PROCESS,
     STOP_AGREEMENT_PROCESS,
     CRASH_DETECT,
-    IM_ALIVE
+    IM_ALIVE,
+    NACK_PACKET
 }

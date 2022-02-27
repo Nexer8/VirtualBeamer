@@ -114,12 +114,9 @@ public class PresentationViewController implements Initializable {
             }
             user.setSlides(files);
 //            user.sendSlides();
-            for (var address : user.getParticipantsInfo().values()) {
-                user.sendSlides(address);
-            }
 //            user.getParticipantsInfo();
             // TODO: send slides to everybody
-//            user.multicastSlides();
+            user.multicastSlides();
             if (user.getSlides().size() <= 1) {
                 nextSlideButton.setDisable(true);
                 previousSlideButton.setDisable(true);

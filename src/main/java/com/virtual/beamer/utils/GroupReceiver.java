@@ -1,9 +1,11 @@
 package com.virtual.beamer.utils;
 
 import com.virtual.beamer.models.Message;
+import com.virtual.beamer.models.User;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
 
 import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
 import static com.virtual.beamer.models.Message.deserializeMessage;
@@ -13,12 +15,14 @@ public class GroupReceiver extends Thread {
     final private MulticastSocket socket;
     final private InetSocketAddress inetSocketAddress;
     final private NetworkInterface networkInterface;
+    private ArrayList<Message> buffer;
 
     public GroupReceiver(int port) throws IOException {
         socket = new MulticastSocket(port);
         socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
         inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, port);
         networkInterface = Helpers.getNetworkInterface();
+        buffer = new ArrayList<Message>();
     }
 
     @SuppressWarnings("InfiniteLoopStatement")
@@ -27,14 +31,26 @@ public class GroupReceiver extends Thread {
             byte[] buffer = new byte[10000];
             socket.joinGroup(inetSocketAddress, networkInterface);
             while (true) {
-                System.out.println("Waiting for groupcast request..");
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 InetAddress senderAddress = packet.getAddress();
                 System.out.println("Groupcast received packet from " + senderAddress + ":" +inetSocketAddress.getPort());
 
                 Message message = deserializeMessage(buffer);
-                handleMessage(message, senderAddress);
+                if(!this.buffer.contains(message))
+                {
+                    this.buffer.add(message);
+                    if(this.buffer.size() >= 2)
+                    {
+                        if(this.buffer.get(this.buffer.size()-1).packetID-1 > this.buffer.get(this.buffer.size()-2).packetID)
+                        {
+                            System.out.println("Missing packet found");
+                            User.getInstance().sendNackPacket(this.buffer.get(this.buffer.size()-1).packetID-1);
+                        }
+                    }
+                    handleMessage(message, senderAddress);
+                }
+
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();

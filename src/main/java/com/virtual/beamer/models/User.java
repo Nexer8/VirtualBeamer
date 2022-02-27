@@ -42,6 +42,7 @@ public class User {
     private Timer electionTimer;
     private Timer agreementTimer;
     private Timer crashDetectionTimer;
+    private Map<Integer, Timer> nackTimer;
     private boolean agreementMessageSent = false;
     private int ID;
     private final ArrayList<Integer> groupIDs = new ArrayList<>();
@@ -120,7 +121,7 @@ public class User {
         groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION,
                 username, Helpers.getInetAddress()));
 
-        session.receiveFiles(9999);
+        //session.receiveFiles(9999);
 
         // Collects IDs
         try (DatagramSocket socket = new DatagramSocket(UNICAST_SEND_USER_DATA_PORT)) {
@@ -183,17 +184,17 @@ public class User {
         session.multicast(new Message(MessageType.HELLO));
     }
 
-//    public void multicastSlides() throws IOException {
-//        groupSession.sendGroupMessage(new Message(MessageType.SEND_SLIDES,
-//                slides.toArray(new File[]{}), currentSlide));
-//    }
+    public void multicastSlides() throws IOException {
+        groupSession.sendGroupMessage(new Message(MessageType.SEND_SLIDES,
+                slides.toArray(new File[]{}), currentSlide));
+    }
 
     public void sendSlides(InetAddress senderAddress) throws IOException {
-        session.sendFiles(new Message(MessageType.SEND_SLIDES,
-                slides.toArray(new File[]{}), currentSlide), senderAddress);
+       // session.sendFiles(new Message(MessageType.SEND_SLIDES,
+         //       slides.toArray(new File[]{}), currentSlide), senderAddress);
 
-//        session.sendMessage(new Message(MessageType.SEND_SLIDES,
-//                slides.toArray(new File[]{}), currentSlide), senderAddress);
+        session.sendMessage(new Message(MessageType.SEND_SLIDES,
+                slides.toArray(new File[]{}), currentSlide), senderAddress);
     }
 
     public void multicastSessionDetails() throws IOException {
@@ -498,5 +499,33 @@ public class User {
 
     public Map<String, InetAddress> getParticipantsInfo() {
         return participantsInfo;
+    }
+
+    public void sendNackPacket(int packetID) throws IOException {
+
+        Timer nackTimerTmp = new Timer(true);
+        nackTimer.put(packetID, nackTimerTmp);
+
+        nackTimerTmp.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    groupSession.sendGroupMessage(new Message(MessageType.NACK_PACKET, packetID));
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, (int)(Math.random()*1000));
+    }
+
+    public void stopNackTimer(int packetID)
+    {
+        nackTimer.get(packetID).cancel();
+        nackTimer.remove(packetID);
+    }
+
+    public void resendPacket(int packetID) throws IOException {
+        groupSession.sendGroupMessage(packetID);
     }
 }
