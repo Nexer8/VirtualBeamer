@@ -26,7 +26,6 @@ public class MulticastReceiver extends Thread {
 
     @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
-
         try {
             byte[] buffer = new byte[1000];
             System.out.println(networkInterface);

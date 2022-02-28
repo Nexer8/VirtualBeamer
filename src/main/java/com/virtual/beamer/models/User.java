@@ -4,28 +4,28 @@ import com.virtual.beamer.constants.AppConstants;
 import com.virtual.beamer.constants.MessageType;
 import com.virtual.beamer.constants.SessionConstants;
 import com.virtual.beamer.controllers.PresentationViewController;
-import com.virtual.beamer.utils.GroupReceiver;
-import com.virtual.beamer.utils.Helpers;
-import com.virtual.beamer.utils.MessageReceiver;
-import com.virtual.beamer.utils.MulticastReceiver;
+import com.virtual.beamer.utils.*;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
 import static com.virtual.beamer.constants.SessionConstants.*;
 import static com.virtual.beamer.models.Message.deserializeMessage;
 import static com.virtual.beamer.models.Message.handleMessage;
+import static com.virtual.beamer.utils.PacketCreator.createPackets;
 
 public class User {
 
     private static volatile User instance;
-    private ObservableList<File> slides;
+    private ObservableList<BufferedImage> slides = FXCollections.observableArrayList();
     private String username;
     private int currentSlide = 0;
     private AppConstants.UserType userType = VIEWER;
@@ -36,6 +36,7 @@ public class User {
     private final Map<String, InetAddress> participantsInfo = new HashMap<>();
     private final Session session;
     private GroupSession groupSession;
+    private final SlidesSender slidesSender;
     private final ArrayList<Integer> groupPortList = new ArrayList<>();
     private GroupReceiver gr;
     private boolean electSent = false;
@@ -54,8 +55,15 @@ public class User {
 
         MessageReceiver rec = new MessageReceiver();
         rec.start();
+
+        SlidesReceiver sr = new SlidesReceiver();
+        sr.start();
+        IndividualSlidesReceiver isr = new IndividualSlidesReceiver();
+        isr.start();
+
         session = new Session();
         groupSession = new GroupSession("");
+        slidesSender = new SlidesSender();
     }
 
     public static User getInstance() throws IOException {
@@ -81,7 +89,7 @@ public class User {
         try (DatagramSocket socket = new DatagramSocket(UNICAST_COLLECT_PORTS_PORT)) {
             byte[] buffer = new byte[10000];
 //                TODO: add a constant with the timeout value
-            socket.setSoTimeout(5000);
+            socket.setSoTimeout(1000);
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
@@ -115,19 +123,17 @@ public class User {
         this.groupIDs.clear();
         groupSession = getGroupSession(name);
         groupSession.setPort(getGroupSession(name).getPort());
-        System.out.println("Test print: " + groupSession.getLeaderInfo() + " "+getGroupSession(name).getPort() );
+        System.out.println("Test print: " + groupSession.getLeaderInfo() + " " + getGroupSession(name).getPort());
         gr = new GroupReceiver(getGroupSession(name).getPort());
         gr.start();
         groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION,
                 username, Helpers.getInetAddress()));
 
-        //session.receiveFiles(9999);
-
         // Collects IDs
         try (DatagramSocket socket = new DatagramSocket(UNICAST_SEND_USER_DATA_PORT)) {
             byte[] buffer = new byte[10000];
 //                TODO: add a constant with the timeout value
-            socket.setSoTimeout(5000);
+            socket.setSoTimeout(1000);
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
@@ -141,17 +147,15 @@ public class User {
         }
 
         int id = 0;
-        if(!this.groupIDs.isEmpty())
-        {
+        if (!this.groupIDs.isEmpty()) {
             Collections.sort(groupIDs);
-            id = groupIDs.get(groupIDs.size()-1)+1;
-        }
-        else
+            id = groupIDs.get(groupIDs.size() - 1) + 1;
+        } else
             id = 1;
 
 
         setID(id);
-        System.out.println("ID set: "+ id);
+        System.out.println("ID set: " + id);
         crashDetectionThread = new CrashDetection();
         crashDetectionThread.start();
     }
@@ -184,17 +188,19 @@ public class User {
         session.multicast(new Message(MessageType.HELLO));
     }
 
-    public void multicastSlides() throws IOException {
-        groupSession.sendGroupMessage(new Message(MessageType.SEND_SLIDES,
-                slides.toArray(new File[]{}), currentSlide));
+    public void multicastSlide() throws IOException {
+        for (var packet : createPackets(slides.get(currentSlide), currentSlide)) {
+            slidesSender.multicast(packet);
+        }
     }
 
-    public void sendSlides(InetAddress senderAddress) throws IOException {
-       // session.sendFiles(new Message(MessageType.SEND_SLIDES,
-         //       slides.toArray(new File[]{}), currentSlide), senderAddress);
-
-        session.sendMessage(new Message(MessageType.SEND_SLIDES,
-                slides.toArray(new File[]{}), currentSlide), senderAddress);
+    public void sendSlides(InetAddress senderAddress) throws IOException, InterruptedException {
+        for (int i = 0; i <= currentSlide; i++) {
+            for (var packet : createPackets(slides.get(i), i)) {
+                TimeUnit.MILLISECONDS.sleep(50);
+                slidesSender.sendMessage(packet, senderAddress);
+            }
+        }
     }
 
     public void multicastSessionDetails() throws IOException {
@@ -212,7 +218,7 @@ public class User {
 
     public void multicastNextSlide() throws IOException {
         currentSlide++;
-        groupSession.sendGroupMessage(new Message(MessageType.NEXT_SLIDE));
+        multicastSlide();
     }
 
     public void multicastPreviousSlide() throws IOException {
@@ -231,7 +237,7 @@ public class User {
         return currentSlide;
     }
 
-    public ObservableList<File> getSlides() {
+    public ObservableList<BufferedImage> getSlides() {
         return slides;
     }
 
@@ -247,7 +253,7 @@ public class User {
         }
     }
 
-    public void setSlides(File[] slides) throws IOException {
+    public void setSlides(BufferedImage[] slides) throws IOException {
         this.slides = FXCollections.observableArrayList(slides);
 
         if (userType == VIEWER) {
@@ -267,7 +273,6 @@ public class User {
     }
 
     public void addParticipant(String name, InetAddress ipAddress) {
-        //System.out.println(name + " " + ipAddress.getHostAddress());
         participantsInfo.put(name, ipAddress);
         Platform.runLater(() -> participantsNames.add(name));
     }
@@ -350,7 +355,6 @@ public class User {
         this.ID = ID;
     }
 
-    //    We start the ID with 0 and increment it for each new member of the session. The lower, the better.
     public void electLeader() throws IOException {
         if (!electSent) {
             groupSession.sendGroupMessage(new Message(MessageType.ELECT, ID));
@@ -384,7 +388,8 @@ public class User {
 
     public void agreeOnSlidesSender(InetAddress senderAddress) throws IOException {
         if (!agreementMessageSent) {
-            groupSession.sendGroupMessage(new Message(MessageType.START_AGREEMENT_PROCESS, ID));
+            int mID = groupIDs.isEmpty() ? ID : Collections.min(groupIDs);
+            groupSession.sendGroupMessage(new Message(MessageType.START_AGREEMENT_PROCESS, mID));
             agreementMessageSent = true;
 
             agreementTimer = new Timer(true);
@@ -392,9 +397,11 @@ public class User {
                 @Override
                 public void run() {
                     try {
-                        sendSlides(senderAddress);
+                        if (ID == mID) {
+                            sendSlides(senderAddress);
+                        }
                         agreementMessageSent = false;
-                    } catch (IOException e) {
+                    } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
@@ -411,8 +418,7 @@ public class User {
         agreementMessageSent = false;
     }
 
-    public void addListGroupID(int id)
-    {
+    public void addListGroupID(int id) {
         groupIDs.add(id);
     }
 
@@ -445,13 +451,10 @@ public class User {
                         System.out.println("Stop waiting for IM ALIVE.");
                     }
 
-                    if(leaderCrashed)
-                    {
+                    if (leaderCrashed) {
                         System.out.println("Leader crashed.");
                         electLeader();
-                    }
-                    else
-                    {
+                    } else {
                         System.out.println("Leader online.");
                     }
 
@@ -462,18 +465,15 @@ public class User {
         }, delay);
     }
 
-    public void stopCrashDetectionTimer()
-    {
+    public void stopCrashDetectionTimer() {
         crashDetectionTimer.cancel();
     }
 
-    public void stopCrashChecking()
-    {
+    public void stopCrashChecking() {
         crashDetectionThread.stop();
     }
 
-    public void startCrashChecking()
-    {
+    public void startCrashChecking() {
         crashDetectionThread.start();
     }
 
@@ -482,14 +482,13 @@ public class User {
     }
 
     public static class CrashDetection extends Thread {
-
-        public void run(){
-            while(true)
-            {
+        @SuppressWarnings("InfiniteLoopStatement")
+        public void run() {
+            while (true) {
                 try {
-                    int delay = CRASH_DETECTION_LOWER_BOUND_TIMEOUT+(int)(Math.random()*5000);
+                    int delay = CRASH_DETECTION_LOWER_BOUND_TIMEOUT + (int) (Math.random() * 1000);
                     User.getInstance().sendCrashDetectionCheck(delay);
-                    sleep((long)delay + 1500);
+                    sleep((long) delay + 1500);
                 } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -497,12 +496,7 @@ public class User {
         }
     }
 
-    public Map<String, InetAddress> getParticipantsInfo() {
-        return participantsInfo;
-    }
-
-    public void sendNackPacket(int packetID) throws IOException {
-
+    public void sendNACKPacket(int packetID) throws IOException {
         Timer nackTimerTmp = new Timer(true);
         nackTimer.put(packetID, nackTimerTmp);
 
@@ -516,16 +510,19 @@ public class User {
                     e.printStackTrace();
                 }
             }
-        }, (int)(Math.random()*1000));
+        }, (int) (Math.random() * 1000));
     }
 
-    public void stopNackTimer(int packetID)
-    {
+    public void stopNackTimer(int packetID) {
         nackTimer.get(packetID).cancel();
         nackTimer.remove(packetID);
     }
 
     public void resendPacket(int packetID) throws IOException {
         groupSession.sendGroupMessage(packetID);
+    }
+
+    public ArrayList<Integer> getGroupIDs() {
+        return groupIDs;
     }
 }

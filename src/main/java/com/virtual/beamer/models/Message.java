@@ -4,6 +4,7 @@ import com.virtual.beamer.constants.MessageType;
 
 import java.io.*;
 import java.net.InetAddress;
+import java.util.Collections;
 
 import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
@@ -85,12 +86,12 @@ public class Message implements Serializable {
                     User.getInstance().sendSessionDetails(senderAddress);
                 }
             }
-            case SEND_SLIDES -> {
-                if (User.getInstance().getUserType() != PRESENTER) {
-                    User.getInstance().setSlides(message.slides);
-                    User.getInstance().setCurrentSlide(message.intVariable);
-                }
-            }
+//            case SEND_SLIDES -> {
+//                if (User.getInstance().getUserType() != PRESENTER) {
+//                    User.getInstance().setSlides(message.slides);
+//                    User.getInstance().setCurrentSlide(message.intVariable);
+//                }
+//            }
             case NEXT_SLIDE -> {
                 if (User.getInstance().getUserType() != PRESENTER) {
                     User.getInstance().setCurrentSlide(User.getInstance().getCurrentSlide() + 1);
@@ -114,14 +115,12 @@ public class Message implements Serializable {
                     User.getInstance().addParticipant(message.stringVariable, message.ipAddress);
                     User.getInstance().sendUserData(senderAddress);
 
-
                     if (User.getInstance().getSlides() != null && !User.getInstance().getSlides().isEmpty()) {
                         User.getInstance().agreeOnSlidesSender(senderAddress);
                     }
                 }
             }
             case SEND_USER_DATA -> {
-
                 System.out.println(User.getInstance().getUsername() + " added " + message.stringVariable + " to participants list.");
                 User.getInstance().addParticipant(message.stringVariable, message.ipAddress);
                 User.getInstance().addListGroupID(message.intVariable);
@@ -130,7 +129,7 @@ public class Message implements Serializable {
             case COORD -> {
                 User.getInstance().updateSessionData(
                         message.session, message.stringVariable, message.ipAddress);
-               // User.getInstance().startCrashChecking();
+                 User.getInstance().startCrashChecking();
             }
             case ELECT -> {
                 User.getInstance().stopCrashChecking();
@@ -144,25 +143,24 @@ public class Message implements Serializable {
                 User.getInstance().stopElection();
             }
             case START_AGREEMENT_PROCESS -> {
-                if (User.getInstance().getID() < message.intVariable) {
+                int mID = User.getInstance().getGroupIDs().isEmpty() ? User.getInstance().getID() : Collections.min(User.getInstance().getGroupIDs());
+
+                if (mID < message.intVariable) {
                     User.getInstance().sendStopAgreementProcess(senderAddress);
                 }
             }
             case STOP_AGREEMENT_PROCESS -> User.getInstance().stopAgreementProcess();
             case CRASH_DETECT -> {
-                if(!User.getInstance().getUsername().equals(message.stringVariable))
-                {
-                    if(User.getInstance().getUserType() == VIEWER)
-                    {
+                if (!User.getInstance().getUsername().equals(message.stringVariable)) {
+                    if (User.getInstance().getUserType() == VIEWER) {
                         System.out.println("Crash timer stopped.");
                         User.getInstance().stopCrashDetectionTimer();
-                    }
-                    else
+                    } else
                         User.getInstance().sendImAlive(senderAddress);
                 }
             }
             case NACK_PACKET -> {
-                if(User.getInstance().getUserType() == PRESENTER)
+                if (User.getInstance().getUserType() == PRESENTER)
                     User.getInstance().resendPacket(message.packetID);
                 else
                     User.getInstance().stopNackTimer(message.packetID);

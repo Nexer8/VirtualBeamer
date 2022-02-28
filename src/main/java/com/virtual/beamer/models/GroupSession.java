@@ -6,9 +6,7 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Collections;
 
 import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
 
@@ -35,10 +33,10 @@ public class GroupSession implements Serializable {
         return port;
     }
 
-    public GroupSession(String name) throws SocketException {
+    public GroupSession(String name) {
         this.name = name;
         this.port = 0;
-        this.buffer = new ArrayList<Message>();
+        this.buffer = new ArrayList<>();
     }
 
     public String getLeaderInfo() {
@@ -59,23 +57,19 @@ public class GroupSession implements Serializable {
     }
 
     public void sendGroupMessage(Message message) throws IOException {
-        if(message.type == MessageType.NEXT_SLIDE || message.type == MessageType.PREVIOUS_SLIDE)
-        {
-            if(buffer.isEmpty())
+        if (message.type == MessageType.NEXT_SLIDE || message.type == MessageType.PREVIOUS_SLIDE) {
+            if (buffer.isEmpty())
                 message.packetID = 1;
-            else
-            {
+            else {
                 int maxPacketID = 0;
                 Message maxMessage = null;
-                for(Message m : buffer)
-                {
-                    if(m.packetID > maxPacketID)
-                    {
+                for (Message m : buffer) {
+                    if (m.packetID > maxPacketID) {
                         maxPacketID = m.packetID;
                         maxMessage = m;
                     }
                 }
-                message.packetID = maxPacketID+1;
+                message.packetID = maxPacketID + 1;
             }
             buffer.add(message);
         }
@@ -85,7 +79,8 @@ public class GroupSession implements Serializable {
         oos.writeObject(message);
         final byte[] data = baos.toByteArray();
 
-        System.out.println("Sending group message to port: " + User.getInstance().getGroupSession().getPort());
+        System.out.println("Sending group message to port: "
+                + User.getInstance().getGroupSession().getPort());
         DatagramPacket packet = new DatagramPacket(data, data.length,
                 InetAddress.getByName(GROUP_ADDRESS), User.getInstance().getGroupSession().getPort());
         socket.send(packet);
@@ -93,10 +88,8 @@ public class GroupSession implements Serializable {
     }
 
     public void sendGroupMessage(int packetID) throws IOException {
-        for(Message m : this.buffer)
-        {
-            if(m.packetID == packetID)
-            {
+        for (Message m : this.buffer) {
+            if (m.packetID == packetID) {
                 sendGroupMessage(m);
                 break;
             }

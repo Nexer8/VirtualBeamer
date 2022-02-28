@@ -22,7 +22,7 @@ public class GroupReceiver extends Thread {
         socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
         inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, port);
         networkInterface = Helpers.getNetworkInterface();
-        buffer = new ArrayList<Message>();
+        buffer = new ArrayList<>();
     }
 
     @SuppressWarnings("InfiniteLoopStatement")
@@ -34,23 +34,19 @@ public class GroupReceiver extends Thread {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 InetAddress senderAddress = packet.getAddress();
-                System.out.println("Groupcast received packet from " + senderAddress + ":" +inetSocketAddress.getPort());
+                System.out.println("Groupcast received packet from " + senderAddress + ":" + inetSocketAddress.getPort());
 
                 Message message = deserializeMessage(buffer);
-                if(!this.buffer.contains(message))
-                {
+                if (!this.buffer.contains(message)) {
                     this.buffer.add(message);
-                    if(this.buffer.size() >= 2)
-                    {
-                        if(this.buffer.get(this.buffer.size()-1).packetID-1 > this.buffer.get(this.buffer.size()-2).packetID)
-                        {
+                    if (this.buffer.size() >= 2) {
+                        if (this.buffer.get(this.buffer.size() - 1).packetID - 1 > this.buffer.get(this.buffer.size() - 2).packetID) {
                             System.out.println("Missing packet found");
-                            User.getInstance().sendNackPacket(this.buffer.get(this.buffer.size()-1).packetID-1);
+                            User.getInstance().sendNACKPacket(this.buffer.get(this.buffer.size() - 1).packetID - 1);
                         }
                     }
                     handleMessage(message, senderAddress);
                 }
-
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();

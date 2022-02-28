@@ -12,10 +12,11 @@ import javafx.scene.layout.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
@@ -85,8 +86,12 @@ public class PresentationViewController implements Initializable {
     }
 
     public void setSlide() throws IOException {
-        Image slide = new Image(new FileInputStream(user.getSlides().get(user.getCurrentSlide())),
-                slidePane.getWidth(), slidePane.getHeight(), true, true);
+        progressIndicator.setVisible(false);
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ImageIO.write(user.getSlides().get(user.getCurrentSlide()), "jpeg", os);
+        InputStream is = new ByteArrayInputStream(os.toByteArray());
+
+        Image slide = new Image(is, slidePane.getWidth(), slidePane.getHeight(), true, true);
 
         BackgroundImage backgroundImage = new BackgroundImage(
                 slide,
@@ -100,23 +105,24 @@ public class PresentationViewController implements Initializable {
     }
 
     @FXML
-    public void loadPresentation() throws IOException {
-        user.setCurrentSlide(0);
-
+    public void loadPresentation() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File directory = directoryChooser.showDialog(new Stage());
 
         try {
             File[] files = directory.listFiles(file ->
-                    !file.isHidden() && !file.isDirectory() && (file.getName().matches(".*\\.(jpg|png|jpeg)")));
+                    !file.isHidden() && !file.isDirectory()
+                            && (file.getName().matches(".*\\.(jpg|png|jpeg)")));
             if (Objects.requireNonNull(files).length == 0) {
                 throw new IOException();
             }
-            user.setSlides(files);
-//            user.sendSlides();
-//            user.getParticipantsInfo();
-            // TODO: send slides to everybody
-            user.multicastSlides();
+            ArrayList<BufferedImage> images = new ArrayList<>();
+            for (var file : files) {
+                images.add(ImageIO.read(file));
+            }
+            user.setSlides(images.toArray(new BufferedImage[0]));
+            user.setCurrentSlide(0);
+            user.multicastSlide();
             if (user.getSlides().size() <= 1) {
                 nextSlideButton.setDisable(true);
                 previousSlideButton.setDisable(true);
@@ -125,6 +131,7 @@ public class PresentationViewController implements Initializable {
                 nextSlideButton.setDisable(false);
             }
         } catch (NullPointerException | IOException e) {
+            e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.WARNING, "No images found in the directory!");
             alert.initOwner(slidePane.getScene().getWindow());
             alert.getDialogPane().getStylesheets().add((Objects.requireNonNull(
@@ -204,10 +211,14 @@ public class PresentationViewController implements Initializable {
 
     public void changePresenterData(String leaderInfo) {
         if (user.getUserType() == VIEWER) {
+            System.out.println("I'm a VIEWER");
             loadPresentationButton.setVisible(false);
             nextSlideButton.setDisable(true);
             previousSlideButton.setDisable(true);
-            progressIndicator.setVisible(true);
+
+            if (slidePane.getBackground() == null) {
+                progressIndicator.setVisible(true);
+            }
             giveControlButton.setVisible(false);
 
             Platform.runLater(() -> participants.getSelectionModel().clearSelection());
@@ -227,9 +238,15 @@ public class PresentationViewController implements Initializable {
         });
 
         if (user.getUserType() == PRESENTER) {
+            System.out.println("I'm a PRESENTER");
             loadPresentationButton.setVisible(true);
-            nextSlideButton.setDisable(true);
-            previousSlideButton.setDisable(true);
+            System.out.println("Current slide: " + user.getCurrentSlide());
+            if (user.getCurrentSlide() < user.getSlides().size()) {
+                nextSlideButton.setDisable(false);
+            }
+            if (user.getCurrentSlide() > 0) {
+                previousSlideButton.setDisable(false);
+            }
             progressIndicator.setVisible(false);
             giveControlButton.setVisible(true);
         }
