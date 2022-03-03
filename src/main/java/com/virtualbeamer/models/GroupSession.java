@@ -1,6 +1,8 @@
-package com.virtual.beamer.models;
+package com.virtualbeamer.models;
 
-import com.virtual.beamer.constants.MessageType;
+import com.virtualbeamer.constants.MessageType;
+import com.virtualbeamer.constants.SessionConstants;
+import com.virtualbeamer.services.MainService;
 
 import java.io.*;
 import java.net.DatagramPacket;
@@ -8,14 +10,12 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
-
 public class GroupSession implements Serializable {
     private String name;
     private int port;
     private String leaderName;
     private String leaderIPAddress;
-    private ArrayList<Message> buffer;
+    private final ArrayList<Message> buffer;
 
     public String getName() {
         return name;
@@ -80,9 +80,9 @@ public class GroupSession implements Serializable {
         final byte[] data = baos.toByteArray();
 
         System.out.println("Sending group message to port: "
-                + User.getInstance().getGroupSession().getPort());
+                + MainService.getInstance().getGroupSession().getPort());
         DatagramPacket packet = new DatagramPacket(data, data.length,
-                InetAddress.getByName(GROUP_ADDRESS), User.getInstance().getGroupSession().getPort());
+                InetAddress.getByName(SessionConstants.GROUP_ADDRESS), MainService.getInstance().getGroupSession().getPort());
         socket.send(packet);
         socket.close();
     }

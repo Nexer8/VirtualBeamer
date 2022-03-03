@@ -1,6 +1,6 @@
-package com.virtual.beamer;
+package com.virtualbeamer;
 
-import com.virtual.beamer.utils.ServiceRegistrar;
+import com.virtualbeamer.utils.ServiceRegistrar;
 import javafx.application.Application;
 import javafx.application.Platform;
 
@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-import static com.virtual.beamer.constants.AppConstants.*;
+import static com.virtualbeamer.constants.AppConstants.*;
 
 public class VirtualBeamer extends Application {
     @Override

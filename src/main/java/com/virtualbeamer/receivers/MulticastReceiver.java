@@ -1,18 +1,15 @@
-package com.virtual.beamer.utils;
+package com.virtualbeamer.receivers;
 
-import com.virtual.beamer.models.Message;
+import com.virtualbeamer.utils.Helpers;
 
 import java.io.*;
 import java.net.*;
 
-import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
-import static com.virtual.beamer.constants.SessionConstants.MULTICAST_PORT;
-import static com.virtual.beamer.models.Message.deserializeMessage;
-import static com.virtual.beamer.models.Message.handleMessage;
+import static com.virtualbeamer.constants.SessionConstants.GROUP_ADDRESS;
+import static com.virtualbeamer.constants.SessionConstants.MULTICAST_PORT;
+import static com.virtualbeamer.utils.MessageHandler.collectAndProcessMessage;
 
 public class MulticastReceiver extends Thread {
-    public static final int INET_SOCKET_PORT = 1234;
-
     final private MulticastSocket socket;
     final private InetSocketAddress inetSocketAddress;
     private final NetworkInterface networkInterface;
@@ -20,25 +17,16 @@ public class MulticastReceiver extends Thread {
     public MulticastReceiver() throws IOException {
         socket = new MulticastSocket(MULTICAST_PORT);
         socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
-        inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, INET_SOCKET_PORT);
+        inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, MULTICAST_PORT);
         networkInterface = Helpers.getNetworkInterface();
     }
 
-    @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
         try {
             byte[] buffer = new byte[1000];
             System.out.println(networkInterface);
             socket.joinGroup(inetSocketAddress, networkInterface);
-            while (true) {
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                socket.receive(packet);
-                InetAddress senderAddress = packet.getAddress();
-                System.out.println("Multicast received from " + senderAddress);
-
-                Message message = deserializeMessage(buffer);
-                handleMessage(message, senderAddress);
-            }
+            collectAndProcessMessage(socket, buffer);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         } finally {
@@ -49,6 +37,5 @@ public class MulticastReceiver extends Thread {
             }
             socket.close();
         }
-
     }
 }

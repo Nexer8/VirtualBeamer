@@ -17,7 +17,7 @@
 
 <BorderPane prefHeight="305.0" prefWidth="507.0" style="-fx-background-color: #32566b;"
             stylesheets="@../styles/base.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.virtual.beamer.controllers.PresentationViewController">
+            fx:controller="com.virtualbeamer.controllers.PresentationViewController">
     <top>
         <BorderPane style="-fx-background-color: #002d40;" BorderPane.alignment="CENTER">
             <left>

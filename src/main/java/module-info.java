@@ -3,8 +3,8 @@ module com.example.virtualbeamer {
     requires javafx.fxml;
     requires java.desktop;
 
-    opens com.virtual.beamer to javafx.fxml;
-    exports com.virtual.beamer;
-    exports com.virtual.beamer.controllers;
-    opens com.virtual.beamer.controllers to javafx.fxml;
+    opens com.virtualbeamer to javafx.fxml;
+    exports com.virtualbeamer;
+    exports com.virtualbeamer.controllers;
+    opens com.virtualbeamer.controllers to javafx.fxml;
 }

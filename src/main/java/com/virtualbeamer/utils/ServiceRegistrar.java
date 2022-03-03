@@ -1,11 +1,11 @@
-package com.virtual.beamer.utils;
+package com.virtualbeamer.utils;
 
-import com.virtual.beamer.models.User;
+import com.virtualbeamer.services.MainService;
 
 import java.io.IOException;
 
 final public class ServiceRegistrar {
     public static void registerServices() throws IOException {
-        User.getInstance();
+        MainService.getInstance();
     }
 }

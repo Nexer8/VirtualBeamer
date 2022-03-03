@@ -1,4 +1,4 @@
-package com.virtual.beamer.constants;
+package com.virtualbeamer.constants;
 
 public enum MessageType {
     DELETE_SESSION,
@@ -6,7 +6,6 @@ public enum MessageType {
     NEXT_SLIDE,
     PREVIOUS_SLIDE,
     SESSION_DETAILS,
-    SEND_SLIDES,
     COLLECT_PORTS,
     SEND_SESSION_PORT,
     JOIN_SESSION,
@@ -19,5 +18,5 @@ public enum MessageType {
     STOP_AGREEMENT_PROCESS,
     CRASH_DETECT,
     IM_ALIVE,
-    NACK_PACKET
+    CURRENT_SLIDE_NUMBER, NACK_PACKET
 }

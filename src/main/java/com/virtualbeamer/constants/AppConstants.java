@@ -1,4 +1,4 @@
-package com.virtual.beamer.constants;
+package com.virtualbeamer.constants;
 
 public final class AppConstants {
     public static final double MIN_WINDOW_HEIGHT = 300.0;

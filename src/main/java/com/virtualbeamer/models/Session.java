@@ -1,9 +1,9 @@
-package com.virtual.beamer.models;
+package com.virtualbeamer.models;
+
+import com.virtualbeamer.constants.SessionConstants;
 
 import java.io.*;
 import java.net.*;
-
-import static com.virtual.beamer.constants.SessionConstants.*;
 
 public class Session implements Serializable {
     private final DatagramSocket socket;
@@ -19,7 +19,7 @@ public class Session implements Serializable {
         final byte[] data = baos.toByteArray();
 
         DatagramPacket packet = new DatagramPacket(data, data.length,
-                InetAddress.getByName(GROUP_ADDRESS), MULTICAST_PORT);
+                InetAddress.getByName(SessionConstants.GROUP_ADDRESS), SessionConstants.MULTICAST_PORT);
         socket.send(packet);
     }
 
@@ -35,6 +35,6 @@ public class Session implements Serializable {
     }
 
     public void sendMessage(Message message, InetAddress address) throws IOException {
-        sendMessage(message, address, INDIVIDUAL_MESSAGE_PORT);
+        sendMessage(message, address, SessionConstants.INDIVIDUAL_MESSAGE_PORT);
     }
 }

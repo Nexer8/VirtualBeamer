@@ -1,21 +1,23 @@
-package com.virtual.beamer.utils;
+package com.virtualbeamer.receivers;
 
-import com.virtual.beamer.models.Message;
-import com.virtual.beamer.models.User;
+import com.virtualbeamer.models.Message;
+import com.virtualbeamer.services.MainService;
+import com.virtualbeamer.utils.Helpers;
 
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
 
-import static com.virtual.beamer.constants.SessionConstants.GROUP_ADDRESS;
-import static com.virtual.beamer.models.Message.deserializeMessage;
-import static com.virtual.beamer.models.Message.handleMessage;
+import static com.virtualbeamer.constants.SessionConstants.GROUP_ADDRESS;
+import static com.virtualbeamer.utils.MessageHandler.deserializeMessage;
+import static com.virtualbeamer.utils.MessageHandler.handleMessage;
+import static com.virtualbeamer.utils.PacketCreator.SLIDE_PACKET_MAX_SIZE;
 
 public class GroupReceiver extends Thread {
     final private MulticastSocket socket;
     final private InetSocketAddress inetSocketAddress;
     final private NetworkInterface networkInterface;
-    private ArrayList<Message> buffer;
+    private final ArrayList<Message> buffer;
 
     public GroupReceiver(int port) throws IOException {
         socket = new MulticastSocket(port);
@@ -28,7 +30,7 @@ public class GroupReceiver extends Thread {
     @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
         try {
-            byte[] buffer = new byte[10000];
+            byte[] buffer = new byte[SLIDE_PACKET_MAX_SIZE + 8];
             socket.joinGroup(inetSocketAddress, networkInterface);
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -42,7 +44,7 @@ public class GroupReceiver extends Thread {
                     if (this.buffer.size() >= 2) {
                         if (this.buffer.get(this.buffer.size() - 1).packetID - 1 > this.buffer.get(this.buffer.size() - 2).packetID) {
                             System.out.println("Missing packet found");
-                            User.getInstance().sendNACKPacket(this.buffer.get(this.buffer.size() - 1).packetID - 1);
+                            MainService.getInstance().sendNACKPacket(this.buffer.get(this.buffer.size() - 1).packetID - 1);
                         }
                     }
                     handleMessage(message, senderAddress);

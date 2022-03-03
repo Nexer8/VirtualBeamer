@@ -1,4 +1,4 @@
-package com.virtual.beamer.utils;
+package com.virtualbeamer.utils;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;

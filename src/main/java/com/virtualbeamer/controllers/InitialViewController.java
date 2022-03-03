@@ -1,6 +1,6 @@
-package com.virtual.beamer.controllers;
+package com.virtualbeamer.controllers;
 
-import com.virtual.beamer.models.User;
+import com.virtualbeamer.services.MainService;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,12 +17,12 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 
-import static com.virtual.beamer.constants.AppConstants.UserType;
-import static com.virtual.beamer.constants.AppConstants.UserType.*;
+import static com.virtualbeamer.constants.AppConstants.UserType;
+import static com.virtualbeamer.constants.AppConstants.UserType.*;
 
 
 public class InitialViewController implements Initializable {
-    private User user;
+    private MainService user;
 
     @FXML
     private Button createButton;
@@ -58,7 +58,7 @@ public class InitialViewController implements Initializable {
         user.setUsername(usernameEditTextField.getText());
         String session = ongoingSessions.getSelectionModel().getSelectedItem().
                 substring(0, ongoingSessions.getSelectionModel().getSelectedItem().indexOf(":"));
-        User.getInstance().joinSession(session);
+        MainService.getInstance().joinSession(session);
         goToPresentationView(mouseEvent, VIEWER);
     }
 
@@ -99,7 +99,7 @@ public class InitialViewController implements Initializable {
                         ongoingSessions.getSelectionModel().selectedItemProperty()));
 
         try {
-            user = User.getInstance();
+            user = MainService.getInstance();
             ongoingSessions.setItems(user.getGroupSessionsInfo());
         } catch (IOException e) {
             e.printStackTrace();

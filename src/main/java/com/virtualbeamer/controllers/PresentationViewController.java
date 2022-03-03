@@ -1,6 +1,6 @@
-package com.virtual.beamer.controllers;
+package com.virtualbeamer.controllers;
 
-import com.virtual.beamer.models.User;
+import com.virtualbeamer.services.MainService;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -20,12 +20,12 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-import static com.virtual.beamer.constants.AppConstants.UserType.PRESENTER;
-import static com.virtual.beamer.constants.AppConstants.UserType.VIEWER;
+import static com.virtualbeamer.constants.AppConstants.UserType.PRESENTER;
+import static com.virtualbeamer.constants.AppConstants.UserType.VIEWER;
 
 
 public class PresentationViewController implements Initializable {
-    private User user;
+    private MainService user;
 
     private Background slidePaneDefaultBackground;
 
@@ -122,7 +122,7 @@ public class PresentationViewController implements Initializable {
             }
             user.setSlides(images.toArray(new BufferedImage[0]));
             user.setCurrentSlide(0);
-            user.multicastSlide();
+            user.multicastSlides();
             if (user.getSlides().size() <= 1) {
                 nextSlideButton.setDisable(true);
                 previousSlideButton.setDisable(true);
@@ -175,22 +175,11 @@ public class PresentationViewController implements Initializable {
         slidePaneDefaultBackground = slidePane.getBackground();
 
         try {
-            user = User.getInstance();
+            user = MainService.getInstance();
             participants.setItems(user.getParticipantsNames());
 
             if (user.getUserType() == VIEWER) {
-                participants.setCellFactory(lv -> new ListCell<>() {
-                    @Override
-                    public void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty || item == null) {
-                            setText("Participants");
-                        } else {
-                            setText(item);
-                            setDisable(user.getUserType() == VIEWER);
-                        }
-                    }
-                });
+                initializeParticipantsComboBox();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -224,18 +213,7 @@ public class PresentationViewController implements Initializable {
             Platform.runLater(() -> participants.getSelectionModel().clearSelection());
         }
 
-        participants.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            public void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText("Participants");
-                } else {
-                    setText(item);
-                    setDisable(user.getUserType() == VIEWER);
-                }
-            }
-        });
+        initializeParticipantsComboBox();
 
         if (user.getUserType() == PRESENTER) {
             System.out.println("I'm a PRESENTER");
@@ -252,6 +230,21 @@ public class PresentationViewController implements Initializable {
         }
 
         Platform.runLater(() -> presenterLabel.setText("Presenter: " + leaderInfo));
+    }
+
+    private void initializeParticipantsComboBox() {
+        participants.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText("Participants");
+                } else {
+                    setText(item);
+                    setDisable(user.getUserType() == VIEWER);
+                }
+            }
+        });
     }
 
     public VBox getProgressIndicator() {

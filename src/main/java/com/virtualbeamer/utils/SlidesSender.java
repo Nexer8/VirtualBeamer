@@ -1,9 +1,10 @@
-package com.virtual.beamer.utils;
+package com.virtualbeamer.utils;
 
 import java.io.*;
 import java.net.*;
 
-import static com.virtual.beamer.constants.SessionConstants.*;
+import static com.virtualbeamer.constants.SessionConstants.*;
+
 
 public class SlidesSender implements Serializable {
     private final DatagramSocket socket;
