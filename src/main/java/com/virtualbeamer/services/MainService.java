@@ -4,9 +4,9 @@ import com.virtualbeamer.constants.AppConstants;
 import com.virtualbeamer.constants.MessageType;
 import com.virtualbeamer.constants.SessionConstants;
 import com.virtualbeamer.controllers.PresentationViewController;
+import com.virtualbeamer.models.GlobalSession;
 import com.virtualbeamer.models.GroupSession;
 import com.virtualbeamer.models.Message;
-import com.virtualbeamer.models.Session;
 import com.virtualbeamer.models.User;
 import com.virtualbeamer.receivers.*;
 import com.virtualbeamer.utils.*;
@@ -23,8 +23,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.virtualbeamer.constants.SessionConstants.SO_TIMEOUT;
 import static com.virtualbeamer.utils.MessageHandler.collectAndProcessMessage;
-import static com.virtualbeamer.utils.MessageHandler.deserializeMessage;
-import static com.virtualbeamer.utils.MessageHandler.handleMessage;
 
 public class MainService {
     private static volatile MainService instance;
@@ -42,20 +40,16 @@ public class MainService {
     private final ArrayList<Integer> groupIDs = new ArrayList<>();
     private final ArrayList<Integer> groupPortList = new ArrayList<>();
 
-    private final Session session;
+    private final GlobalSession globalSession;
     private GroupSession groupSession;
     private GroupReceiver groupReceiver;
     private final SlidesSender slidesSender;
 
-    private boolean electSent = false;
-    private Timer electionTimer;
-
     private boolean agreementMessageSent = false;
     private Timer agreementTimer;
 
-    private Timer crashDetectionTimer;
-    private Map<Integer, Timer> nackTimer;
-    private CrashDetection crashDetectionThread;
+    private final Map<Integer, Timer> nackTimer = new HashMap<>();
+    private CrashDetection crashDetection;
 
     private MainService() throws IOException {
         MulticastReceiver multicastReceiver = new MulticastReceiver();
@@ -64,7 +58,7 @@ public class MainService {
         UnicastReceiver unicastReceiver = new UnicastReceiver();
         unicastReceiver.start();
 
-        session = new Session();
+        globalSession = new GlobalSession();
         groupSession = new GroupSession("");
 
         SlidesReceiver slidesReceiver = new SlidesReceiver();
@@ -93,7 +87,7 @@ public class MainService {
         user.setUserType(AppConstants.UserType.PRESENTER);
         user.setID(0);
         groupSession.setName(sessionName);
-        session.multicast(new Message(MessageType.COLLECT_PORTS));
+        globalSession.multicast(new Message(MessageType.COLLECT_PORTS));
         this.groupPortList.clear();
 
         try (DatagramSocket socket = new DatagramSocket(SessionConstants.UNICAST_COLLECT_PORTS_PORT)) {
@@ -149,18 +143,18 @@ public class MainService {
 
         user.setID(id);
         System.out.println("ID set: " + id);
-        crashDetectionThread = new CrashDetection();
-        crashDetectionThread.start();
+//        crashDetection = new CrashDetection();
+//        crashDetection.start();
     }
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
-        session.sendMessage(new Message(MessageType.SEND_USER_DATA,
+        globalSession.sendMessage(new Message(MessageType.SEND_USER_DATA,
                 user.getUsername(), user.getID(), Helpers.getInetAddress()), senderAddress, SessionConstants.UNICAST_SEND_USER_DATA_PORT);
     }
 
     public void setGroupLeader(String name) throws IOException {
         user.setUserType(AppConstants.UserType.VIEWER);
-        session.multicast(new Message(MessageType.COORD,
+        globalSession.multicast(new Message(MessageType.COORD,
                 groupSession, name, participantsInfo.get(name)));
     }
 
@@ -178,11 +172,12 @@ public class MainService {
     }
 
     public void sendHelloMessage() throws IOException {
-        session.multicast(new Message(MessageType.HELLO));
+        globalSession.multicast(new Message(MessageType.HELLO));
     }
 
     public void multicastSlides() throws IOException {
         for (int i = 0; i < slides.size(); i++) {
+            System.out.println("Sending slide " + i);
             for (var packet : PacketCreator.createPackets(slides.get(i), i)) {
                 slidesSender.multicast(packet);
             }
@@ -197,6 +192,7 @@ public class MainService {
 
     public void sendSlides(InetAddress senderAddress) throws IOException, InterruptedException {
         for (int i = 0; i < slides.size(); i++) {
+            System.out.println("Sending slide " + i);
             for (var packet : PacketCreator.createPackets(slides.get(i), i)) {
                 TimeUnit.MILLISECONDS.sleep(50);
                 slidesSender.sendMessage(packet, senderAddress);
@@ -206,15 +202,15 @@ public class MainService {
     }
 
     public void multicastSessionDetails() throws IOException {
-        session.multicast(new Message(MessageType.SESSION_DETAILS, groupSession));
+        globalSession.multicast(new Message(MessageType.SESSION_DETAILS, groupSession));
     }
 
     public void sendSessionDetails(InetAddress senderAddress) throws IOException {
-        session.sendMessage(new Message(MessageType.SESSION_DETAILS, groupSession), senderAddress);
+        globalSession.sendMessage(new Message(MessageType.SESSION_DETAILS, groupSession), senderAddress);
     }
 
     public void multicastDeleteSession() throws IOException {
-        session.multicast(new Message(MessageType.DELETE_SESSION, groupSession));
+        globalSession.multicast(new Message(MessageType.DELETE_SESSION, groupSession));
         cleanUpSessionData();
     }
 
@@ -230,7 +226,7 @@ public class MainService {
 
     public void sendGroupPort(InetAddress senderAddress) throws IOException {
         if (groupSession.getPort() != 0) {
-            session.sendMessage(new Message(MessageType.SEND_SESSION_PORT,
+            globalSession.sendMessage(new Message(MessageType.SEND_SESSION_PORT,
                     groupSession.getPort()), senderAddress, SessionConstants.UNICAST_COLLECT_PORTS_PORT);
         }
     }
@@ -353,35 +349,21 @@ public class MainService {
         return user.getID();
     }
 
-    public void electLeader() throws IOException {
-        if (!electSent) {
-            groupSession.sendGroupMessage(new Message(MessageType.ELECT, user.getID()));
-            electSent = true;
+    public void sendElect() throws IOException {
+        groupSession.sendGroupMessage(new Message(MessageType.ELECT, user.getID()));
+    }
 
-            electionTimer = new Timer(true);
-            electionTimer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    try {
-                        groupSession.sendGroupMessage(new Message(MessageType.COORD,
-                                groupSession, user.getUsername(), Helpers.getInetAddress()));
-                        user.setUserType(AppConstants.UserType.PRESENTER);
-                        electSent = false;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }, SessionConstants.LEADER_ELECTION_TIMEOUT);
-        }
+    public void sendCOORD() throws IOException {
+        groupSession.sendGroupMessage(new Message(MessageType.COORD,
+                groupSession, user.getUsername(), Helpers.getInetAddress()));
     }
 
     public void sendStopElection(InetAddress senderAddress) throws IOException {
-        session.sendMessage(new Message(MessageType.STOP_ELECT), senderAddress);
+        globalSession.sendMessage(new Message(MessageType.STOP_ELECT), senderAddress);
     }
 
     public void stopElection() {
-        electionTimer.cancel();
-        electSent = false;
+        crashDetection.stopElection();
     }
 
     public void agreeOnSlidesSender(InetAddress senderAddress) throws IOException {
@@ -408,7 +390,7 @@ public class MainService {
     }
 
     public void sendStopAgreementProcess(InetAddress senderAddress) throws IOException {
-        session.sendMessage(new Message(MessageType.STOP_AGREEMENT_PROCESS), senderAddress);
+        globalSession.sendMessage(new Message(MessageType.STOP_AGREEMENT_PROCESS), senderAddress);
     }
 
     public void stopAgreementProcess() {
@@ -420,80 +402,24 @@ public class MainService {
         groupIDs.add(id);
     }
 
-    public void sendCrashDetectionCheck(int delay) {
-        crashDetectionTimer = new Timer(false);
-        System.out.println("Sending crash detection message in " + delay);
-
-        crashDetectionTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    MainService.getInstance().groupSession.sendGroupMessage(new Message(MessageType.CRASH_DETECT, user.getUsername()));
-
-                    boolean leaderCrashed = true;
-
-                    try (DatagramSocket socket = new DatagramSocket(SessionConstants.UNICAST_IM_ALIVE_PORT)) {
-                        socket.setSoTimeout(SO_TIMEOUT);
-                        byte[] buffer = new byte[10000];
-//                        TODO: try to replace with collectAndProcessMessage(socket, buffer);
-                        //noinspection InfiniteLoopStatement
-                        while (true) {
-                            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                            socket.receive(packet);
-                            InetAddress senderAddress = packet.getAddress();
-
-                            Message message = deserializeMessage(buffer);
-                            handleMessage(message, senderAddress);
-                            leaderCrashed = false;
-                        }
-                    } catch (IOException | ClassNotFoundException e) {
-                        System.out.println("Stop waiting for IM ALIVE.");
-                    }
-
-                    if (leaderCrashed) {
-                        System.out.println("Leader crashed.");
-                        electLeader();
-                    } else {
-                        System.out.println("Leader online.");
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, delay);
+    public void sendCrashDetect() throws IOException {
+        groupSession.sendGroupMessage(new Message(MessageType.CRASH_DETECT, user.getUsername()));
     }
 
     public void stopCrashDetectionTimer() {
-        crashDetectionTimer.cancel();
+        crashDetection.stopTimer();
     }
 
     public void stopCrashChecking() {
-        crashDetectionThread.stop();
+        crashDetection.stop();
     }
 
     public void startCrashChecking() {
-        crashDetectionThread.start();
+        crashDetection.start();
     }
 
     public void sendImAlive(InetAddress address) throws IOException {
-        session.sendMessage(new Message(MessageType.IM_ALIVE), address, SessionConstants.UNICAST_IM_ALIVE_PORT);
-    }
-
-    public static class CrashDetection extends Thread {
-        @SuppressWarnings("InfiniteLoopStatement")
-        public void run() {
-            while (true) {
-                try {
-                    int delay = SessionConstants.CRASH_DETECTION_LOWER_BOUND_TIMEOUT + (int) (Math.random() * 1000);
-                    MainService.getInstance().sendCrashDetectionCheck(delay);
-                    // TODO: Sleep inside a thread is not good practice.
-                    sleep((long) delay + 1500);
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        globalSession.sendMessage(new Message(MessageType.IM_ALIVE), address, SessionConstants.UNICAST_IM_ALIVE_PORT);
     }
 
     public void sendNACKPacket(int packetID) {
@@ -513,7 +439,7 @@ public class MainService {
         }, (int) (Math.random() * 1000));
     }
 
-    public void stopNackTimer(int packetID) {
+    public void stopNACKTimer(int packetID) {
         nackTimer.get(packetID).cancel();
         nackTimer.remove(packetID);
     }

@@ -5,10 +5,10 @@ import com.virtualbeamer.constants.SessionConstants;
 import java.io.*;
 import java.net.*;
 
-public class Session implements Serializable {
+public class GlobalSession implements Serializable {
     private final DatagramSocket socket;
 
-    public Session() throws SocketException {
+    public GlobalSession() throws SocketException {
         socket = new DatagramSocket();
     }
 

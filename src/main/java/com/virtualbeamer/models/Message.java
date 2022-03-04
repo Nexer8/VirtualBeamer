@@ -149,7 +149,7 @@ public class Message implements Serializable {
                 if (MainService.getInstance().getUserType() == AppConstants.UserType.PRESENTER)
                     MainService.getInstance().resendPacket(message.packetID);
                 else
-                    MainService.getInstance().stopNackTimer(message.packetID);
+                    MainService.getInstance().stopNACKTimer(message.packetID);
             }
         }
     }
