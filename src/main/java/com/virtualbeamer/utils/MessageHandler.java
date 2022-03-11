@@ -98,13 +98,14 @@ public class MessageHandler {
                 MainService.getInstance().stopElection();
             }
             case START_AGREEMENT_PROCESS -> {
-                int mID = MainService.getInstance().getGroupIDs().isEmpty() ? MainService.getInstance().getID() : Collections.min(MainService.getInstance().getGroupIDs());
+                int mID = MainService.getInstance().getGroupIDs().isEmpty() ?
+                        MainService.getInstance().getID() : Collections.min(MainService.getInstance().getGroupIDs());
 
                 if (mID < message.intVariable) {
-                    MainService.getInstance().sendStopAgreementProcess(senderAddress);
+                    MainService.getInstance().sendStopAgreementProcess(senderAddress, message.ipAddress);
                 }
             }
-            case STOP_AGREEMENT_PROCESS -> MainService.getInstance().stopAgreementProcess();
+            case STOP_AGREEMENT_PROCESS -> MainService.getInstance().stopAgreementProcess(message.ipAddress);
             case CRASH_DETECT -> {
                 if (!MainService.getInstance().getUsername().equals(message.stringVariable)) {
                     if (MainService.getInstance().getUserType() == AppConstants.UserType.VIEWER) {

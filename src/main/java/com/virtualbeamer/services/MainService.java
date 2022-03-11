@@ -44,8 +44,8 @@ public class MainService {
     private GroupReceiver groupReceiver;
     private final SlidesSender slidesSender;
 
-    private boolean agreementMessageSent = false;
-    private Timer agreementTimer;
+    private final Map<InetAddress, Boolean> agreementMessageSent = new HashMap<>();
+    private final Map<InetAddress, Timer> agreementTimer = new HashMap<>();
 
     private final Map<Integer, Timer> nackTimer = new HashMap<>();
     private CrashDetection crashDetection;
@@ -370,20 +370,20 @@ public class MainService {
     }
 
     public synchronized void agreeOnSlidesSender(InetAddress senderAddress) throws IOException {
-        if (!agreementMessageSent) {
+        if (!agreementMessageSent.containsKey(senderAddress) || !agreementMessageSent.get(senderAddress)) {
             int mID = groupIDs.isEmpty() ? user.getID() : Collections.min(groupIDs);
-            groupSession.sendGroupMessage(new Message(START_AGREEMENT_PROCESS, mID));
-            agreementMessageSent = true;
+            groupSession.sendGroupMessage(new Message(START_AGREEMENT_PROCESS, mID, senderAddress));
+            agreementMessageSent.put(senderAddress, true);
 
-            agreementTimer = new Timer(true);
-            agreementTimer.schedule(new TimerTask() {
+            agreementTimer.put(senderAddress, new Timer(true));
+            agreementTimer.get(senderAddress).schedule(new TimerTask() {
                 @Override
                 public void run() {
                     try {
                         if (user.getID() == mID) {
                             sendSlides(senderAddress);
                         }
-                        agreementMessageSent = false;
+                        agreementMessageSent.put(senderAddress, false);
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -392,13 +392,13 @@ public class MainService {
         }
     }
 
-    public void sendStopAgreementProcess(InetAddress senderAddress) throws IOException {
-        globalSession.sendMessage(new Message(STOP_AGREEMENT_PROCESS), senderAddress);
+    public void sendStopAgreementProcess(InetAddress senderAddress, InetAddress viewerAddress) throws IOException {
+        globalSession.sendMessage(new Message(STOP_AGREEMENT_PROCESS, viewerAddress), senderAddress);
     }
 
-    public void stopAgreementProcess() {
-        agreementTimer.cancel();
-        agreementMessageSent = false;
+    public synchronized void stopAgreementProcess(InetAddress viewerAddress) {
+        agreementTimer.get(viewerAddress).cancel();
+        agreementMessageSent.put(viewerAddress, false);
     }
 
     public synchronized void addListGroupID(int id) {
