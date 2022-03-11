@@ -13,7 +13,7 @@ import java.util.Objects;
 import static com.virtualbeamer.utils.PacketCreator.*;
 
 public class SlidesHandler {
-    public static void receiveSlides(DatagramSocket socket) throws IOException {
+    public synchronized static void receiveSlides(DatagramSocket socket) throws IOException {
         int currentSession = -1;
         int slicesStored = 0;
         int[] slicesCol = null;
@@ -68,9 +68,7 @@ public class SlidesHandler {
             ByteArrayInputStream bis = new ByteArrayInputStream(Objects.requireNonNull(imageData));
             BufferedImage image = ImageIO.read(bis);
 
-            synchronized (MainService.class) {
-                MainService.getInstance().getSlides().add(image);
-            }
+            MainService.getInstance().addSlide(image);
             System.out.println("Image " + currentSession + " downloaded");
         }
     }

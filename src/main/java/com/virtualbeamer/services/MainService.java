@@ -1,8 +1,6 @@
 package com.virtualbeamer.services;
 
 import com.virtualbeamer.constants.AppConstants;
-import com.virtualbeamer.constants.MessageType;
-import com.virtualbeamer.constants.SessionConstants;
 import com.virtualbeamer.controllers.PresentationViewController;
 import com.virtualbeamer.models.GlobalSession;
 import com.virtualbeamer.models.GroupSession;
@@ -21,7 +19,8 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static com.virtualbeamer.constants.SessionConstants.SO_TIMEOUT;
+import static com.virtualbeamer.constants.MessageType.*;
+import static com.virtualbeamer.constants.SessionConstants.*;
 import static com.virtualbeamer.utils.MessageHandler.collectAndProcessMessage;
 
 public class MainService {
@@ -87,10 +86,10 @@ public class MainService {
         user.setUserType(AppConstants.UserType.PRESENTER);
         user.setID(0);
         groupSession.setName(sessionName);
-        globalSession.multicast(new Message(MessageType.COLLECT_PORTS));
+        globalSession.multicast(new Message(COLLECT_PORTS));
         this.groupPortList.clear();
 
-        try (DatagramSocket socket = new DatagramSocket(SessionConstants.UNICAST_COLLECT_PORTS_PORT)) {
+        try (DatagramSocket socket = new DatagramSocket(UNICAST_COLLECT_PORTS_PORT)) {
             socket.setSoTimeout(SO_TIMEOUT);
             byte[] buffer = new byte[10000];
             collectAndProcessMessage(socket, buffer);
@@ -100,7 +99,7 @@ public class MainService {
 
         int groupPort;
         if (groupPortList.isEmpty()) {
-            groupPort = SessionConstants.STARTING_GROUP_PORT;
+            groupPort = STARTING_GROUP_PORT;
         } else {
             groupPort = Collections.max(groupPortList) + 1;
         }
@@ -121,11 +120,11 @@ public class MainService {
         System.out.println("Test print: " + groupSession.getLeaderInfo() + " " + getGroupSession(name).getPort());
         groupReceiver = new GroupReceiver(getGroupSession(name).getPort());
         groupReceiver.start();
-        groupSession.sendGroupMessage(new Message(MessageType.JOIN_SESSION,
+        groupSession.sendGroupMessage(new Message(JOIN_SESSION,
                 user.getUsername(), Helpers.getInetAddress()));
 
         // Collect IDs
-        try (DatagramSocket socket = new DatagramSocket(SessionConstants.UNICAST_SEND_USER_DATA_PORT)) {
+        try (DatagramSocket socket = new DatagramSocket(UNICAST_SEND_USER_DATA_PORT)) {
             socket.setSoTimeout(SO_TIMEOUT);
             byte[] buffer = new byte[10000];
             collectAndProcessMessage(socket, buffer);
@@ -148,13 +147,13 @@ public class MainService {
     }
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
-        globalSession.sendMessage(new Message(MessageType.SEND_USER_DATA,
-                user.getUsername(), user.getID(), Helpers.getInetAddress()), senderAddress, SessionConstants.UNICAST_SEND_USER_DATA_PORT);
+        globalSession.sendMessage(new Message(SEND_USER_DATA,
+                user.getUsername(), user.getID(), Helpers.getInetAddress()), senderAddress, UNICAST_SEND_USER_DATA_PORT);
     }
 
     public void setGroupLeader(String name) throws IOException {
         user.setUserType(AppConstants.UserType.VIEWER);
-        globalSession.multicast(new Message(MessageType.COORD,
+        globalSession.multicast(new Message(COORD,
                 groupSession, name, participantsInfo.get(name)));
     }
 
@@ -167,12 +166,12 @@ public class MainService {
     }
 
     public void leaveSession() throws IOException {
-        groupSession.sendGroupMessage(new Message(MessageType.LEAVE_SESSION, user.getUsername()));
+        groupSession.sendGroupMessage(new Message(LEAVE_SESSION, user.getUsername()));
         cleanUpSessionData();
     }
 
     public void sendHelloMessage() throws IOException {
-        globalSession.multicast(new Message(MessageType.HELLO));
+        globalSession.multicast(new Message(HELLO));
     }
 
     public void multicastSlides() throws IOException {
@@ -186,7 +185,7 @@ public class MainService {
     }
 
     public void multicastCurrentSlideNumber() throws IOException {
-        groupSession.sendGroupMessage(new Message(MessageType.CURRENT_SLIDE_NUMBER,
+        groupSession.sendGroupMessage(new Message(CURRENT_SLIDE_NUMBER,
                 currentSlide));
     }
 
@@ -202,32 +201,32 @@ public class MainService {
     }
 
     public void multicastSessionDetails() throws IOException {
-        globalSession.multicast(new Message(MessageType.SESSION_DETAILS, groupSession));
+        globalSession.multicast(new Message(SESSION_DETAILS, groupSession));
     }
 
     public void sendSessionDetails(InetAddress senderAddress) throws IOException {
-        globalSession.sendMessage(new Message(MessageType.SESSION_DETAILS, groupSession), senderAddress);
+        globalSession.sendMessage(new Message(SESSION_DETAILS, groupSession), senderAddress);
     }
 
     public void multicastDeleteSession() throws IOException {
-        globalSession.multicast(new Message(MessageType.DELETE_SESSION, groupSession));
+        globalSession.multicast(new Message(DELETE_SESSION, groupSession));
         cleanUpSessionData();
     }
 
     public void multicastNextSlide() throws IOException {
         currentSlide++;
-        groupSession.sendGroupMessage(new Message(MessageType.NEXT_SLIDE, currentSlide));
+        groupSession.sendGroupMessage(new Message(NEXT_SLIDE, currentSlide));
     }
 
     public void multicastPreviousSlide() throws IOException {
         currentSlide--;
-        groupSession.sendGroupMessage(new Message(MessageType.PREVIOUS_SLIDE));
+        groupSession.sendGroupMessage(new Message(PREVIOUS_SLIDE));
     }
 
     public void sendGroupPort(InetAddress senderAddress) throws IOException {
         if (groupSession.getPort() != 0) {
-            globalSession.sendMessage(new Message(MessageType.SEND_SESSION_PORT,
-                    groupSession.getPort()), senderAddress, SessionConstants.UNICAST_COLLECT_PORTS_PORT);
+            globalSession.sendMessage(new Message(SEND_SESSION_PORT,
+                    groupSession.getPort()), senderAddress, UNICAST_COLLECT_PORTS_PORT);
         }
     }
 
@@ -239,11 +238,15 @@ public class MainService {
         return slides;
     }
 
+    public synchronized void addSlide(BufferedImage slide) {
+        slides.add(slide);
+    }
+
     public AppConstants.UserType getUserType() {
         return user.getUserType();
     }
 
-    public void setCurrentSlide(int currentSlide) throws IOException {
+    public synchronized void setCurrentSlide(int currentSlide) throws IOException {
         this.currentSlide = currentSlide;
 
         if (user.getUserType() == AppConstants.UserType.VIEWER) {
@@ -270,24 +273,24 @@ public class MainService {
         this.pvc = pvc;
     }
 
-    public void addParticipant(String name, InetAddress ipAddress) {
+    public synchronized void addParticipant(String name, InetAddress ipAddress) {
         participantsInfo.put(name, ipAddress);
         Platform.runLater(() -> participantsNames.add(name));
     }
 
-    public void deleteParticipant(String name) {
+    public synchronized void deleteParticipant(String name) {
         participantsInfo.remove(name);
         System.out.println(name);
         Platform.runLater(() -> participantsNames.remove(name));
     }
 
-    public void addSessionData(GroupSession session) {
+    public synchronized void addSessionData(GroupSession session) {
         groupSessions.add(session);
         Platform.runLater(() -> groupSessionsInfo.add(session.getName() + ": " + session.getLeaderInfo()));
         System.out.println(session.getName());
     }
 
-    public void updateSessionData(GroupSession session, String leaderName, InetAddress addressIP) {
+    public synchronized void updateSessionData(GroupSession session, String leaderName, InetAddress addressIP) {
         if (leaderName.equals(user.getUsername())) {
             user.setUserType(AppConstants.UserType.PRESENTER);
         }
@@ -309,7 +312,7 @@ public class MainService {
         return groupSessionsInfo;
     }
 
-    public void deleteSession(GroupSession session) {
+    public synchronized void deleteSession(GroupSession session) {
         int idx = groupSessions.indexOf(session);
         if (idx != -1) {
             String name = groupSessions.get(idx).getName();
@@ -320,7 +323,7 @@ public class MainService {
         }
     }
 
-    public void addGroupPortToList(int groupPort) {
+    public synchronized void addGroupPortToList(int groupPort) {
         groupPortList.add(groupPort);
     }
 
@@ -350,26 +353,26 @@ public class MainService {
     }
 
     public void sendElect() throws IOException {
-        groupSession.sendGroupMessage(new Message(MessageType.ELECT, user.getID()));
+        groupSession.sendGroupMessage(new Message(ELECT, user.getID()));
     }
 
     public void sendCOORD() throws IOException {
-        groupSession.sendGroupMessage(new Message(MessageType.COORD,
+        groupSession.sendGroupMessage(new Message(COORD,
                 groupSession, user.getUsername(), Helpers.getInetAddress()));
     }
 
     public void sendStopElection(InetAddress senderAddress) throws IOException {
-        globalSession.sendMessage(new Message(MessageType.STOP_ELECT), senderAddress);
+        globalSession.sendMessage(new Message(STOP_ELECT), senderAddress);
     }
 
     public void stopElection() {
         crashDetection.stopElection();
     }
 
-    public void agreeOnSlidesSender(InetAddress senderAddress) throws IOException {
+    public synchronized void agreeOnSlidesSender(InetAddress senderAddress) throws IOException {
         if (!agreementMessageSent) {
             int mID = groupIDs.isEmpty() ? user.getID() : Collections.min(groupIDs);
-            groupSession.sendGroupMessage(new Message(MessageType.START_AGREEMENT_PROCESS, mID));
+            groupSession.sendGroupMessage(new Message(START_AGREEMENT_PROCESS, mID));
             agreementMessageSent = true;
 
             agreementTimer = new Timer(true);
@@ -385,12 +388,12 @@ public class MainService {
                         e.printStackTrace();
                     }
                 }
-            }, SessionConstants.AGREEMENT_PROCESS_TIMEOUT);
+            }, AGREEMENT_PROCESS_TIMEOUT);
         }
     }
 
     public void sendStopAgreementProcess(InetAddress senderAddress) throws IOException {
-        globalSession.sendMessage(new Message(MessageType.STOP_AGREEMENT_PROCESS), senderAddress);
+        globalSession.sendMessage(new Message(STOP_AGREEMENT_PROCESS), senderAddress);
     }
 
     public void stopAgreementProcess() {
@@ -398,12 +401,12 @@ public class MainService {
         agreementMessageSent = false;
     }
 
-    public void addListGroupID(int id) {
+    public synchronized void addListGroupID(int id) {
         groupIDs.add(id);
     }
 
     public void sendCrashDetect() throws IOException {
-        groupSession.sendGroupMessage(new Message(MessageType.CRASH_DETECT, user.getUsername()));
+        groupSession.sendGroupMessage(new Message(CRASH_DETECT, user.getUsername()));
     }
 
     public void stopCrashDetectionTimer() {
@@ -419,10 +422,10 @@ public class MainService {
     }
 
     public void sendImAlive(InetAddress address) throws IOException {
-        globalSession.sendMessage(new Message(MessageType.IM_ALIVE), address, SessionConstants.UNICAST_IM_ALIVE_PORT);
+        globalSession.sendMessage(new Message(IM_ALIVE), address, UNICAST_IM_ALIVE_PORT);
     }
 
-    public void sendNACKPacket(int packetID) {
+    public synchronized void sendNACKPacket(int packetID) {
         Timer nackTimerTmp = new Timer(true);
         nackTimer.put(packetID, nackTimerTmp);
 
@@ -430,7 +433,7 @@ public class MainService {
             @Override
             public void run() {
                 try {
-                    groupSession.sendGroupMessage(new Message(MessageType.NACK_PACKET, packetID));
+                    groupSession.sendGroupMessage(new Message(NACK_PACKET, packetID));
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -439,7 +442,7 @@ public class MainService {
         }, (int) (Math.random() * 1000));
     }
 
-    public void stopNACKTimer(int packetID) {
+    public synchronized void stopNACKTimer(int packetID) {
         nackTimer.get(packetID).cancel();
         nackTimer.remove(packetID);
     }

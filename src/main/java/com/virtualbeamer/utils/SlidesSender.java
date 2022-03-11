@@ -13,13 +13,13 @@ public class SlidesSender implements Serializable {
         socket = new DatagramSocket();
     }
 
-    public void multicast(byte[] data) throws IOException {
+    public synchronized void multicast(byte[] data) throws IOException {
         DatagramPacket packet = new DatagramPacket(data, data.length,
                 InetAddress.getByName(GROUP_ADDRESS), SLIDES_MULTICAST_PORT);
         socket.send(packet);
     }
 
-    public void sendMessage(byte[] data, InetAddress address) throws IOException {
+    public synchronized void sendMessage(byte[] data, InetAddress address) throws IOException {
         DatagramPacket packet = new DatagramPacket(data, data.length, address, INDIVIDUAL_SLIDES_PORT);
         socket.send(packet);
     }

@@ -1,7 +1,5 @@
 package com.virtualbeamer.models;
 
-import com.virtualbeamer.constants.MessageType;
-import com.virtualbeamer.constants.SessionConstants;
 import com.virtualbeamer.services.MainService;
 
 import java.io.*;
@@ -9,6 +7,10 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
+
+import static com.virtualbeamer.constants.MessageType.NEXT_SLIDE;
+import static com.virtualbeamer.constants.MessageType.PREVIOUS_SLIDE;
+import static com.virtualbeamer.constants.SessionConstants.GROUP_ADDRESS;
 
 public class GroupSession implements Serializable {
     private String name;
@@ -56,8 +58,8 @@ public class GroupSession implements Serializable {
         return name.equals(that.name);
     }
 
-    public void sendGroupMessage(Message message) throws IOException {
-        if (message.type == MessageType.NEXT_SLIDE || message.type == MessageType.PREVIOUS_SLIDE) {
+    public synchronized void sendGroupMessage(Message message) throws IOException {
+        if (message.type == NEXT_SLIDE || message.type == PREVIOUS_SLIDE) {
             if (buffer.isEmpty())
                 message.packetID = 1;
             else {
@@ -82,7 +84,7 @@ public class GroupSession implements Serializable {
         System.out.println("Sending group message to port: "
                 + MainService.getInstance().getGroupSession().getPort());
         DatagramPacket packet = new DatagramPacket(data, data.length,
-                InetAddress.getByName(SessionConstants.GROUP_ADDRESS), MainService.getInstance().getGroupSession().getPort());
+                InetAddress.getByName(GROUP_ADDRESS), MainService.getInstance().getGroupSession().getPort());
         socket.send(packet);
         socket.close();
     }

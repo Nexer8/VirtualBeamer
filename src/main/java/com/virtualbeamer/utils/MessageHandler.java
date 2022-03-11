@@ -95,7 +95,6 @@ public class MessageHandler {
             }
             case STOP_ELECT -> {
                 MainService.getInstance().stopCrashChecking();
-
                 MainService.getInstance().stopElection();
             }
             case START_AGREEMENT_PROCESS -> {
