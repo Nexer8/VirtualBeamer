@@ -1,4 +1,4 @@
-module com.example.virtualbeamer {
+module com.virtualbeamer {
     requires javafx.controls;
     requires javafx.fxml;
     requires java.desktop;
