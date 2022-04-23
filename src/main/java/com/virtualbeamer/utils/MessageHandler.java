@@ -8,9 +8,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.net.*;
 import java.util.Collections;
 
 public class MessageHandler {
@@ -23,6 +21,19 @@ public class MessageHandler {
 
             Message message = deserializeMessage(buffer);
             handleMessage(message, senderAddress);
+        }
+    }
+
+    public static void collectAndProcessUnicastMessage(ServerSocket serverSocket) throws IOException, ClassNotFoundException {
+        //noinspection InfiniteLoopStatement
+        while (true) {
+            Socket socket = serverSocket.accept();
+            System.out.println("Client connected!");
+
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+
+            Message message = (Message) in.readObject();
+            handleMessage(message, socket.getInetAddress());
         }
     }
 
@@ -45,6 +56,13 @@ public class MessageHandler {
             }
             case CURRENT_SLIDE_NUMBER -> {
                 if (MainService.getInstance().getUserType() != AppConstants.UserType.PRESENTER) {
+                    if (MainService.getInstance().getSlides().size() < message.intVariable + 1) {
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
                     MainService.getInstance().setCurrentSlide(message.intVariable);
                 }
             }
