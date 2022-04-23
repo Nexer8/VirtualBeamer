@@ -1,27 +1,37 @@
 package com.virtualbeamer.receivers;
 
+import com.virtualbeamer.models.Message;
+
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.*;
 
 import static com.virtualbeamer.constants.SessionConstants.INDIVIDUAL_MESSAGE_PORT;
-import static com.virtualbeamer.utils.MessageHandler.collectAndProcessMessage;
-import static com.virtualbeamer.utils.PacketCreator.SLIDE_PACKET_MAX_SIZE;
+import static com.virtualbeamer.utils.MessageHandler.handleMessage;
 
 public class UnicastReceiver extends Thread {
-    final private DatagramSocket socket;
+    final private ServerSocket serverSocket;
 
     public UnicastReceiver() throws IOException {
-        socket = new DatagramSocket(INDIVIDUAL_MESSAGE_PORT);
+        serverSocket = new ServerSocket(INDIVIDUAL_MESSAGE_PORT);
     }
 
     public void run() {
         try {
-            byte[] buffer = new byte[SLIDE_PACKET_MAX_SIZE + 8];
-            collectAndProcessMessage(socket, buffer);
-        } catch (IOException | ClassNotFoundException e) {
+            //noinspection InfiniteLoopStatement
+            while (true) {
+                Socket socket = serverSocket.accept();
+                System.out.println("Client connected!");
+
+                ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+
+                Message message = (Message) in.readObject();
+                handleMessage(message, socket.getInetAddress());
+            }
+        } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            socket.close();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 }
