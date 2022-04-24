@@ -18,8 +18,6 @@ public class IndividualSlidesReceiver extends Thread {
             //noinspection InfiniteLoopStatement
             while (true) {
                 Socket socket = serverSocket.accept();
-                System.out.println("Client connected!");
-
                 DataInputStream in = new DataInputStream(socket.getInputStream());
 
                 int numberOfSlides = in.readInt();

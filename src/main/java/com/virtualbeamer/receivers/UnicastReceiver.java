@@ -21,8 +21,6 @@ public class UnicastReceiver extends Thread {
             //noinspection InfiniteLoopStatement
             while (true) {
                 Socket socket = serverSocket.accept();
-                System.out.println("Client connected!");
-
                 ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
                 Message message = (Message) in.readObject();

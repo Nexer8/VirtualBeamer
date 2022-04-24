@@ -42,6 +42,7 @@ public class MainService {
     private GroupSession groupSession;
     private GroupReceiver groupReceiver;
     private final SlidesSender slidesSender;
+    private SlidesReceiver slidesReceiver;
     private final Map<InetAddress, Boolean> agreementMessageSent = new HashMap<>();
     private final Map<InetAddress, Timer> agreementTimer = new HashMap<>();
 
@@ -105,9 +106,6 @@ public class MainService {
         groupReceiver = new GroupReceiver(groupPort);
         groupReceiver.start();
 
-        SlidesReceiver slidesReceiver = new SlidesReceiver(groupPort);
-        slidesReceiver.start();
-
         multicastSessionDetails();
     }
 
@@ -115,9 +113,13 @@ public class MainService {
         this.groupIDs.clear();
         groupSession = getGroupSession(name);
         groupSession.setPort(getGroupSession(name).getPort());
-        System.out.println("Test print: " + groupSession.getLeaderInfo() + " " + getGroupSession(name).getPort());
+        System.out.println("Leader: " + groupSession.getLeaderInfo() + " " + getGroupSession(name).getPort());
         groupReceiver = new GroupReceiver(getGroupSession(name).getPort());
         groupReceiver.start();
+
+        slidesReceiver = new SlidesReceiver(getGroupSession(name).getPort());
+        slidesReceiver.start();
+
         groupSession.sendGroupMessage(new Message(JOIN_SESSION,
                 user.getUsername(), Helpers.getInetAddress()));
 
@@ -175,7 +177,12 @@ public class MainService {
         for (int i = 0; i < slides.size(); i++) {
             System.out.println("Sending slide " + i);
             for (var packet : PacketCreator.createPackets(slides.get(i), i)) {
-                slidesSender.multicast(packet);
+                slidesSender.multicast(packet, SLIDES_MULTICAST_BASE_PORT + groupSession.getPort());
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
         multicastCurrentSlideNumber();
