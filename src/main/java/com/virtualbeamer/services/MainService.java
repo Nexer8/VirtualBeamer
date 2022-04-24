@@ -17,11 +17,10 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static com.virtualbeamer.constants.MessageType.*;
 import static com.virtualbeamer.constants.SessionConstants.*;
-import static com.virtualbeamer.utils.MessageHandler.collectAndProcessMessage;
+import static com.virtualbeamer.utils.MessageHandler.collectAndProcessUnicastMessage;
 
 public class MainService {
     private static volatile MainService instance;
@@ -43,7 +42,7 @@ public class MainService {
     private GroupSession groupSession;
     private GroupReceiver groupReceiver;
     private final SlidesSender slidesSender;
-
+    private SlidesReceiver slidesReceiver;
     private final Map<InetAddress, Boolean> agreementMessageSent = new HashMap<>();
     private final Map<InetAddress, Timer> agreementTimer = new HashMap<>();
 
@@ -59,9 +58,6 @@ public class MainService {
 
         globalSession = new GlobalSession();
         groupSession = new GroupSession("");
-
-        SlidesReceiver slidesReceiver = new SlidesReceiver();
-        slidesReceiver.start();
 
         IndividualSlidesReceiver individualSlidesReceiver = new IndividualSlidesReceiver();
         individualSlidesReceiver.start();
@@ -89,10 +85,9 @@ public class MainService {
         globalSession.multicast(new Message(COLLECT_PORTS));
         this.groupPortList.clear();
 
-        try (DatagramSocket socket = new DatagramSocket(UNICAST_COLLECT_PORTS_PORT)) {
+        try (ServerSocket socket = new ServerSocket(UNICAST_COLLECT_PORTS_PORT)) {
             socket.setSoTimeout(SO_TIMEOUT);
-            byte[] buffer = new byte[10000];
-            collectAndProcessMessage(socket, buffer);
+            collectAndProcessUnicastMessage(socket);
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("No ports received.");
         }
@@ -110,6 +105,7 @@ public class MainService {
         groupSession.setLeaderData(user.getUsername(), Helpers.getInetAddress());
         groupReceiver = new GroupReceiver(groupPort);
         groupReceiver.start();
+
         multicastSessionDetails();
     }
 
@@ -117,17 +113,20 @@ public class MainService {
         this.groupIDs.clear();
         groupSession = getGroupSession(name);
         groupSession.setPort(getGroupSession(name).getPort());
-        System.out.println("Test print: " + groupSession.getLeaderInfo() + " " + getGroupSession(name).getPort());
+        System.out.println("Leader: " + groupSession.getLeaderInfo() + " " + getGroupSession(name).getPort());
         groupReceiver = new GroupReceiver(getGroupSession(name).getPort());
         groupReceiver.start();
+
+        slidesReceiver = new SlidesReceiver(getGroupSession(name).getPort());
+        slidesReceiver.start();
+
         groupSession.sendGroupMessage(new Message(JOIN_SESSION,
                 user.getUsername(), Helpers.getInetAddress()));
 
         // Collect IDs
-        try (DatagramSocket socket = new DatagramSocket(UNICAST_SEND_USER_DATA_PORT)) {
+        try (ServerSocket socket = new ServerSocket(UNICAST_SEND_USER_DATA_PORT)) {
             socket.setSoTimeout(SO_TIMEOUT);
-            byte[] buffer = new byte[10000];
-            collectAndProcessMessage(socket, buffer);
+            collectAndProcessUnicastMessage(socket);
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("No ids received.");
         }
@@ -178,7 +177,12 @@ public class MainService {
         for (int i = 0; i < slides.size(); i++) {
             System.out.println("Sending slide " + i);
             for (var packet : PacketCreator.createPackets(slides.get(i), i)) {
-                slidesSender.multicast(packet);
+                slidesSender.multicast(packet, SLIDES_MULTICAST_BASE_PORT + groupSession.getPort());
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
         multicastCurrentSlideNumber();
@@ -189,15 +193,13 @@ public class MainService {
                 currentSlide));
     }
 
+    public void sendCurrentSlideNumber(InetAddress address) throws IOException {
+        globalSession.sendMessage(new Message(CURRENT_SLIDE_NUMBER, currentSlide), address);
+    }
+
     public void sendSlides(InetAddress senderAddress) throws IOException, InterruptedException {
-        for (int i = 0; i < slides.size(); i++) {
-            System.out.println("Sending slide " + i);
-            for (var packet : PacketCreator.createPackets(slides.get(i), i)) {
-                TimeUnit.MILLISECONDS.sleep(50);
-                slidesSender.sendMessage(packet, senderAddress);
-            }
-        }
-        multicastCurrentSlideNumber();
+        slidesSender.unicast(slides, senderAddress);
+        sendCurrentSlideNumber(senderAddress);
     }
 
     public void multicastSessionDetails() throws IOException {
@@ -220,7 +222,7 @@ public class MainService {
 
     public void multicastPreviousSlide() throws IOException {
         currentSlide--;
-        groupSession.sendGroupMessage(new Message(PREVIOUS_SLIDE));
+        groupSession.sendGroupMessage(new Message(PREVIOUS_SLIDE, currentSlide));
     }
 
     public void sendGroupPort(InetAddress senderAddress) throws IOException {

@@ -1,5 +1,8 @@
 package com.virtualbeamer.utils;
 
+import javafx.collections.ObservableList;
+
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 
@@ -13,14 +16,26 @@ public class SlidesSender implements Serializable {
         socket = new DatagramSocket();
     }
 
-    public synchronized void multicast(byte[] data) throws IOException {
+    public synchronized void multicast(byte[] data, int port) throws IOException {
         DatagramPacket packet = new DatagramPacket(data, data.length,
-                InetAddress.getByName(GROUP_ADDRESS), SLIDES_MULTICAST_PORT);
+                InetAddress.getByName(GROUP_ADDRESS), port);
         socket.send(packet);
     }
 
-    public synchronized void sendMessage(byte[] data, InetAddress address) throws IOException {
-        DatagramPacket packet = new DatagramPacket(data, data.length, address, INDIVIDUAL_SLIDES_PORT);
-        socket.send(packet);
+    public synchronized void unicast(ObservableList<BufferedImage> slides, InetAddress address) throws IOException {
+        try (Socket socket = new Socket(address, INDIVIDUAL_SLIDES_PORT)) {
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+            out.writeInt(slides.size());
+            for (int i = 0; i < slides.size(); i++) {
+                var packets = PacketCreator.createPackets(slides.get(i), i);
+                out.writeInt(packets.size());
+                for (var packet : packets) {
+                    out.writeInt(packet.length);
+                    out.write(packet);
+                }
+                System.out.println("Slide " + i + " sent!");
+            }
+        }
     }
 }
