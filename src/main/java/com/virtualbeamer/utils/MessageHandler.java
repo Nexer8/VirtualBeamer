@@ -66,14 +66,9 @@ public class MessageHandler {
                     MainService.getInstance().setCurrentSlide(message.intVariable);
                 }
             }
-            case NEXT_SLIDE -> {
+            case NEXT_SLIDE, PREVIOUS_SLIDE -> {
                 if (MainService.getInstance().getUserType() != AppConstants.UserType.PRESENTER) {
-                    MainService.getInstance().setCurrentSlide(MainService.getInstance().getCurrentSlide() + 1);
-                }
-            }
-            case PREVIOUS_SLIDE -> {
-                if (MainService.getInstance().getUserType() != AppConstants.UserType.PRESENTER) {
-                    MainService.getInstance().setCurrentSlide(MainService.getInstance().getCurrentSlide() - 1);
+                    MainService.getInstance().setCurrentSlide(message.intVariable);
                 }
             }
             case SESSION_DETAILS -> MainService.getInstance().addSessionData(message.session);

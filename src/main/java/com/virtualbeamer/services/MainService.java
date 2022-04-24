@@ -215,7 +215,7 @@ public class MainService {
 
     public void multicastPreviousSlide() throws IOException {
         currentSlide--;
-        groupSession.sendGroupMessage(new Message(PREVIOUS_SLIDE));
+        groupSession.sendGroupMessage(new Message(PREVIOUS_SLIDE, currentSlide));
     }
 
     public void sendGroupPort(InetAddress senderAddress) throws IOException {
