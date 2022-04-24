@@ -1,6 +1,9 @@
-name: Java CI
+name: Deploy
 
 on: [push]
+  # push:
+  #   tags:
+  #     - "v*"
 
 jobs:
   build:
@@ -21,3 +24,8 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: staging/*
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: staging/*.jar
