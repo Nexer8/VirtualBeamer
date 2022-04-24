@@ -18,7 +18,7 @@ public class SlidesSender implements Serializable {
 
     public synchronized void multicast(byte[] data) throws IOException {
         DatagramPacket packet = new DatagramPacket(data, data.length,
-                InetAddress.getByName(GROUP_ADDRESS), SLIDES_MULTICAST_PORT);
+                InetAddress.getByName(GROUP_ADDRESS), SLIDES_MULTICAST_BASE_PORT);
         socket.send(packet);
     }
 

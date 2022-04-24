@@ -2,7 +2,7 @@ package com.virtualbeamer.models;
 
 import static com.virtualbeamer.utils.PacketCreator.SLIDE_PACKET_MAX_SIZE;
 
-public class SlideReceiverData {
+public class SlidesReceiverData {
     public int currentSession = -1;
     public int slicesStored = 0;
     public int[] slicesCol = null;

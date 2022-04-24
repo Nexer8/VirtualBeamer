@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.*;
 
 import static com.virtualbeamer.constants.SessionConstants.GROUP_ADDRESS;
-import static com.virtualbeamer.constants.SessionConstants.SLIDES_MULTICAST_PORT;
+import static com.virtualbeamer.constants.SessionConstants.SLIDES_MULTICAST_BASE_PORT;
 import static com.virtualbeamer.utils.SlidesHandler.receiveSlides;
 
 public class SlidesReceiver extends Thread {
@@ -14,10 +14,11 @@ public class SlidesReceiver extends Thread {
     final private InetSocketAddress inetSocketAddress;
     final private NetworkInterface networkInterface;
 
-    public SlidesReceiver() throws IOException {
-        socket = new MulticastSocket(SLIDES_MULTICAST_PORT);
+    public SlidesReceiver(int port) throws IOException {
+        int receiverPort = SLIDES_MULTICAST_BASE_PORT + port;
+        socket = new MulticastSocket(receiverPort);
         socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
-        inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, SLIDES_MULTICAST_PORT);
+        inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, receiverPort);
         networkInterface = Helpers.getNetworkInterface();
     }
 

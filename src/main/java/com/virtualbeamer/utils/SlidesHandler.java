@@ -1,6 +1,6 @@
 package com.virtualbeamer.utils;
 
-import com.virtualbeamer.models.SlideReceiverData;
+import com.virtualbeamer.models.SlidesReceiverData;
 import com.virtualbeamer.services.MainService;
 
 import javax.imageio.ImageIO;
@@ -15,7 +15,7 @@ import static com.virtualbeamer.utils.PacketCreator.*;
 
 public class SlidesHandler {
     public synchronized static void receiveSlides(DatagramSocket socket) throws IOException {
-        SlideReceiverData srd = new SlideReceiverData();
+        SlidesReceiverData srd = new SlidesReceiverData();
 
         //noinspection InfiniteLoopStatement
         while (true) {
@@ -28,7 +28,7 @@ public class SlidesHandler {
         }
     }
 
-    public static void processReceivedSlideData(byte[] data, SlideReceiverData srd) throws IOException {
+    public static void processReceivedSlideData(byte[] data, SlidesReceiverData srd) throws IOException {
         /* Read header information */
         short session = (short) (data[1] & 0xff);
         short slices = (short) (data[2] & 0xff);

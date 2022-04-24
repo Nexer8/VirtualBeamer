@@ -1,6 +1,6 @@
 package com.virtualbeamer.receivers;
 
-import com.virtualbeamer.models.SlideReceiverData;
+import com.virtualbeamer.models.SlidesReceiverData;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -12,7 +12,7 @@ import static com.virtualbeamer.utils.SlidesHandler.processReceivedSlideData;
 
 public class IndividualSlidesReceiver extends Thread {
     public void run() {
-        SlideReceiverData srd = new SlideReceiverData();
+        SlidesReceiverData srd = new SlidesReceiverData();
 
         try (ServerSocket serverSocket = new ServerSocket(INDIVIDUAL_SLIDES_PORT)) {
             //noinspection InfiniteLoopStatement

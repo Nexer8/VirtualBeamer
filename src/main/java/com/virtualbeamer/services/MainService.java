@@ -42,7 +42,6 @@ public class MainService {
     private GroupSession groupSession;
     private GroupReceiver groupReceiver;
     private final SlidesSender slidesSender;
-
     private final Map<InetAddress, Boolean> agreementMessageSent = new HashMap<>();
     private final Map<InetAddress, Timer> agreementTimer = new HashMap<>();
 
@@ -58,9 +57,6 @@ public class MainService {
 
         globalSession = new GlobalSession();
         groupSession = new GroupSession("");
-
-        SlidesReceiver slidesReceiver = new SlidesReceiver();
-        slidesReceiver.start();
 
         IndividualSlidesReceiver individualSlidesReceiver = new IndividualSlidesReceiver();
         individualSlidesReceiver.start();
@@ -108,6 +104,10 @@ public class MainService {
         groupSession.setLeaderData(user.getUsername(), Helpers.getInetAddress());
         groupReceiver = new GroupReceiver(groupPort);
         groupReceiver.start();
+
+        SlidesReceiver slidesReceiver = new SlidesReceiver(groupPort);
+        slidesReceiver.start();
+
         multicastSessionDetails();
     }
 
