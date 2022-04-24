@@ -14,4 +14,5 @@ public class SessionConstants {
     public static final int UNICAST_IM_ALIVE_PORT = 5558;
     public static final int CRASH_DETECTION_LOWER_BOUND_TIMEOUT = 500;
     public static final int SO_TIMEOUT = 1000;
+    public static final int PERIODICITY_OF_HELLO_MESSAGE = 5;
 }

@@ -17,6 +17,9 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static com.virtualbeamer.constants.MessageType.*;
 import static com.virtualbeamer.constants.SessionConstants.*;
@@ -72,7 +75,19 @@ public class MainService {
         synchronized (MainService.class) {
             if (instance == null) {
                 instance = new MainService();
-                instance.sendHelloMessage();
+
+                Runnable sendHelloMessage = () -> {
+                    try {
+                        instance.cleanUpSessionsData();
+                        instance.sendHelloMessage();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                };
+
+                ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+                executor.scheduleAtFixedRate(sendHelloMessage, 0, PERIODICITY_OF_HELLO_MESSAGE, TimeUnit.SECONDS);
+
             }
             return instance;
         }
@@ -290,6 +305,11 @@ public class MainService {
         groupSessions.add(session);
         Platform.runLater(() -> groupSessionsInfo.add(session.getName() + ": " + session.getLeaderInfo()));
         System.out.println(session.getName());
+    }
+
+    public synchronized void cleanUpSessionsData() {
+        groupSessions.clear();
+        Platform.runLater(groupSessionsInfo::clear);
     }
 
     public synchronized void updateSessionData(GroupSession session, String leaderName, InetAddress addressIP) {

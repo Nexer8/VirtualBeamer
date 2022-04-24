@@ -54,21 +54,13 @@ public class MessageHandler {
                     MainService.getInstance().sendSessionDetails(senderAddress);
                 }
             }
-            case CURRENT_SLIDE_NUMBER -> {
+            case CURRENT_SLIDE_NUMBER, NEXT_SLIDE, PREVIOUS_SLIDE -> {
                 if (MainService.getInstance().getUserType() != AppConstants.UserType.PRESENTER) {
                     if (MainService.getInstance().getSlides().size() < message.intVariable + 1) {
-                        try {
-                            Thread.sleep(10);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
+                        MainService.getInstance().setCurrentSlide(message.intVariable);
+                    } else {
+                        System.out.println("Slide number is out of bounds!");
                     }
-                    MainService.getInstance().setCurrentSlide(message.intVariable);
-                }
-            }
-            case NEXT_SLIDE, PREVIOUS_SLIDE -> {
-                if (MainService.getInstance().getUserType() != AppConstants.UserType.PRESENTER) {
-                    MainService.getInstance().setCurrentSlide(message.intVariable);
                 }
             }
             case SESSION_DETAILS -> MainService.getInstance().addSessionData(message.session);
