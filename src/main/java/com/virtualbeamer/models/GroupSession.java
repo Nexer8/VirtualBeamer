@@ -101,8 +101,7 @@ public class GroupSession implements Serializable {
                 + MainService.getInstance().getGroupSession().getPort());
         DatagramPacket packet = new DatagramPacket(data, data.length,
                 InetAddress.getByName(GROUP_ADDRESS), MainService.getInstance().getGroupSession().getPort());
-        if(message.packetID != 2)
-            socket.send(packet);
+        socket.send(packet);
         socket.close();
     }
 
