@@ -9,6 +9,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.*;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.time.Instant;
 import java.util.Collections;
 
 public class MessageHandler {
@@ -88,18 +91,19 @@ public class MessageHandler {
             }
             case LEAVE_SESSION -> MainService.getInstance().deleteParticipant(message.stringVariable);
             case COORD -> {
+                MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
                 MainService.getInstance().updateSessionData(
                         message.session, message.stringVariable, message.ipAddress);
-                MainService.getInstance().startCrashChecking();
+                MainService.getInstance().startCrashDetection();
             }
             case ELECT -> {
-                MainService.getInstance().stopCrashChecking();
+                MainService.getInstance().stopCrashDetection();
+                MainService.getInstance().deleteParticipant(MainService.getInstance().getCurrentLeaderName());
                 if (MainService.getInstance().getID() < message.intVariable) {
                     MainService.getInstance().sendStopElection(senderAddress);
                 }
             }
             case STOP_ELECT -> {
-                MainService.getInstance().stopCrashChecking();
                 MainService.getInstance().stopElection();
             }
             case START_AGREEMENT_PROCESS -> {
@@ -111,20 +115,20 @@ public class MessageHandler {
                 }
             }
             case STOP_AGREEMENT_PROCESS -> MainService.getInstance().stopAgreementProcess(message.ipAddress);
-            case CRASH_DETECT -> {
-                if (!MainService.getInstance().getUsername().equals(message.stringVariable)) {
-                    if (MainService.getInstance().getUserType() == AppConstants.UserType.VIEWER) {
-                        System.out.println("Crash timer stopped.");
-                        MainService.getInstance().stopCrashDetectionTimer();
-                    } else
-                        MainService.getInstance().sendImAlive(senderAddress);
-                }
-            }
             case NACK_PACKET -> {
                 if (MainService.getInstance().getUserType() == AppConstants.UserType.PRESENTER)
                     MainService.getInstance().resendPacket(message.packetID);
                 else
                     MainService.getInstance().stopNACKTimer(message.packetID);
+            }
+            case IM_ALIVE -> {
+                Instant instant = Instant.now();
+                MainService.getInstance().setLastImAlive(instant.getEpochSecond());
+            }
+            case CHANGE_LEADER -> {
+                MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
+                MainService.getInstance().updateSessionData(
+                        message.session, message.stringVariable, message.ipAddress);
             }
         }
     }

@@ -15,4 +15,5 @@ public class SessionConstants {
     public static final int CRASH_DETECTION_LOWER_BOUND_TIMEOUT = 500;
     public static final int SO_TIMEOUT = 1000;
     public static final int PERIODICITY_OF_HELLO_MESSAGE = 5;
+    public static final int CRASH_DETECTION_TIMEOUT = 3000;
 }

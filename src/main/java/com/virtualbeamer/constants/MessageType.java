@@ -19,5 +19,6 @@ public enum MessageType {
     CRASH_DETECT,
     IM_ALIVE,
     CURRENT_SLIDE_NUMBER,
-    NACK_PACKET
+    NACK_PACKET,
+    CHANGE_LEADER
 }

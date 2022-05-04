@@ -52,6 +52,8 @@ public class MainService {
     private final Map<Integer, Timer> nackTimer = new HashMap<>();
     private CrashDetection crashDetection;
 
+    private long lastImAlive;
+
     private MainService() throws IOException {
         MulticastReceiver multicastReceiver = new MulticastReceiver();
         multicastReceiver.start();
@@ -66,6 +68,7 @@ public class MainService {
         individualSlidesReceiver.start();
 
         slidesSender = new SlidesSender();
+        lastImAlive = 0;
     }
 
     public static MainService getInstance() throws IOException {
@@ -118,10 +121,12 @@ public class MainService {
         groupSession.setPort(groupPort);
         System.out.println("Username: " + user.getUsername());
         groupSession.setLeaderData(user.getUsername(), Helpers.getInetAddress());
+        groupSession.updatePreviousLeaderIpAddress();
         groupReceiver = new GroupReceiver(groupPort);
         groupReceiver.start();
 
         multicastSessionDetails();
+        startCrashDetection();
     }
 
     public void joinSession(String name) throws IOException {
@@ -156,8 +161,11 @@ public class MainService {
 
         user.setID(id);
         System.out.println("ID set: " + id);
-//        crashDetection = new CrashDetection();
-//        crashDetection.start();
+        startCrashDetection();
+
+        if(groupSession.getPreviousLeaderIpAddress() != null && groupSession.getPreviousLeaderIpAddress().equals(Helpers.getInetAddress().getHostAddress()))
+            sendChangeLeader();
+
     }
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
@@ -167,7 +175,7 @@ public class MainService {
 
     public void setGroupLeader(String name) throws IOException {
         user.setUserType(AppConstants.UserType.VIEWER);
-        globalSession.multicast(new Message(COORD,
+        globalSession.multicast(new Message(CHANGE_LEADER,
                 groupSession, name, participantsInfo.get(name)));
     }
 
@@ -316,6 +324,8 @@ public class MainService {
         if (leaderName.equals(user.getUsername())) {
             user.setUserType(AppConstants.UserType.PRESENTER);
         }
+        else
+            user.setUserType(AppConstants.UserType.VIEWER);
 
         groupSessions.get(groupSessions.indexOf(session)).setLeaderData(leaderName, addressIP);
         if (groupSession.equals(session)) {
@@ -383,6 +393,11 @@ public class MainService {
                 groupSession, user.getUsername(), Helpers.getInetAddress()));
     }
 
+    public void sendChangeLeader() throws IOException {
+        globalSession.multicast(new Message(CHANGE_LEADER,
+                groupSession, user.getUsername(), Helpers.getInetAddress()));
+    }
+
     public void sendStopElection(InetAddress senderAddress) throws IOException {
         globalSession.sendMessage(new Message(STOP_ELECT), senderAddress);
     }
@@ -427,24 +442,21 @@ public class MainService {
         groupIDs.add(id);
     }
 
-    public void sendCrashDetect() throws IOException {
-        groupSession.sendGroupMessage(new Message(CRASH_DETECT, user.getUsername()));
+
+    public void stopCrashDetection() {
+        System.out.println("Stopped crash detection");
+        crashDetection.stopCrashDetectionTimer();
+        crashDetection.interrupt();
+        lastImAlive = 0;
     }
 
-    public void stopCrashDetectionTimer() {
-        crashDetection.stopTimer();
-    }
-
-    public void stopCrashChecking() {
-        crashDetection.stop();
-    }
-
-    public void startCrashChecking() {
+    public void startCrashDetection() {
+        crashDetection = new CrashDetection();
         crashDetection.start();
     }
 
-    public void sendImAlive(InetAddress address) throws IOException {
-        globalSession.sendMessage(new Message(IM_ALIVE), address, UNICAST_IM_ALIVE_PORT);
+    public void sendImAlive() throws IOException {
+        groupSession.sendGroupMessage(new Message(IM_ALIVE));
     }
 
     public synchronized void sendNACKPacket(int packetID) {
@@ -475,5 +487,22 @@ public class MainService {
 
     public ArrayList<Integer> getGroupIDs() {
         return groupIDs;
+    }
+
+    public void setLastImAlive(long lastImAlive)
+    {
+        this.lastImAlive = lastImAlive;
+    }
+
+    public long getLastImAlive() { return this.lastImAlive; }
+
+    public void updatePreviousLeaderIP(String leaderIPAddress)
+    {
+        groupSession.updatePreviousLeaderIpAddress(leaderIPAddress);
+    }
+
+    public String getCurrentLeaderName()
+    {
+        return this.groupSession.getLeaderName();
     }
 }

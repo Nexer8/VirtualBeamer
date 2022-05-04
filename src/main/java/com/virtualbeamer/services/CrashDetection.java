@@ -8,15 +8,17 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static com.virtualbeamer.constants.AppConstants.UserType.PRESENTER;
+import static com.virtualbeamer.constants.SessionConstants.CRASH_DETECTION_TIMEOUT;
 import static com.virtualbeamer.constants.SessionConstants.SO_TIMEOUT;
-import static com.virtualbeamer.utils.MessageHandler.deserializeMessage;
-import static com.virtualbeamer.utils.MessageHandler.handleMessage;
+import static com.virtualbeamer.utils.MessageHandler.*;
 
 public class CrashDetection extends Thread {
-    private Timer crashDetectionTimer;
+    private Timer aliveMessageTimer;
     private boolean electSent = false;
     private Timer electionTimer;
 
@@ -25,9 +27,11 @@ public class CrashDetection extends Thread {
         electSent = false;
     }
 
-    public void stopTimer() {
-        crashDetectionTimer.cancel();
+    public void stopCrashDetectionTimer()
+    {
+        aliveMessageTimer.cancel();
     }
+
 
     private void electLeader() throws IOException {
         if (!electSent) {
@@ -40,7 +44,7 @@ public class CrashDetection extends Thread {
                 public void run() {
                     try {
                         MainService.getInstance().sendCOORD();
-                        MainService.getInstance().setUserType(AppConstants.UserType.PRESENTER);
+                        MainService.getInstance().setUserType(PRESENTER);
                         electSent = false;
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -50,61 +54,44 @@ public class CrashDetection extends Thread {
         }
     }
 
-    private void sendCrashDetectionCheck(int delay) {
-        crashDetectionTimer = new Timer(false);
-        System.out.println("Sending crash detection message in " + delay);
-
-        crashDetectionTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    MainService.getInstance().sendCrashDetect();
-
-                    boolean leaderCrashed = true;
-
-                    try (DatagramSocket socket = new DatagramSocket(SessionConstants.UNICAST_IM_ALIVE_PORT)) {
-                        socket.setSoTimeout(SO_TIMEOUT);
-                        byte[] buffer = new byte[10000];
-//                        TODO: try to replace with collectAndProcessMessage(socket, buffer);
-                        //noinspection InfiniteLoopStatement
-                        while (true) {
-                            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                            socket.receive(packet);
-                            InetAddress senderAddress = packet.getAddress();
-
-                            Message message = deserializeMessage(buffer);
-                            handleMessage(message, senderAddress);
-                            leaderCrashed = false;
-                        }
-                    } catch (IOException | ClassNotFoundException e) {
-                        System.out.println("Stop waiting for IM ALIVE.");
-                    }
-
-                    if (leaderCrashed) {
-                        System.out.println("Leader crashed.");
-                        electLeader();
-                    } else {
-                        System.out.println("Leader online.");
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, delay);
-    }
-
     public void run() {
-        //noinspection InfiniteLoopStatement
-        while (true) {
-            try {
-                int delay = SessionConstants.CRASH_DETECTION_LOWER_BOUND_TIMEOUT + (int) (Math.random() * 1000);
-                sendCrashDetectionCheck(delay);
-                // TODO: Sleep inside a thread is not good practice.
-                sleep((long) delay + 1500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        try {
+            if(MainService.getInstance().getUserType() == PRESENTER)
+            {
+                aliveMessageTimer = new Timer(false);
+                aliveMessageTimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        try {
+                            MainService.getInstance().sendImAlive();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, 0, 1000);
             }
+            else
+            {
+                aliveMessageTimer = new Timer(false);
+                aliveMessageTimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        try {
+                            Instant instant = Instant.now();
+                            System.out.println("Check im-alive: " + (instant.getEpochSecond() - MainService.getInstance().getLastImAlive()));
+                            if(MainService.getInstance().getLastImAlive() != 0 && instant.getEpochSecond() - MainService.getInstance().getLastImAlive() > CRASH_DETECTION_TIMEOUT/1000)
+                            {
+                                electLeader();
+                                MainService.getInstance().stopCrashDetection();
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, 0, CRASH_DETECTION_TIMEOUT);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

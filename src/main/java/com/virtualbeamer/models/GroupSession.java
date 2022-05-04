@@ -17,6 +17,7 @@ public class GroupSession implements Serializable {
     private int port;
     private String leaderName;
     private String leaderIPAddress;
+    private String previousLeaderIPAddress[];
     private final ArrayList<Message> buffer;
 
     public String getName() {
@@ -35,14 +36,39 @@ public class GroupSession implements Serializable {
         return port;
     }
 
+    public String getLeaderIPAddress() { return leaderIPAddress; }
+
+    public void updatePreviousLeaderIpAddress()
+    {
+        previousLeaderIPAddress[0] = previousLeaderIPAddress[1];
+        previousLeaderIPAddress[1] = leaderIPAddress;
+    }
+
+    public void updatePreviousLeaderIpAddress(String leaderIPAddress)
+    {
+        previousLeaderIPAddress[0] = previousLeaderIPAddress[1];
+        previousLeaderIPAddress[1] = leaderIPAddress;
+    }
+
+    public String getPreviousLeaderIpAddress()
+    {
+        return previousLeaderIPAddress[0];
+    }
+
     public GroupSession(String name) {
         this.name = name;
         this.port = 0;
         this.buffer = new ArrayList<>();
+        this.previousLeaderIPAddress = new String[2];
     }
 
     public String getLeaderInfo() {
         return leaderName + "(" + leaderIPAddress + ")";
+    }
+
+    public String getLeaderName()
+    {
+        return leaderName;
     }
 
     public void setLeaderData(String leaderName, InetAddress leaderAddress) {
@@ -59,33 +85,24 @@ public class GroupSession implements Serializable {
     }
 
     public synchronized void sendGroupMessage(Message message) throws IOException {
-        if (message.type == NEXT_SLIDE || message.type == PREVIOUS_SLIDE) {
-            if (buffer.isEmpty())
-                message.packetID = 1;
-            else {
-                int maxPacketID = 0;
-                Message maxMessage = null;
-                for (Message m : buffer) {
-                    if (m.packetID > maxPacketID) {
-                        maxPacketID = m.packetID;
-                        maxMessage = m;
-                    }
-                }
-                message.packetID = maxPacketID + 1;
-            }
-            buffer.add(message);
-        }
+        if (buffer.isEmpty())
+            message.packetID = 1;
+        else
+            message.packetID = buffer.get(buffer.size()-1).packetID + 1;
+
+        buffer.add(message);
         DatagramSocket socket = new DatagramSocket();
         final ByteArrayOutputStream baos = new ByteArrayOutputStream(6400);
         final ObjectOutputStream oos = new ObjectOutputStream(baos);
         oos.writeObject(message);
         final byte[] data = baos.toByteArray();
 
-        System.out.println("Sending group message to port: "
+        System.out.println("[Packet " +message.packetID + "]Sending group message to port: "
                 + MainService.getInstance().getGroupSession().getPort());
         DatagramPacket packet = new DatagramPacket(data, data.length,
                 InetAddress.getByName(GROUP_ADDRESS), MainService.getInstance().getGroupSession().getPort());
-        socket.send(packet);
+        if(message.packetID != 2)
+            socket.send(packet);
         socket.close();
     }
 
