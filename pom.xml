@@ -30,6 +30,25 @@
             <artifactId>controlsfx</artifactId>
             <version>11.1.1</version>
         </dependency>
+        <!-- Uncomment only for release. Otherwise, mvn javafx:run will not work inside Docker. -->
+        <!-- <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>18.0.1</version>
+            <classifier>win</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>18.0.1</version>
+            <classifier>linux</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>18.0.1</version>
+            <classifier>mac</classifier>
+        </dependency> -->
         <dependency>
             <groupId>com.dlsc.formsfx</groupId>
             <artifactId>formsfx-core</artifactId>
@@ -82,26 +101,6 @@
                         </manifest>
                     </archive>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-graphics</artifactId>
-                        <version>18.0.1</version>
-                        <classifier>win</classifier>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-graphics</artifactId>
-                        <version>18.0.1</version>
-                        <classifier>linux</classifier>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-graphics</artifactId>
-                        <version>18.0.1</version>
-                        <classifier>mac</classifier>
-                    </dependency>
-                </dependencies>
                 <executions>
                     <execution>
                         <id>default-jar</id>
@@ -125,26 +124,6 @@
                     <!-- prevent appending <descriptorRef> "jar-with-dependencies" to final jar name -->
                     <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-graphics</artifactId>
-                        <version>18.0.1</version>
-                        <classifier>win</classifier>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-graphics</artifactId>
-                        <version>18.0.1</version>
-                        <classifier>linux</classifier>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.openjfx</groupId>
-                        <artifactId>javafx-graphics</artifactId>
-                        <version>18.0.1</version>
-                        <classifier>mac</classifier>
-                    </dependency>
-                </dependencies>
                 <executions>
                     <execution>
                         <!-- For inheritance merges -->

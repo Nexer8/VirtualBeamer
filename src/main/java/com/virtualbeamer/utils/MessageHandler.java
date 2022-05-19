@@ -134,8 +134,6 @@ public class MessageHandler {
                 MainService.getInstance().updateSessionData(
                         message.session, message.stringVariable, message.ipAddress);
             }
-            // TODO: To implement
-            case CRASH_DETECT -> throw new UnsupportedOperationException("Unimplemented case: " + message.type);
             default -> throw new IllegalArgumentException("Unexpected value: " + message.type);
         }
     }

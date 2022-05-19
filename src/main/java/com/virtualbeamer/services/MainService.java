@@ -89,7 +89,7 @@ public class MainService {
                 };
 
                 ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-                executor.scheduleAtFixedRate(sendHelloMessage, 0, PERIODICITY_OF_HELLO_MESSAGE, TimeUnit.SECONDS);
+                executor.scheduleAtFixedRate(sendHelloMessage, 0, HELLO_MESSAGE_PERIODICITY, TimeUnit.SECONDS);
 
             }
             return instance;

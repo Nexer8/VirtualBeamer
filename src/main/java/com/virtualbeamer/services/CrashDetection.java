@@ -9,6 +9,7 @@ import java.util.TimerTask;
 
 import static com.virtualbeamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtualbeamer.constants.SessionConstants.CRASH_DETECTION_TIMEOUT;
+import static com.virtualbeamer.constants.SessionConstants.IM_ALIVE_PERIODICITY;
 
 public class CrashDetection extends Thread {
     private Timer aliveMessageTimer;
@@ -58,7 +59,7 @@ public class CrashDetection extends Thread {
                             e.printStackTrace();
                         }
                     }
-                }, 0, 1000);
+                }, 0, IM_ALIVE_PERIODICITY);
             } else {
                 aliveMessageTimer = new Timer(false);
                 aliveMessageTimer.schedule(new TimerTask() {
@@ -69,7 +70,8 @@ public class CrashDetection extends Thread {
                             System.out.println("Check im-alive: "
                                     + (instant.getEpochSecond() - MainService.getInstance().getLastImAlive()));
                             if (MainService.getInstance().getLastImAlive() != 0 && instant.getEpochSecond()
-                                    - MainService.getInstance().getLastImAlive() > CRASH_DETECTION_TIMEOUT / 1000) {
+                                    - MainService.getInstance().getLastImAlive() > CRASH_DETECTION_TIMEOUT
+                                            / IM_ALIVE_PERIODICITY) {
                                 electLeader();
                                 MainService.getInstance().stopCrashDetection();
                             }
