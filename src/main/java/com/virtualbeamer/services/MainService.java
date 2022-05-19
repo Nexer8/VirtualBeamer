@@ -203,7 +203,7 @@ public class MainService {
             for (var packet : PacketCreator.createPackets(slides.get(i), i)) {
                 slidesSender.multicast(packet, SLIDES_MULTICAST_BASE_PORT + groupSession.getPort());
                 try {
-                    Thread.sleep(200);
+                    Thread.sleep(200);// TODO: To delete
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
