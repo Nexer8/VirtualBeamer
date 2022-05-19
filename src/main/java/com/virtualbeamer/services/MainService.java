@@ -158,19 +158,20 @@ public class MainService {
         } else
             id = 1;
 
-
         user.setID(id);
         System.out.println("ID set: " + id);
         startCrashDetection();
 
-        if(groupSession.getPreviousLeaderIpAddress() != null && groupSession.getPreviousLeaderIpAddress().equals(Helpers.getInetAddress().getHostAddress()))
+        if (groupSession.getPreviousLeaderIpAddress() != null
+                && groupSession.getPreviousLeaderIpAddress().equals(Helpers.getInetAddress().getHostAddress()))
             sendChangeLeader();
 
     }
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
         globalSession.sendMessage(new Message(SEND_USER_DATA,
-                user.getUsername(), user.getID(), Helpers.getInetAddress()), senderAddress, UNICAST_SEND_USER_DATA_PORT);
+                user.getUsername(), user.getID(), Helpers.getInetAddress()), senderAddress,
+                UNICAST_SEND_USER_DATA_PORT);
     }
 
     public void setGroupLeader(String name) throws IOException {
@@ -184,7 +185,7 @@ public class MainService {
         slides.clear();
         currentSlide = 0;
         user.setUserType(AppConstants.UserType.VIEWER);
-        groupReceiver.stop();
+        groupReceiver.interrupt();
     }
 
     public void leaveSession() throws IOException {
@@ -323,8 +324,7 @@ public class MainService {
     public synchronized void updateSessionData(GroupSession session, String leaderName, InetAddress addressIP) {
         if (leaderName.equals(user.getUsername())) {
             user.setUserType(AppConstants.UserType.PRESENTER);
-        }
-        else
+        } else
             user.setUserType(AppConstants.UserType.VIEWER);
 
         groupSessions.get(groupSessions.indexOf(session)).setLeaderData(leaderName, addressIP);
@@ -360,8 +360,7 @@ public class MainService {
     }
 
     public GroupSession getGroupSession(String name) {
-        return groupSessions.stream().filter(item ->
-                item.getName().equals(name)).findFirst().orElse(null);
+        return groupSessions.stream().filter(item -> item.getName().equals(name)).findFirst().orElse(null);
     }
 
     public GroupSession getGroupSession() {
@@ -442,7 +441,6 @@ public class MainService {
         groupIDs.add(id);
     }
 
-
     public void stopCrashDetection() {
         System.out.println("Stopped crash detection");
         crashDetection.stopCrashDetectionTimer();
@@ -489,20 +487,19 @@ public class MainService {
         return groupIDs;
     }
 
-    public void setLastImAlive(long lastImAlive)
-    {
+    public void setLastImAlive(long lastImAlive) {
         this.lastImAlive = lastImAlive;
     }
 
-    public long getLastImAlive() { return this.lastImAlive; }
+    public long getLastImAlive() {
+        return this.lastImAlive;
+    }
 
-    public void updatePreviousLeaderIP(String leaderIPAddress)
-    {
+    public void updatePreviousLeaderIP(String leaderIPAddress) {
         groupSession.updatePreviousLeaderIpAddress(leaderIPAddress);
     }
 
-    public String getCurrentLeaderName()
-    {
+    public String getCurrentLeaderName() {
         return this.groupSession.getLeaderName();
     }
 }

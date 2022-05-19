@@ -8,8 +8,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-import static com.virtualbeamer.constants.MessageType.NEXT_SLIDE;
-import static com.virtualbeamer.constants.MessageType.PREVIOUS_SLIDE;
 import static com.virtualbeamer.constants.SessionConstants.GROUP_ADDRESS;
 
 public class GroupSession implements Serializable {
@@ -36,22 +34,21 @@ public class GroupSession implements Serializable {
         return port;
     }
 
-    public String getLeaderIPAddress() { return leaderIPAddress; }
+    public String getLeaderIPAddress() {
+        return leaderIPAddress;
+    }
 
-    public void updatePreviousLeaderIpAddress()
-    {
+    public void updatePreviousLeaderIpAddress() {
         previousLeaderIPAddress[0] = previousLeaderIPAddress[1];
         previousLeaderIPAddress[1] = leaderIPAddress;
     }
 
-    public void updatePreviousLeaderIpAddress(String leaderIPAddress)
-    {
+    public void updatePreviousLeaderIpAddress(String leaderIPAddress) {
         previousLeaderIPAddress[0] = previousLeaderIPAddress[1];
         previousLeaderIPAddress[1] = leaderIPAddress;
     }
 
-    public String getPreviousLeaderIpAddress()
-    {
+    public String getPreviousLeaderIpAddress() {
         return previousLeaderIPAddress[0];
     }
 
@@ -66,8 +63,7 @@ public class GroupSession implements Serializable {
         return leaderName + "(" + leaderIPAddress + ")";
     }
 
-    public String getLeaderName()
-    {
+    public String getLeaderName() {
         return leaderName;
     }
 
@@ -78,8 +74,10 @@ public class GroupSession implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         GroupSession that = (GroupSession) o;
         return name.equals(that.name);
     }
@@ -88,7 +86,7 @@ public class GroupSession implements Serializable {
         if (buffer.isEmpty())
             message.packetID = 1;
         else
-            message.packetID = buffer.get(buffer.size()-1).packetID + 1;
+            message.packetID = buffer.get(buffer.size() - 1).packetID + 1;
 
         buffer.add(message);
         DatagramSocket socket = new DatagramSocket();
@@ -97,7 +95,7 @@ public class GroupSession implements Serializable {
         oos.writeObject(message);
         final byte[] data = baos.toByteArray();
 
-        System.out.println("[Packet " +message.packetID + "]Sending group message to port: "
+        System.out.println("[Packet " + message.packetID + "]Sending group message to port: "
                 + MainService.getInstance().getGroupSession().getPort());
         DatagramPacket packet = new DatagramPacket(data, data.length,
                 InetAddress.getByName(GROUP_ADDRESS), MainService.getInstance().getGroupSession().getPort());

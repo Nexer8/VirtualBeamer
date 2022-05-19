@@ -1,21 +1,14 @@
 package com.virtualbeamer.services;
 
-import com.virtualbeamer.constants.AppConstants;
 import com.virtualbeamer.constants.SessionConstants;
-import com.virtualbeamer.models.Message;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.time.Instant;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import static com.virtualbeamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtualbeamer.constants.SessionConstants.CRASH_DETECTION_TIMEOUT;
-import static com.virtualbeamer.constants.SessionConstants.SO_TIMEOUT;
-import static com.virtualbeamer.utils.MessageHandler.*;
 
 public class CrashDetection extends Thread {
     private Timer aliveMessageTimer;
@@ -27,11 +20,9 @@ public class CrashDetection extends Thread {
         electSent = false;
     }
 
-    public void stopCrashDetectionTimer()
-    {
+    public void stopCrashDetectionTimer() {
         aliveMessageTimer.cancel();
     }
-
 
     private void electLeader() throws IOException {
         if (!electSent) {
@@ -56,8 +47,7 @@ public class CrashDetection extends Thread {
 
     public void run() {
         try {
-            if(MainService.getInstance().getUserType() == PRESENTER)
-            {
+            if (MainService.getInstance().getUserType() == PRESENTER) {
                 aliveMessageTimer = new Timer(false);
                 aliveMessageTimer.schedule(new TimerTask() {
                     @Override
@@ -69,18 +59,17 @@ public class CrashDetection extends Thread {
                         }
                     }
                 }, 0, 1000);
-            }
-            else
-            {
+            } else {
                 aliveMessageTimer = new Timer(false);
                 aliveMessageTimer.schedule(new TimerTask() {
                     @Override
                     public void run() {
                         try {
                             Instant instant = Instant.now();
-                            System.out.println("Check im-alive: " + (instant.getEpochSecond() - MainService.getInstance().getLastImAlive()));
-                            if(MainService.getInstance().getLastImAlive() != 0 && instant.getEpochSecond() - MainService.getInstance().getLastImAlive() > CRASH_DETECTION_TIMEOUT/1000)
-                            {
+                            System.out.println("Check im-alive: "
+                                    + (instant.getEpochSecond() - MainService.getInstance().getLastImAlive()));
+                            if (MainService.getInstance().getLastImAlive() != 0 && instant.getEpochSecond()
+                                    - MainService.getInstance().getLastImAlive() > CRASH_DETECTION_TIMEOUT / 1000) {
                                 electLeader();
                                 MainService.getInstance().stopCrashDetection();
                             }

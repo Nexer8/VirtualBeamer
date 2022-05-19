@@ -15,8 +15,9 @@ import java.time.Instant;
 import java.util.Collections;
 
 public class MessageHandler {
-    public static void collectAndProcessMessage(DatagramSocket socket, byte[] buffer) throws IOException, ClassNotFoundException {
-        //noinspection InfiniteLoopStatement
+    public static void collectAndProcessMessage(DatagramSocket socket, byte[] buffer)
+            throws IOException, ClassNotFoundException {
+        // noinspection InfiniteLoopStatement
         while (true) {
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
             socket.receive(packet);
@@ -27,8 +28,9 @@ public class MessageHandler {
         }
     }
 
-    public static void collectAndProcessUnicastMessage(ServerSocket serverSocket) throws IOException, ClassNotFoundException {
-        //noinspection InfiniteLoopStatement
+    public static void collectAndProcessUnicastMessage(ServerSocket serverSocket)
+            throws IOException, ClassNotFoundException {
+        // noinspection InfiniteLoopStatement
         while (true) {
             Socket socket = serverSocket.accept();
             System.out.println("Client connected!");
@@ -79,13 +81,15 @@ public class MessageHandler {
                     MainService.getInstance().addParticipant(message.stringVariable, message.ipAddress);
                     MainService.getInstance().sendUserData(senderAddress);
 
-                    if (MainService.getInstance().getSlides() != null && !MainService.getInstance().getSlides().isEmpty()) {
+                    if (MainService.getInstance().getSlides() != null
+                            && !MainService.getInstance().getSlides().isEmpty()) {
                         MainService.getInstance().agreeOnSlidesSender(senderAddress);
                     }
                 }
             }
             case SEND_USER_DATA -> {
-                System.out.println(MainService.getInstance().getUsername() + " added " + message.stringVariable + " to participants list.");
+                System.out.println(MainService.getInstance().getUsername() + " added " + message.stringVariable
+                        + " to participants list.");
                 MainService.getInstance().addParticipant(message.stringVariable, message.ipAddress);
                 MainService.getInstance().addListGroupID(message.intVariable);
             }
@@ -107,8 +111,8 @@ public class MessageHandler {
                 MainService.getInstance().stopElection();
             }
             case START_AGREEMENT_PROCESS -> {
-                int mID = MainService.getInstance().getGroupIDs().isEmpty() ?
-                        MainService.getInstance().getID() : Collections.min(MainService.getInstance().getGroupIDs());
+                int mID = MainService.getInstance().getGroupIDs().isEmpty() ? MainService.getInstance().getID()
+                        : Collections.min(MainService.getInstance().getGroupIDs());
 
                 if (mID < message.intVariable) {
                     MainService.getInstance().sendStopAgreementProcess(senderAddress, message.ipAddress);
@@ -130,6 +134,9 @@ public class MessageHandler {
                 MainService.getInstance().updateSessionData(
                         message.session, message.stringVariable, message.ipAddress);
             }
+            // TODO: To implement
+            case CRASH_DETECT -> throw new UnsupportedOperationException("Unimplemented case: " + message.type);
+            default -> throw new IllegalArgumentException("Unexpected value: " + message.type);
         }
     }
 }

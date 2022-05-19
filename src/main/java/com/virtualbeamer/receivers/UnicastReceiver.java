@@ -18,7 +18,7 @@ public class UnicastReceiver extends Thread {
 
     public void run() {
         try {
-            //noinspection InfiniteLoopStatement
+            // noinspection InfiniteLoopStatement
             while (true) {
                 Socket socket = serverSocket.accept();
                 ObjectInputStream in = new ObjectInputStream(socket.getInputStream());

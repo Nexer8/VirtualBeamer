@@ -16,10 +16,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-
 import static com.virtualbeamer.constants.AppConstants.UserType;
 import static com.virtualbeamer.constants.AppConstants.UserType.*;
-
 
 public class InitialViewController implements Initializable {
     private MainService user;
@@ -42,7 +40,6 @@ public class InitialViewController implements Initializable {
     @FXML
     private TextField usernameEditTextField;
 
-
     private void goToPresentationView(MouseEvent mouseEvent, UserType userType) throws IOException {
         Stage stage = (Stage) ((Node) mouseEvent.getSource()).getScene().getWindow();
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/presentation_view.fxml"));
@@ -56,8 +53,8 @@ public class InitialViewController implements Initializable {
     public void joinSession(MouseEvent mouseEvent) throws IOException {
         user.setUserType(VIEWER);
         user.setUsername(usernameEditTextField.getText());
-        String session = ongoingSessions.getSelectionModel().getSelectedItem().
-                substring(0, ongoingSessions.getSelectionModel().getSelectedItem().indexOf(":"));
+        String session = ongoingSessions.getSelectionModel().getSelectedItem().substring(0,
+                ongoingSessions.getSelectionModel().getSelectedItem().indexOf(":"));
         MainService.getInstance().joinSession(session);
         goToPresentationView(mouseEvent, VIEWER);
     }
@@ -85,16 +82,14 @@ public class InitialViewController implements Initializable {
         sessionNameEditTextField.setFocusTraversable(false);
 
         createButton.disableProperty()
-                .bind(Bindings.createBooleanBinding(() ->
-                                usernameEditTextField.getText().isEmpty()
-                                        || sessionNameEditTextField.getText().isEmpty(),
+                .bind(Bindings.createBooleanBinding(() -> usernameEditTextField.getText().isEmpty()
+                        || sessionNameEditTextField.getText().isEmpty(),
                         usernameEditTextField.textProperty(),
                         sessionNameEditTextField.textProperty()));
 
         joinButton.disableProperty()
-                .bind(Bindings.createBooleanBinding(() ->
-                                usernameEditTextField.getText().isEmpty()
-                                        || ongoingSessions.getSelectionModel().getSelectedItem() == null,
+                .bind(Bindings.createBooleanBinding(() -> usernameEditTextField.getText().isEmpty()
+                        || ongoingSessions.getSelectionModel().getSelectedItem() == null,
                         usernameEditTextField.textProperty(),
                         ongoingSessions.getSelectionModel().selectedItemProperty()));
 

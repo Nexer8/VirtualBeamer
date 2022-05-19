@@ -8,7 +8,6 @@ import java.net.*;
 
 import static com.virtualbeamer.constants.SessionConstants.*;
 
-
 public class SlidesSender implements Serializable {
     private final DatagramSocket socket;
 

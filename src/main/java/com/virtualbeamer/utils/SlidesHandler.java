@@ -17,7 +17,7 @@ public class SlidesHandler {
     public synchronized static void receiveSlides(DatagramSocket socket) throws IOException {
         SlidesReceiverData srd = new SlidesReceiverData();
 
-        //noinspection InfiniteLoopStatement
+        // noinspection InfiniteLoopStatement
         while (true) {
             /* Receive a UDP packet */
             DatagramPacket packet = new DatagramPacket(srd.buffer, srd.buffer.length);

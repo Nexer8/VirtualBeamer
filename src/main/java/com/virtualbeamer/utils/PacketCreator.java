@@ -33,7 +33,8 @@ public class PacketCreator {
             flags = i == 0 ? flags | SESSION_START : flags;
             flags = (i + 1) * SLIDE_PACKET_MAX_SIZE > imageByteArray.length ? flags | SESSION_END : flags;
 
-            int size = (flags & SESSION_END) != SESSION_END ? SLIDE_PACKET_MAX_SIZE : imageByteArray.length - i * SLIDE_PACKET_MAX_SIZE;
+            int size = (flags & SESSION_END) != SESSION_END ? SLIDE_PACKET_MAX_SIZE
+                    : imageByteArray.length - i * SLIDE_PACKET_MAX_SIZE;
 
             byte[] data = new byte[HEADER_SIZE + size];
             data[0] = (byte) flags;
@@ -54,4 +55,3 @@ public class PacketCreator {
         return packetsList;
     }
 }
-

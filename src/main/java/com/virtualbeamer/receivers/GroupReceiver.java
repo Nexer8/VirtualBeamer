@@ -36,15 +36,18 @@ public class GroupReceiver extends Thread {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 InetAddress senderAddress = packet.getAddress();
-                System.out.println("Groupcast received packet from " + senderAddress + ":" + inetSocketAddress.getPort());
+                System.out
+                        .println("Groupcast received packet from " + senderAddress + ":" + inetSocketAddress.getPort());
 
                 Message message = deserializeMessage(buffer);
                 if (!this.buffer.contains(message)) {
                     this.buffer.add(message);
                     if (this.buffer.size() >= 2) {
-                        if (this.buffer.get(this.buffer.size() - 1).packetID - 1 > this.buffer.get(this.buffer.size() - 2).packetID) {
+                        if (this.buffer.get(this.buffer.size() - 1).packetID
+                                - 1 > this.buffer.get(this.buffer.size() - 2).packetID) {
                             System.out.println("Missing packet found");
-                            MainService.getInstance().sendNACKPacket(this.buffer.get(this.buffer.size() - 1).packetID - 1);
+                            MainService.getInstance()
+                                    .sendNACKPacket(this.buffer.get(this.buffer.size() - 1).packetID - 1);
                         }
                     }
                     handleMessage(message, senderAddress);

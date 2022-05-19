@@ -15,7 +15,7 @@ public class IndividualSlidesReceiver extends Thread {
         SlidesReceiverData srd = new SlidesReceiverData();
 
         try (ServerSocket serverSocket = new ServerSocket(INDIVIDUAL_SLIDES_PORT)) {
-            //noinspection InfiniteLoopStatement
+            // noinspection InfiniteLoopStatement
             while (true) {
                 Socket socket = serverSocket.accept();
                 DataInputStream in = new DataInputStream(socket.getInputStream());

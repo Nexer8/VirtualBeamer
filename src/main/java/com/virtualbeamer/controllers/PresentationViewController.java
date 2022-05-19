@@ -23,7 +23,6 @@ import java.util.ResourceBundle;
 import static com.virtualbeamer.constants.AppConstants.UserType.PRESENTER;
 import static com.virtualbeamer.constants.AppConstants.UserType.VIEWER;
 
-
 public class PresentationViewController implements Initializable {
     private MainService user;
 
@@ -55,7 +54,6 @@ public class PresentationViewController implements Initializable {
 
     @FXML
     private Label presenterLabel;
-
 
     @FXML
     private void exitSession() throws IOException {
@@ -110,9 +108,8 @@ public class PresentationViewController implements Initializable {
         File directory = directoryChooser.showDialog(new Stage());
 
         try {
-            File[] files = directory.listFiles(file ->
-                    !file.isHidden() && !file.isDirectory()
-                            && (file.getName().matches(".*\\.(jpg|png|jpeg)")));
+            File[] files = directory.listFiles(file -> !file.isHidden() && !file.isDirectory()
+                    && (file.getName().matches(".*\\.(jpg|png|jpeg)")));
             if (Objects.requireNonNull(files).length == 0) {
                 throw new IOException();
             }
@@ -251,4 +248,3 @@ public class PresentationViewController implements Initializable {
         return progressIndicator;
     }
 }
-
