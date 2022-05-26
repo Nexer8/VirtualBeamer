@@ -170,7 +170,7 @@ public class MainService {
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
         globalSession.sendMessage(new Message(SEND_USER_DATA,
-                user.getUsername(), user.getID(), Helpers.getInetAddress()), senderAddress,
+                        user.getUsername(), user.getID(), Helpers.getInetAddress()), senderAddress,
                 UNICAST_SEND_USER_DATA_PORT);
     }
 
@@ -434,7 +434,8 @@ public class MainService {
 
     public synchronized void stopAgreementProcess(InetAddress viewerAddress) {
         agreementTimer.get(viewerAddress).cancel();
-        agreementMessageSent.put(viewerAddress, false);
+        agreementTimer.remove(viewerAddress);
+        agreementMessageSent.remove(viewerAddress);
     }
 
     public synchronized void addListGroupID(int id) {
