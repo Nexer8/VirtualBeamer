@@ -185,7 +185,7 @@ public class MainService {
         }
     }
 
-    public void sendUsersData(InetAddress senderAddress) throws IOException {
+    public void sendUsersData(InetAddress senderAddress) {
         for (var name : participantsInfo.keySet()) {
             globalSession.sendMessage(new Message(USER_DATA,
                             name, participantsInfo.get(name).ID, participantsInfo.get(name).ipAddress),
@@ -195,6 +195,7 @@ public class MainService {
 
     public void setGroupLeader(String name) throws IOException {
         user.setUserType(AppConstants.UserType.VIEWER);
+//        globalSession.sendMessage(new MESSAGE(SET_GROUP_LEADER));
         globalSession.multicast(new Message(CHANGE_LEADER,
                 groupSession, participantsInfo.get(name).ID, name, participantsInfo.get(name).ipAddress));
     }
@@ -254,7 +255,8 @@ public class MainService {
         globalSession.sendMessage(new Message(SESSION_DETAILS, groupSession), senderAddress);
     }
 
-    public void sendDeleteSession() throws IOException {
+    public void sendDeleteSession() {
+        stopCrashDetection();
         for (var name : participantsInfo.keySet()) {
             globalSession.sendMessage(new Message(DELETE_SESSION, groupSession), participantsInfo.get(name).ipAddress);
         }
@@ -358,6 +360,7 @@ public class MainService {
                                                InetAddress addressIP, int leaderID, boolean afterCrash) throws UnknownHostException {
         if (leaderName.equals(user.getUsername())) {
             user.setUserType(AppConstants.UserType.PRESENTER);
+            startCrashDetection();
             if (!afterCrash) {
                 addParticipant(groupSession.getLeaderName(),
                         groupSession.getLeaderID(), InetAddress.getByName(groupSession.getLeaderIPAddress()));
