@@ -19,5 +19,6 @@ public enum MessageType {
     IM_ALIVE,
     CURRENT_SLIDE_NUMBER,
     NACK_PACKET,
+    NEW_PARTICIPANT,
     CHANGE_LEADER
 }

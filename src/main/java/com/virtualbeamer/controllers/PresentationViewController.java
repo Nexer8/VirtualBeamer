@@ -60,11 +60,14 @@ public class PresentationViewController implements Initializable {
         cleanUpView();
 
         if (user.getUserType() == PRESENTER) {
-            user.multicastDeleteSession();
+            user.sendDeleteSession();
         } else {
             user.leaveSession();
         }
+        goToInitialView();
+    }
 
+    private void goToInitialView() throws IOException {
         MainService.startSendingPeriodicalHELLO();
         Stage stage = (Stage) slidePane.getScene().getWindow();
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/initial_view.fxml"));
@@ -77,6 +80,17 @@ public class PresentationViewController implements Initializable {
         slidePane.setBackground(slidePaneDefaultBackground);
         nextSlideButton.setDisable(true);
         previousSlideButton.setDisable(true);
+    }
+
+    public void closeSession() throws IOException {
+        Alert alert = new Alert(Alert.AlertType.WARNING, "Presenter has finished the session!");
+        alert.initOwner(slidePane.getScene().getWindow());
+        alert.getDialogPane().getStylesheets().add((Objects.requireNonNull(
+                getClass().getResource("/styles/dialog.css"))).toExternalForm());
+        alert.setHeaderText("Presentation ended!");
+        alert.showAndWait();
+
+        goToInitialView();
     }
 
     private void updatePresentationStatus() {
