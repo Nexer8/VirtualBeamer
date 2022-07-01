@@ -133,6 +133,7 @@ public class MainService {
         groupSession.updatePreviousLeaderIpAddress();
         groupReceiver = new GroupReceiver(groupPort);
         groupReceiver.start();
+        groupSessions.add(groupSession);
 
         multicastSessionDetails();
         startCrashDetection();
@@ -196,12 +197,17 @@ public class MainService {
     public void setGroupLeader(String name) {
         stopCrashDetection();
         user.setUserType(AppConstants.UserType.VIEWER);
-        globalSession.sendMessage(new Message(PASS_LEADERSHIP), participantsInfo.get(name).ipAddress);
+        System.out.println("Leader: " + name);
+        System.out.println("ID: " + participantsInfo.get(name).ID);
+        System.out.println("IP: " + participantsInfo.get(name).ipAddress);
+        globalSession.sendMessage(new Message(PASS_LEADERSHIP,
+                        groupSession, participantsInfo.get(name).ID, name, participantsInfo.get(name).ipAddress),
+                participantsInfo.get(name).ipAddress);
     }
 
     public void multicastNewLeader(String name) throws IOException {
         globalSession.multicast(new Message(CHANGE_LEADER,
-                groupSession, participantsInfo.get(name).ID, name, participantsInfo.get(name).ipAddress));
+                groupSession, user.getID(), name, Helpers.getInetAddress()));
     }
 
     private void cleanUpSessionData() {

@@ -23,7 +23,7 @@ public class MulticastReceiver extends Thread {
 
     public void run() {
         try {
-            byte[] buffer = new byte[1000];
+            byte[] buffer = new byte[2000];
             System.out.println(networkInterface);
             socket.joinGroup(inetSocketAddress, networkInterface);
             collectAndProcessMultipleMessages(socket, buffer);
