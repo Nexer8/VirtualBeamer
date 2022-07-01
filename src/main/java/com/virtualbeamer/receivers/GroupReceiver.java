@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import static com.virtualbeamer.constants.SessionConstants.GROUP_ADDRESS;
 import static com.virtualbeamer.utils.MessageHandler.deserializeMessage;
 import static com.virtualbeamer.utils.MessageHandler.handleMessage;
-import static com.virtualbeamer.utils.PacketCreator.SLIDE_PACKET_MAX_SIZE;
+import static com.virtualbeamer.utils.PacketCreator.MAX_PACKET_SIZE;
 
 public class GroupReceiver extends Thread {
     final private MulticastSocket socket;
@@ -30,7 +30,7 @@ public class GroupReceiver extends Thread {
     @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
         try {
-            byte[] buffer = new byte[SLIDE_PACKET_MAX_SIZE + 8];
+            byte[] buffer = new byte[MAX_PACKET_SIZE + 8];
             socket.joinGroup(inetSocketAddress, networkInterface);
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);

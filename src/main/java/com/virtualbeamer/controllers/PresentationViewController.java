@@ -65,6 +65,7 @@ public class PresentationViewController implements Initializable {
             user.leaveSession();
         }
 
+        MainService.startSendingPeriodicalHELLO();
         Stage stage = (Stage) slidePane.getScene().getWindow();
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/initial_view.fxml"));
 
