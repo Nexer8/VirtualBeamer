@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.virtualbeamer.constants.MessageType.*;
 import static com.virtualbeamer.constants.SessionConstants.*;
-import static com.virtualbeamer.utils.MessageHandler.collectAndProcessUnicastMessage;
+import static com.virtualbeamer.utils.MessageHandler.collectAndProcessMultipleUnicastMessages;
 
 public class MainService {
     private static volatile MainService instance;
@@ -107,13 +107,14 @@ public class MainService {
     public void createSession(String sessionName) throws IOException {
         user.setUserType(AppConstants.UserType.PRESENTER);
         user.setID(0);
+
         groupSession.setName(sessionName);
         globalSession.multicast(new Message(COLLECT_PORTS));
         this.groupPortList.clear();
 
         try (ServerSocket socket = new ServerSocket(UNICAST_COLLECT_PORTS_PORT)) {
             socket.setSoTimeout(SO_TIMEOUT);
-            collectAndProcessUnicastMessage(socket);
+            collectAndProcessMultipleUnicastMessages(socket);
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("No ports received.");
         }
@@ -128,13 +129,23 @@ public class MainService {
         System.out.println("Received port:" + groupPort);
         groupSession.setPort(groupPort);
         System.out.println("Username: " + user.getUsername());
-        groupSession.setLeaderData(user.getUsername(), Helpers.getInetAddress());
+        groupSession.setLeaderData(user.getUsername(), Helpers.getInetAddress(), user.getID());
         groupSession.updatePreviousLeaderIpAddress();
         groupReceiver = new GroupReceiver(groupPort);
         groupReceiver.start();
 
         multicastSessionDetails();
         startCrashDetection();
+    }
+
+    private void collectUsersData() {
+        // Collect IDs
+        try (ServerSocket socket = new ServerSocket(UNICAST_SEND_USER_DATA_PORT)) {
+            socket.setSoTimeout(SO_TIMEOUT);
+            collectAndProcessMultipleUnicastMessages(socket);
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("No ids received.");
+        }
     }
 
     public void joinSession(String name) throws IOException {
@@ -148,16 +159,10 @@ public class MainService {
         slidesReceiver = new SlidesReceiver(getGroupSession(name).getPort());
         slidesReceiver.start();
 
-        globalSession.sendMessage(new Message(JOIN_SESSION, user.getUsername(),
-                Helpers.getInetAddress()), InetAddress.getByName(groupSession.getLeaderIPAddress()));
+        globalSession.sendMessage(new Message(COLLECT_USERS_DATA),
+                InetAddress.getByName(getGroupSession(name).getLeaderIPAddress()));
 
-        // Collect IDs
-        try (ServerSocket socket = new ServerSocket(UNICAST_SEND_USER_DATA_PORT)) {
-            socket.setSoTimeout(SO_TIMEOUT);
-            collectAndProcessUnicastMessage(socket); // will receive the highest ID from the leader - no need for a timer
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("No ids received.");
-        }
+        collectUsersData();
 
         int id;
         if (!this.groupIDs.isEmpty()) {
@@ -166,9 +171,12 @@ public class MainService {
         } else {
             id = 1;
         }
-
         user.setID(id);
         System.out.println("ID set: " + id);
+
+        globalSession.sendMessage(new Message(JOIN_SESSION, user.getUsername(), user.getID(),
+                Helpers.getInetAddress()), InetAddress.getByName(groupSession.getLeaderIPAddress()));
+
         startCrashDetection();
 
         if (groupSession.getPreviousLeaderIpAddress() != null
@@ -177,16 +185,18 @@ public class MainService {
         }
     }
 
-    public void sendUserData(InetAddress senderAddress) throws IOException {
-        globalSession.sendMessage(new Message(SEND_USER_DATA,
-                        user.getUsername(), user.getID(), Helpers.getInetAddress()), senderAddress,
-                UNICAST_SEND_USER_DATA_PORT);
+    public void sendUsersData(InetAddress senderAddress) throws IOException {
+        for (var name : participantsInfo.keySet()) {
+            globalSession.sendMessage(new Message(USER_DATA,
+                            name, participantsInfo.get(name).ID, participantsInfo.get(name).ipAddress),
+                    senderAddress, UNICAST_SEND_USER_DATA_PORT);
+        }
     }
 
     public void setGroupLeader(String name) throws IOException {
         user.setUserType(AppConstants.UserType.VIEWER);
         globalSession.multicast(new Message(CHANGE_LEADER,
-                groupSession, name, participantsInfo.get(name).ipAddress));
+                groupSession, participantsInfo.get(name).ID, name, participantsInfo.get(name).ipAddress));
     }
 
     private void cleanUpSessionData() {
@@ -332,6 +342,7 @@ public class MainService {
         Platform.runLater(() -> participantsNames.remove(name));
     }
 
+    //    TODO: Change to updateSessionData
     public synchronized void addSessionData(GroupSession session) {
         groupSessions.add(session);
         Platform.runLater(() -> groupSessionsInfo.add(session.getName() + ": " + session.getLeaderInfo()));
@@ -343,15 +354,22 @@ public class MainService {
         Platform.runLater(groupSessionsInfo::clear);
     }
 
-    public synchronized void updateSessionData(GroupSession session, String leaderName, InetAddress addressIP) {
+    public synchronized void updateSessionData(GroupSession session, String leaderName,
+                                               InetAddress addressIP, int leaderID, boolean afterCrash) throws UnknownHostException {
         if (leaderName.equals(user.getUsername())) {
             user.setUserType(AppConstants.UserType.PRESENTER);
+            if (!afterCrash) {
+                addParticipant(groupSession.getLeaderName(),
+                        groupSession.getLeaderID(), InetAddress.getByName(groupSession.getLeaderIPAddress()));
+                addListGroupID(groupSession.getLeaderID());
+            }
         } else
             user.setUserType(AppConstants.UserType.VIEWER);
 
-        groupSessions.get(groupSessions.indexOf(session)).setLeaderData(leaderName, addressIP);
+        groupSessions.get(groupSessions.indexOf(session)).setLeaderData(leaderName, addressIP, leaderID);
         if (groupSession.equals(session)) {
-            groupSession.setLeaderData(leaderName, addressIP);
+            groupSession.setLeaderData(leaderName, addressIP, leaderID);
+            deleteParticipant(leaderName);
         }
         Platform.runLater(() -> {
             groupSessionsInfo.remove(session.getName() + ": " + session.getLeaderInfo());
@@ -415,12 +433,12 @@ public class MainService {
 
     public void sendCOORD() throws IOException {
         groupSession.sendGroupMessage(new Message(COORD,
-                groupSession, user.getUsername(), Helpers.getInetAddress()));
+                groupSession, user.getID(), user.getUsername(), Helpers.getInetAddress()));
     }
 
     public void sendChangeLeader() throws IOException {
         globalSession.multicast(new Message(CHANGE_LEADER,
-                groupSession, user.getUsername(), Helpers.getInetAddress()));
+                groupSession, user.getID(), user.getUsername(), Helpers.getInetAddress()));
     }
 
     public void sendStopElection(InetAddress senderAddress) throws IOException {
@@ -530,7 +548,7 @@ public class MainService {
         return this.groupSession.getLeaderName();
     }
 
-    public void multicastNewParticipant(String username, InetAddress address) throws IOException {
-        groupSession.sendGroupMessage(new Message(NEW_PARTICIPANT, username, address));
+    public void multicastNewParticipant(String username, int participantID, InetAddress address) throws IOException {
+        groupSession.sendGroupMessage(new Message(NEW_PARTICIPANT, username, participantID, address));
     }
 }

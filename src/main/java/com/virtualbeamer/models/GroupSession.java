@@ -15,6 +15,7 @@ public class GroupSession implements Serializable {
     private int port;
     private String leaderName;
     private String leaderIPAddress;
+    private int leaderID;
     private String previousLeaderIPAddress[];
     private final ArrayList<Message> buffer;
 
@@ -67,9 +68,10 @@ public class GroupSession implements Serializable {
         return leaderName;
     }
 
-    public void setLeaderData(String leaderName, InetAddress leaderAddress) {
+    public void setLeaderData(String leaderName, InetAddress leaderAddress, int leaderID) {
         this.leaderName = leaderName;
         this.leaderIPAddress = leaderAddress.getHostAddress();
+        this.leaderID = leaderID;
     }
 
     @Override
@@ -110,5 +112,9 @@ public class GroupSession implements Serializable {
                 break;
             }
         }
+    }
+
+    public int getLeaderID() {
+        return leaderID;
     }
 }
