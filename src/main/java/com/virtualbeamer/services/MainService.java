@@ -193,9 +193,13 @@ public class MainService {
         }
     }
 
-    public void setGroupLeader(String name) throws IOException {
+    public void setGroupLeader(String name) {
+        stopCrashDetection();
         user.setUserType(AppConstants.UserType.VIEWER);
-//        globalSession.sendMessage(new MESSAGE(SET_GROUP_LEADER));
+        globalSession.sendMessage(new Message(PASS_LEADERSHIP), participantsInfo.get(name).ipAddress);
+    }
+
+    public void multicastNewLeader(String name) throws IOException {
         globalSession.multicast(new Message(CHANGE_LEADER,
                 groupSession, participantsInfo.get(name).ID, name, participantsInfo.get(name).ipAddress));
     }
@@ -238,11 +242,11 @@ public class MainService {
                 currentSlide));
     }
 
-    public void sendCurrentSlideNumber(InetAddress address) throws IOException {
+    public void sendCurrentSlideNumber(InetAddress address) {
         globalSession.sendMessage(new Message(CURRENT_SLIDE_NUMBER, currentSlide), address);
     }
 
-    public void sendSlides(InetAddress senderAddress) throws IOException, InterruptedException {
+    public void sendSlides(InetAddress senderAddress) throws IOException {
         slidesSender.unicast(slides, senderAddress);
         sendCurrentSlideNumber(senderAddress);
     }
@@ -251,7 +255,7 @@ public class MainService {
         globalSession.multicast(new Message(SESSION_DETAILS, groupSession));
     }
 
-    public void sendSessionDetails(InetAddress senderAddress) throws IOException {
+    public void sendSessionDetails(InetAddress senderAddress) {
         globalSession.sendMessage(new Message(SESSION_DETAILS, groupSession), senderAddress);
     }
 
@@ -273,7 +277,7 @@ public class MainService {
         groupSession.sendGroupMessage(new Message(PREVIOUS_SLIDE, currentSlide));
     }
 
-    public void sendGroupPort(InetAddress senderAddress) throws IOException {
+    public void sendGroupPort(InetAddress senderAddress) {
         if (groupSession.getPort() != 0) {
             globalSession.sendMessage(new Message(SEND_SESSION_PORT,
                     groupSession.getPort()), senderAddress, UNICAST_COLLECT_PORTS_PORT);
@@ -366,8 +370,9 @@ public class MainService {
                         groupSession.getLeaderID(), InetAddress.getByName(groupSession.getLeaderIPAddress()));
                 addListGroupID(groupSession.getLeaderID());
             }
-        } else
+        } else {
             user.setUserType(AppConstants.UserType.VIEWER);
+        }
 
         groupSessions.get(groupSessions.indexOf(session)).setLeaderData(leaderName, addressIP, leaderID);
         if (groupSession.equals(session)) {
@@ -426,7 +431,7 @@ public class MainService {
         return user.getID();
     }
 
-    public void sendElect() throws IOException {
+    public void sendElect() {
         for (var name : participantsInfo.keySet()) {
             if (participantsInfo.get(name).ID < user.getID()) {
                 globalSession.sendMessage(new Message(ELECT, user.getID()), participantsInfo.get(name).ipAddress);
@@ -444,7 +449,7 @@ public class MainService {
                 groupSession, user.getID(), user.getUsername(), Helpers.getInetAddress()));
     }
 
-    public void sendStopElection(InetAddress senderAddress) throws IOException {
+    public void sendStopElection(InetAddress senderAddress) {
         globalSession.sendMessage(new Message(STOP_ELECT), senderAddress);
     }
 
@@ -467,7 +472,7 @@ public class MainService {
                             sendSlides(senderAddress);
                         }
                         agreementMessageSent.put(senderAddress, false);
-                    } catch (IOException | InterruptedException e) {
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
@@ -475,7 +480,7 @@ public class MainService {
         }
     }
 
-    public void sendStopAgreementProcess(InetAddress senderAddress, InetAddress viewerAddress) throws IOException {
+    public void sendStopAgreementProcess(InetAddress senderAddress, InetAddress viewerAddress) {
         globalSession.sendMessage(new Message(STOP_AGREEMENT_PROCESS, viewerAddress), senderAddress);
     }
 

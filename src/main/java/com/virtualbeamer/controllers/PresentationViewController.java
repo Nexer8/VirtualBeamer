@@ -179,7 +179,7 @@ public class PresentationViewController implements Initializable {
     }
 
     @FXML
-    public void giveControl() throws IOException {
+    public void giveControl() {
         String userName = participants.getValue();
         user.setGroupLeader(userName);
     }
