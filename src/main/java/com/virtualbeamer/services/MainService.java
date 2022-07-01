@@ -246,8 +246,10 @@ public class MainService {
         globalSession.sendMessage(new Message(SESSION_DETAILS, groupSession), senderAddress);
     }
 
-    public void multicastDeleteSession() throws IOException {
-        globalSession.multicast(new Message(DELETE_SESSION, groupSession));
+    public void sendDeleteSession() throws IOException {
+        for (var name : participantsNames) {
+            globalSession.sendMessage(new Message(DELETE_SESSION, groupSession), participantsInfo.get(name));
+        }
         cleanUpSessionData();
     }
 

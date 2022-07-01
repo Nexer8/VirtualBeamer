@@ -60,7 +60,7 @@ public class PresentationViewController implements Initializable {
         cleanUpView();
 
         if (user.getUserType() == PRESENTER) {
-            user.multicastDeleteSession();
+            user.sendDeleteSession();
         } else {
             user.leaveSession();
         }
