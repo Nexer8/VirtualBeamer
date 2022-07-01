@@ -2,10 +2,7 @@ package com.virtualbeamer.services;
 
 import com.virtualbeamer.constants.AppConstants;
 import com.virtualbeamer.controllers.PresentationViewController;
-import com.virtualbeamer.models.GlobalSession;
-import com.virtualbeamer.models.GroupSession;
-import com.virtualbeamer.models.Message;
-import com.virtualbeamer.models.User;
+import com.virtualbeamer.models.*;
 import com.virtualbeamer.receivers.*;
 import com.virtualbeamer.utils.*;
 
@@ -38,7 +35,7 @@ public class MainService {
     private final ObservableList<GroupSession> groupSessions = FXCollections.observableArrayList();
     private final ObservableList<String> groupSessionsInfo = FXCollections.observableArrayList();
     private final ObservableList<String> participantsNames = FXCollections.observableArrayList();
-    private final Map<String, InetAddress> participantsInfo = new HashMap<>();
+    private final Map<String, Participant> participantsInfo = new HashMap<>();
     private final ArrayList<Integer> groupIDs = new ArrayList<>();
     private final ArrayList<Integer> groupPortList = new ArrayList<>();
 
@@ -189,7 +186,7 @@ public class MainService {
     public void setGroupLeader(String name) throws IOException {
         user.setUserType(AppConstants.UserType.VIEWER);
         globalSession.multicast(new Message(CHANGE_LEADER,
-                groupSession, name, participantsInfo.get(name)));
+                groupSession, name, participantsInfo.get(name).ipAddress));
     }
 
     private void cleanUpSessionData() {
@@ -248,8 +245,8 @@ public class MainService {
     }
 
     public void sendDeleteSession() throws IOException {
-        for (var name : participantsNames) {
-            globalSession.sendMessage(new Message(DELETE_SESSION, groupSession), participantsInfo.get(name));
+        for (var name : participantsInfo.keySet()) {
+            globalSession.sendMessage(new Message(DELETE_SESSION, groupSession), participantsInfo.get(name).ipAddress);
         }
         cleanUpSessionData();
     }
@@ -324,8 +321,8 @@ public class MainService {
         this.pvc = pvc;
     }
 
-    public synchronized void addParticipant(String name, InetAddress ipAddress) {
-        participantsInfo.put(name, ipAddress);
+    public synchronized void addParticipant(String name, int participantID, InetAddress ipAddress) {
+        participantsInfo.put(name, new Participant(participantID, ipAddress));
         Platform.runLater(() -> participantsNames.add(name));
     }
 
@@ -409,7 +406,11 @@ public class MainService {
     }
 
     public void sendElect() throws IOException {
-        groupSession.sendGroupMessage(new Message(ELECT, user.getID()));
+        for (var name : participantsInfo.keySet()) {
+            if (participantsInfo.get(name).ID < user.getID()) {
+                globalSession.sendMessage(new Message(ELECT, user.getID()), participantsInfo.get(name).ipAddress);
+            }
+        }
     }
 
     public void sendCOORD() throws IOException {

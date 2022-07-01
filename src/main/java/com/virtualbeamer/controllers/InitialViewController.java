@@ -43,7 +43,6 @@ public class InitialViewController implements Initializable {
     private void goToPresentationView(MouseEvent mouseEvent, UserType userType) throws IOException {
         Stage stage = (Stage) ((Node) mouseEvent.getSource()).getScene().getWindow();
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/presentation_view.fxml"));
-
         stage.getScene().setRoot(fxmlLoader.load());
 
         user.setUserType(userType);
