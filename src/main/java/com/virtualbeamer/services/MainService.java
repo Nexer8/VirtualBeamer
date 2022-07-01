@@ -133,6 +133,7 @@ public class MainService {
         groupSession.updatePreviousLeaderIpAddress();
         groupReceiver = new GroupReceiver(groupPort);
         groupReceiver.start();
+        groupSessions.add(groupSession);
 
         multicastSessionDetails();
         startCrashDetection();
@@ -185,7 +186,7 @@ public class MainService {
         }
     }
 
-    public void sendUsersData(InetAddress senderAddress) throws IOException {
+    public void sendUsersData(InetAddress senderAddress) {
         for (var name : participantsInfo.keySet()) {
             globalSession.sendMessage(new Message(USER_DATA,
                             name, participantsInfo.get(name).ID, participantsInfo.get(name).ipAddress),
@@ -193,10 +194,20 @@ public class MainService {
         }
     }
 
-    public void setGroupLeader(String name) throws IOException {
+    public void setGroupLeader(String name) {
+        stopCrashDetection();
         user.setUserType(AppConstants.UserType.VIEWER);
+        System.out.println("Leader: " + name);
+        System.out.println("ID: " + participantsInfo.get(name).ID);
+        System.out.println("IP: " + participantsInfo.get(name).ipAddress);
+        globalSession.sendMessage(new Message(PASS_LEADERSHIP,
+                        groupSession, participantsInfo.get(name).ID, name, participantsInfo.get(name).ipAddress),
+                participantsInfo.get(name).ipAddress);
+    }
+
+    public void multicastNewLeader(String name) throws IOException {
         globalSession.multicast(new Message(CHANGE_LEADER,
-                groupSession, participantsInfo.get(name).ID, name, participantsInfo.get(name).ipAddress));
+                groupSession, user.getID(), name, Helpers.getInetAddress()));
     }
 
     private void cleanUpSessionData() {
@@ -237,11 +248,11 @@ public class MainService {
                 currentSlide));
     }
 
-    public void sendCurrentSlideNumber(InetAddress address) throws IOException {
+    public void sendCurrentSlideNumber(InetAddress address) {
         globalSession.sendMessage(new Message(CURRENT_SLIDE_NUMBER, currentSlide), address);
     }
 
-    public void sendSlides(InetAddress senderAddress) throws IOException, InterruptedException {
+    public void sendSlides(InetAddress senderAddress) throws IOException {
         slidesSender.unicast(slides, senderAddress);
         sendCurrentSlideNumber(senderAddress);
     }
@@ -250,11 +261,12 @@ public class MainService {
         globalSession.multicast(new Message(SESSION_DETAILS, groupSession));
     }
 
-    public void sendSessionDetails(InetAddress senderAddress) throws IOException {
+    public void sendSessionDetails(InetAddress senderAddress) {
         globalSession.sendMessage(new Message(SESSION_DETAILS, groupSession), senderAddress);
     }
 
-    public void sendDeleteSession() throws IOException {
+    public void sendDeleteSession() {
+        stopCrashDetection();
         for (var name : participantsInfo.keySet()) {
             globalSession.sendMessage(new Message(DELETE_SESSION, groupSession), participantsInfo.get(name).ipAddress);
         }
@@ -271,7 +283,7 @@ public class MainService {
         groupSession.sendGroupMessage(new Message(PREVIOUS_SLIDE, currentSlide));
     }
 
-    public void sendGroupPort(InetAddress senderAddress) throws IOException {
+    public void sendGroupPort(InetAddress senderAddress) {
         if (groupSession.getPort() != 0) {
             globalSession.sendMessage(new Message(SEND_SESSION_PORT,
                     groupSession.getPort()), senderAddress, UNICAST_COLLECT_PORTS_PORT);
@@ -358,13 +370,15 @@ public class MainService {
                                                InetAddress addressIP, int leaderID, boolean afterCrash) throws UnknownHostException {
         if (leaderName.equals(user.getUsername())) {
             user.setUserType(AppConstants.UserType.PRESENTER);
+            startCrashDetection();
             if (!afterCrash) {
                 addParticipant(groupSession.getLeaderName(),
                         groupSession.getLeaderID(), InetAddress.getByName(groupSession.getLeaderIPAddress()));
                 addListGroupID(groupSession.getLeaderID());
             }
-        } else
+        } else {
             user.setUserType(AppConstants.UserType.VIEWER);
+        }
 
         groupSessions.get(groupSessions.indexOf(session)).setLeaderData(leaderName, addressIP, leaderID);
         if (groupSession.equals(session)) {
@@ -423,7 +437,7 @@ public class MainService {
         return user.getID();
     }
 
-    public void sendElect() throws IOException {
+    public void sendElect() {
         for (var name : participantsInfo.keySet()) {
             if (participantsInfo.get(name).ID < user.getID()) {
                 globalSession.sendMessage(new Message(ELECT, user.getID()), participantsInfo.get(name).ipAddress);
@@ -441,7 +455,7 @@ public class MainService {
                 groupSession, user.getID(), user.getUsername(), Helpers.getInetAddress()));
     }
 
-    public void sendStopElection(InetAddress senderAddress) throws IOException {
+    public void sendStopElection(InetAddress senderAddress) {
         globalSession.sendMessage(new Message(STOP_ELECT), senderAddress);
     }
 
@@ -464,7 +478,7 @@ public class MainService {
                             sendSlides(senderAddress);
                         }
                         agreementMessageSent.put(senderAddress, false);
-                    } catch (IOException | InterruptedException e) {
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
@@ -472,7 +486,7 @@ public class MainService {
         }
     }
 
-    public void sendStopAgreementProcess(InetAddress senderAddress, InetAddress viewerAddress) throws IOException {
+    public void sendStopAgreementProcess(InetAddress senderAddress, InetAddress viewerAddress) {
         globalSession.sendMessage(new Message(STOP_AGREEMENT_PROCESS, viewerAddress), senderAddress);
     }
 

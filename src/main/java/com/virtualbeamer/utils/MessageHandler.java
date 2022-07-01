@@ -102,9 +102,7 @@ public class MessageHandler {
                     }
                 }
             }
-            case COLLECT_USERS_DATA -> {
-                MainService.getInstance().sendUsersData(senderAddress);
-            }
+            case COLLECT_USERS_DATA -> MainService.getInstance().sendUsersData(senderAddress);
             case USER_DATA -> {
                 MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
                 MainService.getInstance().addListGroupID(message.intVariable);
@@ -123,9 +121,7 @@ public class MessageHandler {
                     MainService.getInstance().sendStopElection(senderAddress);
                 }
             }
-            case STOP_ELECT -> {
-                MainService.getInstance().stopElection();
-            }
+            case STOP_ELECT -> MainService.getInstance().stopElection();
             case START_AGREEMENT_PROCESS -> {
                 int mID = MainService.getInstance().getGroupIDs().isEmpty() ? MainService.getInstance().getID()
                         : Collections.min(MainService.getInstance().getGroupIDs());
@@ -149,6 +145,13 @@ public class MessageHandler {
                 MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
                 MainService.getInstance().updateSessionData(
                         message.session, message.stringVariable, message.ipAddress, message.intVariable, false);
+            }
+            case PASS_LEADERSHIP -> {
+                MainService.getInstance().stopCrashDetection();
+                MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
+                MainService.getInstance().updateSessionData(
+                        message.session, message.stringVariable, message.ipAddress, message.intVariable, false);
+                MainService.getInstance().multicastNewLeader(MainService.getInstance().getUsername());
             }
             default -> throw new IllegalArgumentException("Unexpected value: " + message.type);
         }

@@ -16,7 +16,7 @@ public class GroupSession implements Serializable {
     private String leaderName;
     private String leaderIPAddress;
     private int leaderID;
-    private String previousLeaderIPAddress[];
+    private String[] previousLeaderIPAddress;
     private final ArrayList<Message> buffer;
 
     public String getName() {
