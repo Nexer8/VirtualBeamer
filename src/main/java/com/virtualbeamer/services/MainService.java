@@ -107,6 +107,7 @@ public class MainService {
     public void createSession(String sessionName) throws IOException {
         user.setUserType(AppConstants.UserType.PRESENTER);
         user.setID(0);
+
         groupSession.setName(sessionName);
         globalSession.multicast(new Message(COLLECT_PORTS));
         this.groupPortList.clear();
@@ -128,7 +129,7 @@ public class MainService {
         System.out.println("Received port:" + groupPort);
         groupSession.setPort(groupPort);
         System.out.println("Username: " + user.getUsername());
-        groupSession.setLeaderData(user.getUsername(), Helpers.getInetAddress());
+        groupSession.setLeaderData(user.getUsername(), Helpers.getInetAddress(), user.getID());
         groupSession.updatePreviousLeaderIpAddress();
         groupReceiver = new GroupReceiver(groupPort);
         groupReceiver.start();
@@ -195,7 +196,7 @@ public class MainService {
     public void setGroupLeader(String name) throws IOException {
         user.setUserType(AppConstants.UserType.VIEWER);
         globalSession.multicast(new Message(CHANGE_LEADER,
-                groupSession, name, participantsInfo.get(name).ipAddress));
+                groupSession, participantsInfo.get(name).ID, name, participantsInfo.get(name).ipAddress));
     }
 
     private void cleanUpSessionData() {
@@ -353,15 +354,22 @@ public class MainService {
         Platform.runLater(groupSessionsInfo::clear);
     }
 
-    public synchronized void updateSessionData(GroupSession session, String leaderName, InetAddress addressIP) {
+    public synchronized void updateSessionData(GroupSession session, String leaderName,
+                                               InetAddress addressIP, int leaderID, boolean afterCrash) throws UnknownHostException {
         if (leaderName.equals(user.getUsername())) {
             user.setUserType(AppConstants.UserType.PRESENTER);
+            if (!afterCrash) {
+                addParticipant(groupSession.getLeaderName(),
+                        groupSession.getLeaderID(), InetAddress.getByName(groupSession.getLeaderIPAddress()));
+                addListGroupID(groupSession.getLeaderID());
+            }
         } else
             user.setUserType(AppConstants.UserType.VIEWER);
 
-        groupSessions.get(groupSessions.indexOf(session)).setLeaderData(leaderName, addressIP);
+        groupSessions.get(groupSessions.indexOf(session)).setLeaderData(leaderName, addressIP, leaderID);
         if (groupSession.equals(session)) {
-            groupSession.setLeaderData(leaderName, addressIP);
+            groupSession.setLeaderData(leaderName, addressIP, leaderID);
+            deleteParticipant(leaderName);
         }
         Platform.runLater(() -> {
             groupSessionsInfo.remove(session.getName() + ": " + session.getLeaderInfo());
@@ -425,12 +433,12 @@ public class MainService {
 
     public void sendCOORD() throws IOException {
         groupSession.sendGroupMessage(new Message(COORD,
-                groupSession, user.getUsername(), Helpers.getInetAddress()));
+                groupSession, user.getID(), user.getUsername(), Helpers.getInetAddress()));
     }
 
     public void sendChangeLeader() throws IOException {
         globalSession.multicast(new Message(CHANGE_LEADER,
-                groupSession, user.getUsername(), Helpers.getInetAddress()));
+                groupSession, user.getID(), user.getUsername(), Helpers.getInetAddress()));
     }
 
     public void sendStopElection(InetAddress senderAddress) throws IOException {

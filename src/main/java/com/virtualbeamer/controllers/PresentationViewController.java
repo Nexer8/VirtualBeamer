@@ -83,14 +83,16 @@ public class PresentationViewController implements Initializable {
     }
 
     public void closeSession() throws IOException {
-        Alert alert = new Alert(Alert.AlertType.WARNING, "Presenter has finished the session!");
-        alert.initOwner(slidePane.getScene().getWindow());
-        alert.getDialogPane().getStylesheets().add((Objects.requireNonNull(
-                getClass().getResource("/styles/dialog.css"))).toExternalForm());
-        alert.setHeaderText("Presentation ended!");
-        alert.showAndWait();
+        if (slidePane.getScene() != null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Presenter has finished the session!");
+            alert.initOwner(slidePane.getScene().getWindow());
+            alert.getDialogPane().getStylesheets().add((Objects.requireNonNull(
+                    getClass().getResource("/styles/dialog.css"))).toExternalForm());
+            alert.setHeaderText("Presentation ended!");
+            alert.showAndWait();
 
-        goToInitialView();
+            goToInitialView();
+        }
     }
 
     private void updatePresentationStatus() {

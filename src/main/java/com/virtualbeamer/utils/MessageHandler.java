@@ -113,7 +113,7 @@ public class MessageHandler {
             case COORD -> {
                 MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
                 MainService.getInstance().updateSessionData(
-                        message.session, message.stringVariable, message.ipAddress);
+                        message.session, message.stringVariable, message.ipAddress, message.intVariable, true);
                 MainService.getInstance().startCrashDetection();
             }
             case ELECT -> {
@@ -148,7 +148,7 @@ public class MessageHandler {
             case CHANGE_LEADER -> {
                 MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
                 MainService.getInstance().updateSessionData(
-                        message.session, message.stringVariable, message.ipAddress);
+                        message.session, message.stringVariable, message.ipAddress, message.intVariable, false);
             }
             default -> throw new IllegalArgumentException("Unexpected value: " + message.type);
         }

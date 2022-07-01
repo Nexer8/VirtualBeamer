@@ -66,9 +66,10 @@ public class Message implements Serializable {
         this.ipAddress = ipAddress;
     }
 
-    public Message(MessageType type, GroupSession session, String stringVariable, InetAddress ipAddress) {
+    public Message(MessageType type, GroupSession session, int intVariable, String stringVariable, InetAddress ipAddress) {
         this.type = type;
         this.session = session;
+        this.intVariable = intVariable;
         this.stringVariable = stringVariable;
         this.ipAddress = ipAddress;
     }

@@ -38,7 +38,7 @@ public class CrashDetection extends Thread {
                     try {
                         MainService.getInstance().sendCOORD();
                         MainService.getInstance().updateSessionData(MainService.getInstance().getGroupSession(),
-                                MainService.getInstance().getUsername(), Helpers.getInetAddress());
+                                MainService.getInstance().getUsername(), Helpers.getInetAddress(), MainService.getInstance().getID(), true);
                         electSent = false;
                     } catch (IOException e) {
                         e.printStackTrace();
