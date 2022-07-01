@@ -27,6 +27,8 @@ public class GlobalSession implements Serializable {
         try (Socket socket = new Socket(address, port)) {
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
             out.writeObject(message);
+        } catch (IOException e) {
+            System.out.println("Failed to send message to " + address.getHostAddress() + ":" + port);
         }
         System.out.println("Responded to Hello message!");
     }

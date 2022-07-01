@@ -82,13 +82,13 @@ public class MessageHandler {
             case SEND_SESSION_PORT -> MainService.getInstance().addGroupPortToList(message.intVariable);
             case JOIN_SESSION -> {
                 System.out.println(message.stringVariable + " joined the session.");
-                MainService.getInstance().addParticipant(message.stringVariable, message.ipAddress);
+                MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
                 MainService.getInstance().sendUserData(senderAddress); // send the highest ID instead
                 MainService.getInstance().multicastNewParticipant(message.stringVariable, message.ipAddress);
             }
             case NEW_PARTICIPANT -> {
                 if (MainService.getInstance().getUserType() == AppConstants.UserType.VIEWER) {
-                    MainService.getInstance().addParticipant(message.stringVariable, message.ipAddress);
+                    MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
 
                     if (MainService.getInstance().getSlides() != null
                             && !MainService.getInstance().getSlides().isEmpty()) {
@@ -99,7 +99,7 @@ public class MessageHandler {
             case SEND_USER_DATA -> {
                 System.out.println(MainService.getInstance().getUsername() + " added " + message.stringVariable
                         + " to participants list.");
-                MainService.getInstance().addParticipant(message.stringVariable, message.ipAddress);
+                MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
                 MainService.getInstance().addListGroupID(message.intVariable);
             }
             case LEAVE_SESSION -> MainService.getInstance().deleteParticipant(message.stringVariable);
