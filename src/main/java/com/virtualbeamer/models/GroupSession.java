@@ -11,11 +11,11 @@ import java.util.ArrayList;
 import static com.virtualbeamer.constants.SessionConstants.GROUP_ADDRESS;
 
 public class GroupSession implements Serializable {
-    private String name;
-    private int port;
-    private String leaderName;
-    private String leaderIPAddress;
-    private int leaderID;
+        private String name;
+        private int port;
+        private String leaderName;
+        private String leaderIPAddress;
+        private int leaderID;
     private String[] previousLeaderIPAddress;
     private final ArrayList<Message> buffer;
 

@@ -60,7 +60,7 @@ public class InitialViewController implements Initializable {
     }
 
     @FXML
-    public void createSession(MouseEvent mouseEvent) throws IOException {
+    public void createSession(MouseEvent mouseEvent) throws IOException, InterruptedException {
         user.setUsername(usernameEditTextField.getText());
         user.createSession(sessionNameEditTextField.getText());
         MainService.stopSendingPeriodicalHELLO();
