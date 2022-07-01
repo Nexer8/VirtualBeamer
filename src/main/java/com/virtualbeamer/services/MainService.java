@@ -14,10 +14,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static com.virtualbeamer.constants.MessageType.*;
 import static com.virtualbeamer.constants.SessionConstants.*;
@@ -37,7 +34,6 @@ public class MainService {
     private final ObservableList<String> participantsNames = FXCollections.observableArrayList();
     private final Map<String, Participant> participantsInfo = new HashMap<>();
     private final ArrayList<Integer> groupIDs = new ArrayList<>();
-    private final ArrayList<Integer> groupPortList = new ArrayList<>();
 
     private final GlobalSession globalSession;
     private GroupSession groupSession;
@@ -55,6 +51,8 @@ public class MainService {
     private static ScheduledExecutorService executor;
 
     private static ScheduledFuture<?> handler;
+
+    private static volatile int helloCounter = 0;
 
     private MainService() throws IOException {
         MulticastReceiver multicastReceiver = new MulticastReceiver();
@@ -74,6 +72,7 @@ public class MainService {
     }
 
     public static void startSendingPeriodicalHELLO() {
+        helloCounter = 0;
         Runnable sendHelloMessage = () -> {
             try {
                 instance.cleanUpSessionsData();
@@ -104,26 +103,20 @@ public class MainService {
         }
     }
 
-    public void createSession(String sessionName) throws IOException {
+    public void createSession(String sessionName) throws IOException, InterruptedException {
         user.setUserType(AppConstants.UserType.PRESENTER);
         user.setID(0);
-
         groupSession.setName(sessionName);
-        globalSession.multicast(new Message(COLLECT_PORTS));
-        this.groupPortList.clear();
 
-        try (ServerSocket socket = new ServerSocket(UNICAST_COLLECT_PORTS_PORT)) {
-            socket.setSoTimeout(SO_TIMEOUT);
-            collectAndProcessMultipleUnicastMessages(socket);
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("No ports received.");
+        while (helloCounter < 3) {
+            Thread.sleep(200);
         }
 
         int groupPort;
-        if (groupPortList.isEmpty()) {
+        if (groupSessions.isEmpty()) {
             groupPort = STARTING_GROUP_PORT;
         } else {
-            groupPort = Collections.max(groupPortList) + 1;
+            groupPort = groupSessions.stream().max(Comparator.comparing(GroupSession::getPort)).get().getPort() + 1;
         }
 
         System.out.println("Received port:" + groupPort);
@@ -223,9 +216,10 @@ public class MainService {
         cleanUpSessionData();
     }
 
-    public void sendHelloMessage() throws IOException {
+    public synchronized void sendHelloMessage() throws IOException {
         System.out.println("Sending hello message.");
         globalSession.multicast(new Message(HELLO));
+        helloCounter++;
     }
 
     public void multicastSlides() throws IOException {
@@ -281,13 +275,6 @@ public class MainService {
     public void multicastPreviousSlide() throws IOException {
         currentSlide--;
         groupSession.sendGroupMessage(new Message(PREVIOUS_SLIDE, currentSlide));
-    }
-
-    public void sendGroupPort(InetAddress senderAddress) {
-        if (groupSession.getPort() != 0) {
-            globalSession.sendMessage(new Message(SEND_SESSION_PORT,
-                    groupSession.getPort()), senderAddress, UNICAST_COLLECT_PORTS_PORT);
-        }
     }
 
     public int getCurrentSlide() {
@@ -407,10 +394,6 @@ public class MainService {
             System.out.println("Session name: " + name);
             Platform.runLater(() -> groupSessionsInfo.remove(name + ": " + session.getLeaderInfo()));
         }
-    }
-
-    public synchronized void addGroupPortToList(int groupPort) {
-        groupPortList.add(groupPort);
     }
 
     public GroupSession getGroupSession(String name) {

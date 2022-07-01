@@ -79,12 +79,6 @@ public class MessageHandler {
                 }
             }
             case SESSION_DETAILS -> MainService.getInstance().addSessionData(message.session);
-            case COLLECT_PORTS -> {
-                if (MainService.getInstance().getUserType() == AppConstants.UserType.PRESENTER) {
-                    MainService.getInstance().sendGroupPort(senderAddress);
-                }
-            }
-            case SEND_SESSION_PORT -> MainService.getInstance().addGroupPortToList(message.intVariable);
             case JOIN_SESSION -> {
                 System.out.println(message.stringVariable + " joined the session.");
                 MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
