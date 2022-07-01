@@ -15,7 +15,7 @@ import java.time.Instant;
 import java.util.Collections;
 
 public class MessageHandler {
-    public static void collectAndProcessMessage(DatagramSocket socket, byte[] buffer)
+    public static void collectAndProcessMultipleMessages(DatagramSocket socket, byte[] buffer)
             throws IOException, ClassNotFoundException {
         // noinspection InfiniteLoopStatement
         while (true) {
@@ -28,18 +28,23 @@ public class MessageHandler {
         }
     }
 
-    public static void collectAndProcessUnicastMessage(ServerSocket serverSocket)
+    public static void collectAndProcessMultipleUnicastMessages(ServerSocket serverSocket)
             throws IOException, ClassNotFoundException {
         // noinspection InfiniteLoopStatement
         while (true) {
-            Socket socket = serverSocket.accept();
-            System.out.println("Client connected!");
-
-            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-
-            Message message = (Message) in.readObject();
-            handleMessage(message, socket.getInetAddress());
+            collectAndProcessUnicastMessage(serverSocket);
         }
+    }
+
+    public static void collectAndProcessUnicastMessage(ServerSocket serverSocket)
+            throws IOException, ClassNotFoundException {
+        Socket socket = serverSocket.accept();
+        System.out.println("Client connected!");
+
+        ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+
+        Message message = (Message) in.readObject();
+        handleMessage(message, socket.getInetAddress());
     }
 
     public static Message deserializeMessage(byte[] buffer) throws IOException, ClassNotFoundException {
@@ -83,12 +88,13 @@ public class MessageHandler {
             case JOIN_SESSION -> {
                 System.out.println(message.stringVariable + " joined the session.");
                 MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
-                MainService.getInstance().sendUserData(senderAddress); // send the highest ID instead
-                MainService.getInstance().multicastNewParticipant(message.stringVariable, message.ipAddress);
+                MainService.getInstance().addListGroupID(message.intVariable);
+                MainService.getInstance().multicastNewParticipant(message.stringVariable, message.intVariable, message.ipAddress);
             }
             case NEW_PARTICIPANT -> {
                 if (MainService.getInstance().getUserType() == AppConstants.UserType.VIEWER) {
                     MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
+                    MainService.getInstance().addListGroupID(message.intVariable);
 
                     if (MainService.getInstance().getSlides() != null
                             && !MainService.getInstance().getSlides().isEmpty()) {
@@ -96,9 +102,10 @@ public class MessageHandler {
                     }
                 }
             }
-            case SEND_USER_DATA -> {
-                System.out.println(MainService.getInstance().getUsername() + " added " + message.stringVariable
-                        + " to participants list.");
+            case COLLECT_USERS_DATA -> {
+                MainService.getInstance().sendUsersData(senderAddress);
+            }
+            case USER_DATA -> {
                 MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
                 MainService.getInstance().addListGroupID(message.intVariable);
             }
