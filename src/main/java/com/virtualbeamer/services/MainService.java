@@ -19,6 +19,7 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.virtualbeamer.constants.MessageType.*;
@@ -54,6 +55,10 @@ public class MainService {
 
     private long lastImAlive;
 
+    private static ScheduledExecutorService executor;
+
+    private static ScheduledFuture<?> handler;
+
     private MainService() throws IOException {
         MulticastReceiver multicastReceiver = new MulticastReceiver();
         multicastReceiver.start();
@@ -71,6 +76,24 @@ public class MainService {
         lastImAlive = 0;
     }
 
+    public static void startSendingPeriodicalHELLO() {
+        Runnable sendHelloMessage = () -> {
+            try {
+                instance.cleanUpSessionsData();
+                instance.sendHelloMessage();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+        executor = Executors.newScheduledThreadPool(1);
+        handler = executor.scheduleAtFixedRate(sendHelloMessage, 0, HELLO_MESSAGE_PERIODICITY, TimeUnit.SECONDS);
+    }
+
+    public static void stopSendingPeriodicalHELLO() {
+        handler.cancel(true);
+        executor.shutdown();
+    }
+
     public static MainService getInstance() throws IOException {
         if (instance != null) {
             return instance;
@@ -78,19 +101,7 @@ public class MainService {
         synchronized (MainService.class) {
             if (instance == null) {
                 instance = new MainService();
-
-                Runnable sendHelloMessage = () -> {
-                    try {
-                        instance.cleanUpSessionsData();
-                        instance.sendHelloMessage();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                };
-
-                ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-                executor.scheduleAtFixedRate(sendHelloMessage, 0, HELLO_MESSAGE_PERIODICITY, TimeUnit.SECONDS);
-
+                startSendingPeriodicalHELLO();
             }
             return instance;
         }
@@ -194,6 +205,7 @@ public class MainService {
     }
 
     public void sendHelloMessage() throws IOException {
+        System.out.println("Sending hello message.");
         globalSession.multicast(new Message(HELLO));
     }
 

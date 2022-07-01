@@ -53,6 +53,7 @@ public class InitialViewController implements Initializable {
     public void joinSession(MouseEvent mouseEvent) throws IOException {
         user.setUserType(VIEWER);
         user.setUsername(usernameEditTextField.getText());
+        MainService.stopSendingPeriodicalHELLO();
         String session = ongoingSessions.getSelectionModel().getSelectedItem().substring(0,
                 ongoingSessions.getSelectionModel().getSelectedItem().indexOf(":"));
         MainService.getInstance().joinSession(session);
@@ -63,6 +64,7 @@ public class InitialViewController implements Initializable {
     public void createSession(MouseEvent mouseEvent) throws IOException {
         user.setUsername(usernameEditTextField.getText());
         user.createSession(sessionNameEditTextField.getText());
+        MainService.stopSendingPeriodicalHELLO();
         goToPresentationView(mouseEvent, PRESENTER);
     }
 
@@ -83,13 +85,13 @@ public class InitialViewController implements Initializable {
 
         createButton.disableProperty()
                 .bind(Bindings.createBooleanBinding(() -> usernameEditTextField.getText().isEmpty()
-                        || sessionNameEditTextField.getText().isEmpty(),
+                                || sessionNameEditTextField.getText().isEmpty(),
                         usernameEditTextField.textProperty(),
                         sessionNameEditTextField.textProperty()));
 
         joinButton.disableProperty()
                 .bind(Bindings.createBooleanBinding(() -> usernameEditTextField.getText().isEmpty()
-                        || ongoingSessions.getSelectionModel().getSelectedItem() == null,
+                                || ongoingSessions.getSelectionModel().getSelectedItem() == null,
                         usernameEditTextField.textProperty(),
                         ongoingSessions.getSelectionModel().selectedItemProperty()));
 
