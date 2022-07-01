@@ -151,32 +151,33 @@ public class MainService {
         slidesReceiver = new SlidesReceiver(getGroupSession(name).getPort());
         slidesReceiver.start();
 
-        groupSession.sendGroupMessage(new Message(JOIN_SESSION,
-                user.getUsername(), Helpers.getInetAddress()));
+        globalSession.sendMessage(new Message(JOIN_SESSION, user.getUsername(),
+                Helpers.getInetAddress()), InetAddress.getByName(groupSession.getLeaderIPAddress()));
 
         // Collect IDs
         try (ServerSocket socket = new ServerSocket(UNICAST_SEND_USER_DATA_PORT)) {
             socket.setSoTimeout(SO_TIMEOUT);
-            collectAndProcessUnicastMessage(socket);
+            collectAndProcessUnicastMessage(socket); // will receive the highest ID from the leader - no need for a timer
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("No ids received.");
         }
 
-        int id = 0;
+        int id;
         if (!this.groupIDs.isEmpty()) {
             Collections.sort(groupIDs);
             id = groupIDs.get(groupIDs.size() - 1) + 1;
-        } else
+        } else {
             id = 1;
+        }
 
         user.setID(id);
         System.out.println("ID set: " + id);
         startCrashDetection();
 
         if (groupSession.getPreviousLeaderIpAddress() != null
-                && groupSession.getPreviousLeaderIpAddress().equals(Helpers.getInetAddress().getHostAddress()))
+                && groupSession.getPreviousLeaderIpAddress().equals(Helpers.getInetAddress().getHostAddress())) {
             sendChangeLeader();
-
+        }
     }
 
     public void sendUserData(InetAddress senderAddress) throws IOException {
@@ -516,5 +517,9 @@ public class MainService {
 
     public String getCurrentLeaderName() {
         return this.groupSession.getLeaderName();
+    }
+
+    public void multicastNewParticipant(String username, InetAddress address) throws IOException {
+        groupSession.sendGroupMessage(new Message(NEW_PARTICIPANT, username, address));
     }
 }

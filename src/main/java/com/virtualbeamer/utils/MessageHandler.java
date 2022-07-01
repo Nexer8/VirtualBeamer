@@ -76,10 +76,14 @@ public class MessageHandler {
             }
             case SEND_SESSION_PORT -> MainService.getInstance().addGroupPortToList(message.intVariable);
             case JOIN_SESSION -> {
-                if (!MainService.getInstance().getUsername().equals(message.stringVariable)) {
-                    System.out.println(message.stringVariable + " joined the session.");
+                System.out.println(message.stringVariable + " joined the session.");
+                MainService.getInstance().addParticipant(message.stringVariable, message.ipAddress);
+                MainService.getInstance().sendUserData(senderAddress); // send the highest ID instead
+                MainService.getInstance().multicastNewParticipant(message.stringVariable, message.ipAddress);
+            }
+            case NEW_PARTICIPANT -> {
+                if (MainService.getInstance().getUserType() == AppConstants.UserType.VIEWER) {
                     MainService.getInstance().addParticipant(message.stringVariable, message.ipAddress);
-                    MainService.getInstance().sendUserData(senderAddress);
 
                     if (MainService.getInstance().getSlides() != null
                             && !MainService.getInstance().getSlides().isEmpty()) {
