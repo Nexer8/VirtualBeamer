@@ -53,7 +53,12 @@ public class MessageHandler {
         System.out.println(message.type.name());
 
         switch (message.type) {
-            case DELETE_SESSION -> MainService.getInstance().deleteSession(message.session);
+            case DELETE_SESSION -> {
+                if (MainService.getInstance().getGroupSession().equals(message.session)) {
+                    MainService.getInstance().closeSession();
+                }
+                MainService.getInstance().deleteSession(message.session);
+            }
             case HELLO -> {
                 if (MainService.getInstance().getUserType() == AppConstants.UserType.PRESENTER) {
                     MainService.getInstance().sendSessionDetails(senderAddress);

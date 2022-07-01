@@ -295,6 +295,16 @@ public class MainService {
         }
     }
 
+    public void closeSession() {
+        Platform.runLater(() -> {
+            try {
+                pvc.closeSession();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     public void setSlides(BufferedImage[] slides) throws IOException {
         this.slides = FXCollections.observableArrayList(slides);
 
