@@ -407,7 +407,6 @@ public class MainService {
                                                InetAddress addressIP, int leaderID, boolean afterCrash) throws UnknownHostException {
         if (leaderName.equals(user.getUsername())) {
             user.setUserType(AppConstants.UserType.PRESENTER);
-            startCrashDetection();
             if (!afterCrash) {
                 addParticipant(groupSession.getLeaderName(),
                         groupSession.getLeaderID(), InetAddress.getByName(groupSession.getLeaderIPAddress()));
@@ -537,9 +536,13 @@ public class MainService {
     }
 
     public void stopCrashDetection() {
-        System.out.println("Stopped crash detection");
-        crashDetection.stopCrashDetectionTimer();
-        crashDetection.interrupt();
+        try {
+            System.out.println("Stopped crash detection");
+            crashDetection.stopCrashDetectionTimer();
+            crashDetection.interrupt();
+        } catch (Exception e) {
+            System.out.println("Crash detection already stopped");
+        }
         lastImAlive = 0;
     }
 

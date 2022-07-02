@@ -184,7 +184,9 @@ public class PresentationViewController implements Initializable {
     @FXML
     public void giveControl() {
         String userName = participants.getValue();
-        user.setGroupLeader(userName);
+        if (userName != null) {
+            user.setGroupLeader(userName);
+        }
     }
 
     @Override
@@ -235,8 +237,8 @@ public class PresentationViewController implements Initializable {
         if (user.getUserType() == PRESENTER) {
             System.out.println("I'm a PRESENTER");
             loadPresentationButton.setVisible(true);
-            System.out.println("Current slide: " + user.getCurrentSlide());
-            if (user.getCurrentSlide() < user.getSlides().size()) {
+            System.out.println("Current slide: " + user.getCurrentSlide() + 1);
+            if (user.getCurrentSlide() + 1 < user.getSlides().size()) {
                 nextSlideButton.setDisable(false);
             }
             if (user.getCurrentSlide() > 0) {

@@ -14,7 +14,7 @@ public class SessionConstants {
     public static final int SO_TIMEOUT = 1000;
     public static final int HELLO_MESSAGE_PERIODICITY = 5;
     public static final int IM_ALIVE_PERIODICITY = 5000;
-    public static final int CRASH_DETECTION_TIMEOUT = 3000;
+    public static final int CRASH_DETECTION_TIMEOUT = 3 * IM_ALIVE_PERIODICITY;
     public static final int MESSAGE_QUEUE_FLUSH = 2000;
     public static final int PORT_TIMELINESS = 3;
 }

@@ -69,11 +69,14 @@ public class MessageHandler {
             }
             case CURRENT_SLIDE_NUMBER, NEXT_SLIDE, PREVIOUS_SLIDE -> {
                 if (MainService.getInstance().getUserType() != AppConstants.UserType.PRESENTER) {
-                    if (MainService.getInstance().getSlides().size() < message.intVariable + 1) {
-                        MainService.getInstance().setCurrentSlide(message.intVariable);
-                    } else {
-                        System.out.println("Slide number is out of bounds!");
+                    while (MainService.getInstance().getSlides().size() < message.intVariable + 1) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            System.out.println("Waiting for slides to be received before setting the slide!");
+                        }
                     }
+                    MainService.getInstance().setCurrentSlide(message.intVariable);
                 }
             }
             case SESSION_DETAILS -> MainService.getInstance().addSessionData(message.session);
@@ -93,8 +96,9 @@ public class MessageHandler {
                     MainService.getInstance().addListGroupID(message.intVariable);
 
                     if (MainService.getInstance().getSlides() != null
-                            && !MainService.getInstance().getSlides().isEmpty()) {
-                        MainService.getInstance().agreeOnSlidesSender(senderAddress);
+                            && !MainService.getInstance().getSlides().isEmpty()
+                            && !message.ipAddress.equals(Helpers.getInetAddress())) {
+                        MainService.getInstance().agreeOnSlidesSender(message.ipAddress);
                     }
                 }
             }
@@ -105,6 +109,7 @@ public class MessageHandler {
             }
             case LEAVE_SESSION -> MainService.getInstance().deleteParticipant(message.stringVariable);
             case COORD -> {
+                MainService.getInstance().stopCrashDetection();
                 MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
                 MainService.getInstance().updateSessionData(
                         message.session, message.stringVariable, message.ipAddress, message.intVariable, true);
@@ -132,9 +137,11 @@ public class MessageHandler {
                 MainService.getInstance().setLastImAlive(instant.getEpochSecond());
             }
             case CHANGE_LEADER -> {
+                MainService.getInstance().stopCrashDetection();
                 MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
                 MainService.getInstance().updateSessionData(
                         message.session, message.stringVariable, message.ipAddress, message.intVariable, false);
+                MainService.getInstance().startCrashDetection();
             }
             case PASS_LEADERSHIP -> {
                 MainService.getInstance().stopCrashDetection();
@@ -142,6 +149,7 @@ public class MessageHandler {
                 MainService.getInstance().updateSessionData(
                         message.session, message.stringVariable, message.ipAddress, message.intVariable, false);
                 MainService.getInstance().multicastNewLeader(MainService.getInstance().getUsername());
+                MainService.getInstance().startCrashDetection();
             }
             case MESSAGE_RESEND -> {
                 System.out.println("Resend packet " + message.intVariable);

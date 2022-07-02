@@ -72,8 +72,7 @@ public class CrashDetection extends Thread {
                             System.out.println("Check im-alive: "
                                     + (instant.getEpochSecond() - MainService.getInstance().getLastImAlive()));
                             if (MainService.getInstance().getLastImAlive() != 0 && instant.getEpochSecond()
-                                    - MainService.getInstance().getLastImAlive() > CRASH_DETECTION_TIMEOUT
-                                    / IM_ALIVE_PERIODICITY) {
+                                    - MainService.getInstance().getLastImAlive() > CRASH_DETECTION_TIMEOUT / 1000) {
                                 electLeader();
                                 MainService.getInstance().stopCrashDetection();
                             }
