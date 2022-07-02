@@ -9,8 +9,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.*;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
 import java.time.Instant;
 import java.util.Collections;
 
@@ -81,6 +79,9 @@ public class MessageHandler {
             case SESSION_DETAILS -> MainService.getInstance().addSessionData(message.session);
             case JOIN_SESSION -> {
                 System.out.println(message.stringVariable + " joined the session.");
+                if (MainService.getInstance().getParticipantsNames().isEmpty()) {
+                    MainService.getInstance().sendSlides(senderAddress);
+                }
                 MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
                 MainService.getInstance().addListGroupID(message.intVariable);
                 MainService.getInstance().multicastNewParticipant(message.stringVariable, message.intVariable, message.ipAddress);
