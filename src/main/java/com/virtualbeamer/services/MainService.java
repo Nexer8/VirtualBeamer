@@ -277,7 +277,7 @@ public class MainService {
     }
 
     public void sendSessionDetails(InetAddress senderAddress) {
-        while (groupSession.getLeaderInfo().isEmpty()) {
+        while (!groupSessions.contains(groupSession)) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
