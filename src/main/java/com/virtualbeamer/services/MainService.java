@@ -230,17 +230,10 @@ public class MainService {
     public synchronized void sendHelloMessage() throws IOException {
         System.out.println("Sending hello message.");
         globalSession.multicast(new Message(HELLO));
-        helloCounter++;
 
-//        for (var session : groupSessions) {
-//            if (!session.equals(groupSession) && session.) {
-//
-//            }
-//        }
-//
-//        if (helloCounter % 3 == 0) {
-//
-//        }
+        if (helloCounter < PORT_TIMELINESS) {
+            helloCounter++;
+        }
     }
 
     public void multicastSlides() throws IOException {
@@ -487,10 +480,13 @@ public class MainService {
         crashDetection.stopElection();
     }
 
-    public synchronized void agreeOnSlidesSender(InetAddress senderAddress) throws IOException {
+    public synchronized void agreeOnSlidesSender(InetAddress senderAddress) {
         if (!agreementMessageSent.containsKey(senderAddress) || !agreementMessageSent.get(senderAddress)) {
             int mID = groupIDs.isEmpty() ? user.getID() : Collections.min(groupIDs);
-            groupSession.sendGroupMessage(new Message(START_AGREEMENT_PROCESS, mID, senderAddress));
+            for (var name : participantsInfo.keySet()) {
+                globalSession.sendMessage(new Message(START_AGREEMENT_PROCESS,
+                        mID, senderAddress), participantsInfo.get(name).ipAddress);
+            }
             agreementMessageSent.put(senderAddress, true);
 
             agreementTimer.put(senderAddress, new Timer(true));
