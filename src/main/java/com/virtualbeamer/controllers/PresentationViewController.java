@@ -83,14 +83,16 @@ public class PresentationViewController implements Initializable {
     }
 
     public void closeSession() throws IOException {
-        Alert alert = new Alert(Alert.AlertType.WARNING, "Presenter has finished the session!");
-        alert.initOwner(slidePane.getScene().getWindow());
-        alert.getDialogPane().getStylesheets().add((Objects.requireNonNull(
-                getClass().getResource("/styles/dialog.css"))).toExternalForm());
-        alert.setHeaderText("Presentation ended!");
-        alert.showAndWait();
+        if (slidePane.getScene() != null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Presenter has finished the session!");
+            alert.initOwner(slidePane.getScene().getWindow());
+            alert.getDialogPane().getStylesheets().add((Objects.requireNonNull(
+                    getClass().getResource("/styles/dialog.css"))).toExternalForm());
+            alert.setHeaderText("Presentation ended!");
+            alert.showAndWait();
 
-        goToInitialView();
+            goToInitialView();
+        }
     }
 
     private void updatePresentationStatus() {
@@ -134,7 +136,7 @@ public class PresentationViewController implements Initializable {
             }
             user.setSlides(images.toArray(new BufferedImage[0]));
             user.setCurrentSlide(0);
-            user.multicastSlides();
+
             if (user.getSlides().size() <= 1) {
                 nextSlideButton.setDisable(true);
                 previousSlideButton.setDisable(true);
@@ -142,8 +144,11 @@ public class PresentationViewController implements Initializable {
                 setSlide();
                 nextSlideButton.setDisable(false);
             }
+
+            if (!MainService.getInstance().getParticipantsNames().isEmpty()) {
+                user.multicastSlides();
+            }
         } catch (NullPointerException | IOException e) {
-            e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.WARNING, "No images found in the directory!");
             alert.initOwner(slidePane.getScene().getWindow());
             alert.getDialogPane().getStylesheets().add((Objects.requireNonNull(
@@ -177,7 +182,7 @@ public class PresentationViewController implements Initializable {
     }
 
     @FXML
-    public void giveControl() throws IOException {
+    public void giveControl() {
         String userName = participants.getValue();
         user.setGroupLeader(userName);
     }

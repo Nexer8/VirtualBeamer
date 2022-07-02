@@ -4,6 +4,7 @@ import com.virtualbeamer.constants.MessageType;
 
 import java.io.*;
 import java.net.InetAddress;
+import java.util.ArrayList;
 
 public class Message implements Serializable {
     final public MessageType type;
@@ -14,6 +15,8 @@ public class Message implements Serializable {
     public int packetID;
     public short shortVariable1;
     public short shortVariable2;
+    public ArrayList<Integer> groupIDs;
+    public ArrayList<String> usernames;
 
     public Message(MessageType type) {
         this.type = type;
@@ -70,10 +73,18 @@ public class Message implements Serializable {
         this.ipAddress = ipAddress;
     }
 
-    public Message(MessageType type, GroupSession session, String stringVariable, InetAddress ipAddress) {
+    public Message(MessageType type, GroupSession session, int intVariable, String stringVariable, InetAddress ipAddress) {
         this.type = type;
         this.session = session;
+        this.intVariable = intVariable;
         this.stringVariable = stringVariable;
         this.ipAddress = ipAddress;
+    }
+
+    public Message(MessageType userIds, ArrayList<String> usernames, ArrayList<Integer> groupIDs, InetAddress inetAddress) {
+        this.type = userIds;
+        this.usernames = usernames;
+        this.groupIDs = groupIDs;
+        this.ipAddress = inetAddress;
     }
 }

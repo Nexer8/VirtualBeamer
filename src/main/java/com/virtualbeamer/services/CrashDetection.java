@@ -1,6 +1,7 @@
 package com.virtualbeamer.services;
 
 import com.virtualbeamer.constants.SessionConstants;
+import com.virtualbeamer.utils.Helpers;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -36,7 +37,8 @@ public class CrashDetection extends Thread {
                 public void run() {
                     try {
                         MainService.getInstance().sendCOORD();
-                        MainService.getInstance().setUserType(PRESENTER);
+                        MainService.getInstance().updateSessionData(MainService.getInstance().getGroupSession(),
+                                MainService.getInstance().getUsername(), Helpers.getInetAddress(), MainService.getInstance().getID(), true);
                         electSent = false;
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -71,7 +73,7 @@ public class CrashDetection extends Thread {
                                     + (instant.getEpochSecond() - MainService.getInstance().getLastImAlive()));
                             if (MainService.getInstance().getLastImAlive() != 0 && instant.getEpochSecond()
                                     - MainService.getInstance().getLastImAlive() > CRASH_DETECTION_TIMEOUT
-                                            / IM_ALIVE_PERIODICITY) {
+                                    / IM_ALIVE_PERIODICITY) {
                                 electLeader();
                                 MainService.getInstance().stopCrashDetection();
                             }

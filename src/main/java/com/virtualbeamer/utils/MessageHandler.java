@@ -9,13 +9,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.*;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
 import java.time.Instant;
 import java.util.Collections;
 
 public class MessageHandler {
-    public static void collectAndProcessMessage(DatagramSocket socket, byte[] buffer)
+    public static void collectAndProcessMultipleMessages(DatagramSocket socket, byte[] buffer)
             throws IOException, ClassNotFoundException {
         // noinspection InfiniteLoopStatement
         while (true) {
@@ -28,18 +26,23 @@ public class MessageHandler {
         }
     }
 
-    public static void collectAndProcessUnicastMessage(ServerSocket serverSocket)
+    public static void collectAndProcessMultipleUnicastMessages(ServerSocket serverSocket)
             throws IOException, ClassNotFoundException {
         // noinspection InfiniteLoopStatement
         while (true) {
-            Socket socket = serverSocket.accept();
-            System.out.println("Client connected!");
-
-            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-
-            Message message = (Message) in.readObject();
-            handleMessage(message, socket.getInetAddress());
+            collectAndProcessUnicastMessage(serverSocket);
         }
+    }
+
+    public static void collectAndProcessUnicastMessage(ServerSocket serverSocket)
+            throws IOException, ClassNotFoundException {
+        Socket socket = serverSocket.accept();
+        System.out.println("Client connected!");
+
+        ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+
+        Message message = (Message) in.readObject();
+        handleMessage(message, socket.getInetAddress());
     }
 
     public static Message deserializeMessage(byte[] buffer) throws IOException, ClassNotFoundException {
@@ -74,21 +77,19 @@ public class MessageHandler {
                 }
             }
             case SESSION_DETAILS -> MainService.getInstance().addSessionData(message.session);
-            case COLLECT_PORTS -> {
-                if (MainService.getInstance().getUserType() == AppConstants.UserType.PRESENTER) {
-                    MainService.getInstance().sendGroupPort(senderAddress);
-                }
-            }
-            case SEND_SESSION_PORT -> MainService.getInstance().addGroupPortToList(message.intVariable);
             case JOIN_SESSION -> {
                 System.out.println(message.stringVariable + " joined the session.");
-                MainService.getInstance().addParticipant(message.stringVariable, message.ipAddress);
-                MainService.getInstance().sendUserData(senderAddress); // send the highest ID instead
-                MainService.getInstance().multicastNewParticipant(message.stringVariable, message.ipAddress);
+                if (MainService.getInstance().getParticipantsNames().isEmpty()) {
+                    MainService.getInstance().sendSlides(senderAddress);
+                }
+                MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
+                MainService.getInstance().addListGroupID(message.intVariable);
+                MainService.getInstance().multicastNewParticipant(message.stringVariable, message.intVariable, message.ipAddress);
             }
             case NEW_PARTICIPANT -> {
                 if (MainService.getInstance().getUserType() == AppConstants.UserType.VIEWER) {
-                    MainService.getInstance().addParticipant(message.stringVariable, message.ipAddress);
+                    MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
+                    MainService.getInstance().addListGroupID(message.intVariable);
 
                     if (MainService.getInstance().getSlides() != null
                             && !MainService.getInstance().getSlides().isEmpty()) {
@@ -96,17 +97,16 @@ public class MessageHandler {
                     }
                 }
             }
-            case SEND_USER_DATA -> {
-                System.out.println(MainService.getInstance().getUsername() + " added " + message.stringVariable
-                        + " to participants list.");
-                MainService.getInstance().addParticipant(message.stringVariable, message.ipAddress);
+            case COLLECT_USERS_DATA -> MainService.getInstance().sendUsersData(senderAddress);
+            case USER_DATA -> {
+                MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
                 MainService.getInstance().addListGroupID(message.intVariable);
             }
             case LEAVE_SESSION -> MainService.getInstance().deleteParticipant(message.stringVariable);
             case COORD -> {
                 MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
                 MainService.getInstance().updateSessionData(
-                        message.session, message.stringVariable, message.ipAddress);
+                        message.session, message.stringVariable, message.ipAddress, message.intVariable, true);
                 MainService.getInstance().startCrashDetection();
             }
             case ELECT -> {
@@ -116,9 +116,7 @@ public class MessageHandler {
                     MainService.getInstance().sendStopElection(senderAddress);
                 }
             }
-            case STOP_ELECT -> {
-                MainService.getInstance().stopElection();
-            }
+            case STOP_ELECT -> MainService.getInstance().stopElection();
             case START_AGREEMENT_PROCESS -> {
                 int mID = MainService.getInstance().getGroupIDs().isEmpty() ? MainService.getInstance().getID()
                         : Collections.min(MainService.getInstance().getGroupIDs());
@@ -135,7 +133,14 @@ public class MessageHandler {
             case CHANGE_LEADER -> {
                 MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
                 MainService.getInstance().updateSessionData(
-                        message.session, message.stringVariable, message.ipAddress);
+                        message.session, message.stringVariable, message.ipAddress, message.intVariable, false);
+            }
+            case PASS_LEADERSHIP -> {
+                MainService.getInstance().stopCrashDetection();
+                MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
+                MainService.getInstance().updateSessionData(
+                        message.session, message.stringVariable, message.ipAddress, message.intVariable, false);
+                MainService.getInstance().multicastNewLeader(MainService.getInstance().getUsername());
             }
             case MESSAGE_RESEND -> {
                 System.out.println("Resend packet " + message.intVariable);

@@ -7,7 +7,7 @@ import java.net.*;
 
 import static com.virtualbeamer.constants.SessionConstants.GROUP_ADDRESS;
 import static com.virtualbeamer.constants.SessionConstants.MULTICAST_PORT;
-import static com.virtualbeamer.utils.MessageHandler.collectAndProcessMessage;
+import static com.virtualbeamer.utils.MessageHandler.collectAndProcessMultipleMessages;
 
 public class MulticastReceiver extends Thread {
     final private MulticastSocket socket;
@@ -23,10 +23,10 @@ public class MulticastReceiver extends Thread {
 
     public void run() {
         try {
-            byte[] buffer = new byte[1000];
+            byte[] buffer = new byte[2000];
             System.out.println(networkInterface);
             socket.joinGroup(inetSocketAddress, networkInterface);
-            collectAndProcessMessage(socket, buffer);
+            collectAndProcessMultipleMessages(socket, buffer);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         } finally {

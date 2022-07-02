@@ -9,11 +9,11 @@
     -fx-font-size: 15px;
 }
 
-.dialog-pane:header .header-panel {
+.dialog-pane .header-panel {
     -fx-background-color: #002d40;
 }
 
-.dialog-pane:header .header-panel .label {
+.dialog-pane .header-panel .label {
     -fx-background-color: #002d40;
     -fx-text-fill: white;
     -fx-font-size: 15px;
