@@ -577,7 +577,7 @@ public class MainService {
         groupSession.sendGroupMessage(new Message(NEW_PARTICIPANT, username, participantID, address));
     }
 
-    public void handleMessage(Message message) {
+    public void handleMessage(Message message) throws IOException {
         this.packetHandler.handlePacket(message);
     }
 

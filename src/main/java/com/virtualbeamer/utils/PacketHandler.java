@@ -47,10 +47,15 @@ public class PacketHandler extends Thread {
         }
     }
 
-    public void handlePacket(Message message) {
+    public void handlePacket(Message message) throws IOException {
         if (!bannedMessageType.contains(message.type))
+        {
             if (!this.messagesQueue.contains(message))
                 this.messagesQueue.add(message);
+        }
+        else
+            handleMessage(message, InetAddress.getByName(
+                    MainService.getInstance().getGroupSession().getLeaderIPAddress()));
     }
 
     public int addProcessedMessage(Message message) {
