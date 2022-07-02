@@ -79,7 +79,8 @@ public class MessageHandler {
             case SESSION_DETAILS -> MainService.getInstance().addSessionData(message.session);
             case JOIN_SESSION -> {
                 System.out.println(message.stringVariable + " joined the session.");
-                if (MainService.getInstance().getParticipantsNames().isEmpty()) {
+                if (MainService.getInstance().getParticipantsNames().isEmpty() &&
+                        !MainService.getInstance().getSlides().isEmpty()) {
                     MainService.getInstance().sendSlides(senderAddress);
                 }
                 MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
