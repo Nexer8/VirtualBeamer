@@ -10,11 +10,11 @@ public class SessionConstants {
     public static final int LEADER_ELECTION_TIMEOUT = 500;
     public static final int AGREEMENT_PROCESS_TIMEOUT = 500;
     public static final int UNICAST_SEND_USER_DATA_PORT = 5556;
-    public static final int UNICAST_COLLECT_PORTS_PORT = 5557;
     public static final int UNICAST_IM_ALIVE_PORT = 5558;
     public static final int CRASH_DETECTION_LOWER_BOUND_TIMEOUT = 500;
     public static final int SO_TIMEOUT = 1000;
     public static final int HELLO_MESSAGE_PERIODICITY = 5;
     public static final int IM_ALIVE_PERIODICITY = 1000;
     public static final int CRASH_DETECTION_TIMEOUT = 3000;
+    public static final int PORT_TIMELINESS = 3;
 }

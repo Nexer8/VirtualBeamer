@@ -9,6 +9,7 @@ import com.virtualbeamer.utils.*;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -44,6 +45,7 @@ public class MainService {
     private final Map<InetAddress, Timer> agreementTimer = new HashMap<>();
 
     private final Map<Integer, Timer> nackTimer = new HashMap<>();
+    private static final Map<Integer, CircularFifoQueue<Boolean>> portAvailabilityHistory = new HashMap<>();
     private CrashDetection crashDetection;
 
     private long lastImAlive;
@@ -76,6 +78,14 @@ public class MainService {
         Runnable sendHelloMessage = () -> {
             try {
                 instance.cleanUpSessionsData();
+
+                for (int port : portAvailabilityHistory.keySet()) {
+                    if (!portAvailabilityHistory.get(port).get(0)
+                            && !portAvailabilityHistory.get(port).get(1)
+                            && !portAvailabilityHistory.get(port).get(2)) {
+                        portAvailabilityHistory.remove(port);
+                    }
+                }
                 instance.sendHelloMessage();
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -113,10 +123,10 @@ public class MainService {
         }
 
         int groupPort;
-        if (groupSessions.isEmpty()) {
+        if (portAvailabilityHistory.isEmpty()) {
             groupPort = STARTING_GROUP_PORT;
         } else {
-            groupPort = groupSessions.stream().max(Comparator.comparing(GroupSession::getPort)).get().getPort() + 1;
+            groupPort = Collections.max(portAvailabilityHistory.keySet()) + 1;
         }
 
         System.out.println("Received port:" + groupPort);
@@ -127,6 +137,7 @@ public class MainService {
         groupReceiver = new GroupReceiver(groupPort);
         groupReceiver.start();
         groupSessions.add(groupSession);
+        portAvailabilityHistory.put(groupPort, getCircularFifoQueue());
 
         multicastSessionDetails();
         startCrashDetection();
@@ -220,6 +231,16 @@ public class MainService {
         System.out.println("Sending hello message.");
         globalSession.multicast(new Message(HELLO));
         helloCounter++;
+
+//        for (var session : groupSessions) {
+//            if (!session.equals(groupSession) && session.) {
+//
+//            }
+//        }
+//
+//        if (helloCounter % 3 == 0) {
+//
+//        }
     }
 
     public void multicastSlides() throws IOException {
@@ -256,6 +277,13 @@ public class MainService {
     }
 
     public void sendSessionDetails(InetAddress senderAddress) {
+        while (!groupSessions.contains(groupSession)) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                System.out.println("Leader info not ready.");
+            }
+        }
         globalSession.sendMessage(new Message(SESSION_DETAILS, groupSession), senderAddress);
     }
 
@@ -341,9 +369,22 @@ public class MainService {
         Platform.runLater(() -> participantsNames.remove(name));
     }
 
-    //    TODO: Change to updateSessionData
+    private CircularFifoQueue<Boolean> getCircularFifoQueue() {
+        CircularFifoQueue<Boolean> queue = new CircularFifoQueue<>(PORT_TIMELINESS);
+        for (int i = 0; i < 3; i++) {
+            queue.add(false);
+        }
+        return queue;
+    }
+
     public synchronized void addSessionData(GroupSession session) {
         groupSessions.add(session);
+
+        if (portAvailabilityHistory.containsKey(session.getPort())) {
+            portAvailabilityHistory.get(session.getPort()).add(true);
+        } else {
+            portAvailabilityHistory.put(session.getPort(), getCircularFifoQueue());
+        }
         Platform.runLater(() -> groupSessionsInfo.add(session.getName() + ": " + session.getLeaderInfo()));
         System.out.println(session.getName());
     }
