@@ -12,6 +12,8 @@ public class Message implements Serializable {
     public String stringVariable;
     public InetAddress ipAddress;
     public int packetID;
+    public short shortVariable1;
+    public short shortVariable2;
 
     public Message(MessageType type) {
         this.type = type;
@@ -25,6 +27,12 @@ public class Message implements Serializable {
     public Message(MessageType type, int intVariable) {
         this.type = type;
         this.intVariable = intVariable;
+    }
+
+    public Message(MessageType type, short shortVariable1, short shortVariable2) {
+        this.type = type;
+        this.shortVariable1 = shortVariable1;
+        this.shortVariable2 = shortVariable2;
     }
 
     public Message(MessageType type, String stringVariable) {

@@ -6,6 +6,7 @@ public class SessionConstants {
     public static final int SLIDES_MULTICAST_BASE_PORT = 3000;
     public static final int INDIVIDUAL_SLIDES_PORT = 2246;
     public static final int INDIVIDUAL_MESSAGE_PORT = 5555;
+    public static final int PACKET_LOSS_PORT = 5556;
     public static final int STARTING_GROUP_PORT = 10000;
     public static final int LEADER_ELECTION_TIMEOUT = 500;
     public static final int AGREEMENT_PROCESS_TIMEOUT = 500;
@@ -17,4 +18,5 @@ public class SessionConstants {
     public static final int HELLO_MESSAGE_PERIODICITY = 5;
     public static final int IM_ALIVE_PERIODICITY = 1000;
     public static final int CRASH_DETECTION_TIMEOUT = 3000;
+    public static final int MESSAGE_QUEUE_FLUSH = 2000;
 }

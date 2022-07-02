@@ -1,5 +1,6 @@
 package com.virtualbeamer.receivers;
 
+import com.virtualbeamer.constants.MessageType;
 import com.virtualbeamer.models.Message;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ public class UnicastReceiver extends Thread {
                 ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
                 Message message = (Message) in.readObject();
+                System.out.println("UNICAST MESSAGE: " + (message.type == MessageType.MESSAGE_RESEND ? 1 : 0) + " " + message.intVariable);
                 handleMessage(message, socket.getInetAddress());
             }
         } catch (IOException e) {

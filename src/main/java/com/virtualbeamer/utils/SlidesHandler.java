@@ -24,7 +24,9 @@ public class SlidesHandler {
             socket.receive(packet);
             byte[] data = packet.getData();
 
-            processReceivedSlideData(data, srd);
+            MainService.getInstance().getPacketHandler().setSlidesReceiverData(srd);
+            MainService.getInstance().getPacketHandler().handleSlide(data);
+            //processReceivedSlideData(data, srd);
         }
     }
 

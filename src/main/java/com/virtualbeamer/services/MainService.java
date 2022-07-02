@@ -50,7 +50,6 @@ public class MainService {
     private final Map<InetAddress, Boolean> agreementMessageSent = new HashMap<>();
     private final Map<InetAddress, Timer> agreementTimer = new HashMap<>();
 
-    private final Map<Integer, Timer> nackTimer = new HashMap<>();
     private CrashDetection crashDetection;
 
     private long lastImAlive;
@@ -58,6 +57,9 @@ public class MainService {
     private static ScheduledExecutorService executor;
 
     private static ScheduledFuture<?> handler;
+
+    private PacketHandler packetHandler;
+
 
     private MainService() throws IOException {
         MulticastReceiver multicastReceiver = new MulticastReceiver();
@@ -74,6 +76,8 @@ public class MainService {
 
         slidesSender = new SlidesSender();
         lastImAlive = 0;
+        packetHandler = new PacketHandler();
+        packetHandler.start();
     }
 
     public static void startSendingPeriodicalHELLO() {
@@ -232,6 +236,19 @@ public class MainService {
 
     public void sendCurrentSlideNumber(InetAddress address) throws IOException {
         globalSession.sendMessage(new Message(CURRENT_SLIDE_NUMBER, currentSlide), address);
+    }
+
+    public void sendPacketLostMessage(InetAddress address, Message message) throws IOException {
+        System.out.println(address.getHostAddress() + " " + message.intVariable);
+        globalSession.sendMessage(message, address);
+    }
+
+    public void sendMissingMessage(InetAddress address, Message message) throws IOException {
+        globalSession.sendMessage(message, address, PACKET_LOSS_PORT);
+    }
+
+    public void sendMissingSlide(InetAddress address, byte[] data) throws IOException {
+        globalSession.sendMessage(data, address, PACKET_LOSS_PORT);
     }
 
     public void sendSlides(InetAddress senderAddress) throws IOException, InterruptedException {
@@ -483,31 +500,9 @@ public class MainService {
         groupSession.sendGroupMessage(new Message(IM_ALIVE));
     }
 
-    public synchronized void sendNACKPacket(int packetID) {
-        Timer nackTimerTmp = new Timer(true);
-        nackTimer.put(packetID, nackTimerTmp);
 
-        nackTimerTmp.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    groupSession.sendGroupMessage(new Message(NACK_PACKET, packetID));
 
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, (int) (Math.random() * 1000));
-    }
 
-    public synchronized void stopNACKTimer(int packetID) {
-        nackTimer.get(packetID).cancel();
-        nackTimer.remove(packetID);
-    }
-
-    public void resendPacket(int packetID) throws IOException {
-        groupSession.sendGroupMessage(packetID);
-    }
 
     public ArrayList<Integer> getGroupIDs() {
         return groupIDs;
@@ -531,5 +526,15 @@ public class MainService {
 
     public void multicastNewParticipant(String username, InetAddress address) throws IOException {
         groupSession.sendGroupMessage(new Message(NEW_PARTICIPANT, username, address));
+    }
+
+    public void handleMessage(Message message)
+    {
+        this.packetHandler.handlePacket(message);
+    }
+
+    public PacketHandler getPacketHandler()
+    {
+        return this.packetHandler;
     }
 }

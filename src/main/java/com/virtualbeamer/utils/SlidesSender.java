@@ -1,5 +1,6 @@
 package com.virtualbeamer.utils;
 
+import com.virtualbeamer.services.MainService;
 import javafx.collections.ObservableList;
 
 import java.awt.image.BufferedImage;
@@ -19,6 +20,7 @@ public class SlidesSender implements Serializable {
         DatagramPacket packet = new DatagramPacket(data, data.length,
                 InetAddress.getByName(GROUP_ADDRESS), port);
         socket.send(packet);
+        MainService.getInstance().getPacketHandler().addProcessedSlide(data);
     }
 
     public synchronized void unicast(ObservableList<BufferedImage> slides, InetAddress address) throws IOException {
@@ -37,4 +39,5 @@ public class SlidesSender implements Serializable {
             }
         }
     }
+
 }

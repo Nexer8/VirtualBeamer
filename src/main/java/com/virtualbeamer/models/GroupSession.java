@@ -16,7 +16,6 @@ public class GroupSession implements Serializable {
     private String leaderName;
     private String leaderIPAddress;
     private String previousLeaderIPAddress[];
-    private final ArrayList<Message> buffer;
 
     public String getName() {
         return name;
@@ -55,7 +54,6 @@ public class GroupSession implements Serializable {
     public GroupSession(String name) {
         this.name = name;
         this.port = 0;
-        this.buffer = new ArrayList<>();
         this.previousLeaderIPAddress = new String[2];
     }
 
@@ -83,12 +81,9 @@ public class GroupSession implements Serializable {
     }
 
     public synchronized void sendGroupMessage(Message message) throws IOException {
-        if (buffer.isEmpty())
-            message.packetID = 1;
-        else
-            message.packetID = buffer.get(buffer.size() - 1).packetID + 1;
 
-        buffer.add(message);
+        message.packetID = MainService.getInstance().getPacketHandler().addProcessedMessage(message);
+
         DatagramSocket socket = new DatagramSocket();
         final ByteArrayOutputStream baos = new ByteArrayOutputStream(6400);
         final ObjectOutputStream oos = new ObjectOutputStream(baos);
@@ -101,14 +96,9 @@ public class GroupSession implements Serializable {
                 InetAddress.getByName(GROUP_ADDRESS), MainService.getInstance().getGroupSession().getPort());
         socket.send(packet);
         socket.close();
+
+
+
     }
 
-    public void sendGroupMessage(int packetID) throws IOException {
-        for (Message m : this.buffer) {
-            if (m.packetID == packetID) {
-                sendGroupMessage(m);
-                break;
-            }
-        }
-    }
 }

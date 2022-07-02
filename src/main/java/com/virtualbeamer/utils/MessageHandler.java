@@ -128,12 +128,6 @@ public class MessageHandler {
                 }
             }
             case STOP_AGREEMENT_PROCESS -> MainService.getInstance().stopAgreementProcess(message.ipAddress);
-            case NACK_PACKET -> {
-                if (MainService.getInstance().getUserType() == AppConstants.UserType.PRESENTER)
-                    MainService.getInstance().resendPacket(message.packetID);
-                else
-                    MainService.getInstance().stopNACKTimer(message.packetID);
-            }
             case IM_ALIVE -> {
                 Instant instant = Instant.now();
                 MainService.getInstance().setLastImAlive(instant.getEpochSecond());
@@ -142,6 +136,14 @@ public class MessageHandler {
                 MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
                 MainService.getInstance().updateSessionData(
                         message.session, message.stringVariable, message.ipAddress);
+            }
+            case MESSAGE_RESEND -> {
+                System.out.println("Resend packet " + message.intVariable);
+                MainService.getInstance().getPacketHandler().resendMessage(senderAddress,message.intVariable);
+            }
+            case SLIDE_RESEND -> {
+                System.out.println("Resend slide session:" + message.shortVariable1 + " slice: "+ message.shortVariable2);
+                MainService.getInstance().getPacketHandler().resendSlide(senderAddress,message.shortVariable1, message.shortVariable2);
             }
             default -> throw new IllegalArgumentException("Unexpected value: " + message.type);
         }

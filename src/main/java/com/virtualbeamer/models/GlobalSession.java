@@ -24,11 +24,22 @@ public class GlobalSession implements Serializable {
     }
 
     public synchronized void sendMessage(Message message, InetAddress address, int port) throws IOException {
+        System.out.println("DEBUG: " + address + " " + port);
         try (Socket socket = new Socket(address, port)) {
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
             out.writeObject(message);
         }
         System.out.println("Responded to Hello message!");
+    }
+
+    public synchronized void sendMessage(byte[] data, InetAddress address, int port) throws IOException {
+        System.out.println("DEBUG SLIDE: " + address + " " + port);
+        try (Socket socket = new Socket(address, port)) {
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.writeInt(data.length);
+            out.write(data);
+        }
+        System.out.println("Resent slide");
     }
 
     public void sendMessage(Message message, InetAddress address) throws IOException {
