@@ -6,25 +6,21 @@ import com.virtualbeamer.utils.Helpers;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.ArrayList;
 
 import static com.virtualbeamer.constants.SessionConstants.GROUP_ADDRESS;
 import static com.virtualbeamer.utils.MessageHandler.deserializeMessage;
-import static com.virtualbeamer.utils.MessageHandler.handleMessage;
 import static com.virtualbeamer.utils.PacketCreator.MAX_PACKET_SIZE;
 
 public class GroupReceiver extends Thread {
     final private MulticastSocket socket;
     final private InetSocketAddress inetSocketAddress;
     final private NetworkInterface networkInterface;
-    private final ArrayList<Message> buffer;
 
     public GroupReceiver(int port) throws IOException {
         socket = new MulticastSocket(port);
         socket.setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false);
         inetSocketAddress = new InetSocketAddress(GROUP_ADDRESS, port);
         networkInterface = Helpers.getNetworkInterface();
-        buffer = new ArrayList<>();
     }
 
 

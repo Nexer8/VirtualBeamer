@@ -144,11 +144,11 @@ public class MessageHandler {
             }
             case MESSAGE_RESEND -> {
                 System.out.println("Resend packet " + message.intVariable);
-                MainService.getInstance().getPacketHandler().resendMessage(senderAddress,message.intVariable);
+                MainService.getInstance().getPacketHandler().resendMessage(senderAddress, message.intVariable);
             }
             case SLIDE_RESEND -> {
-                System.out.println("Resend slide session:" + message.shortVariable1 + " slice: "+ message.shortVariable2);
-                MainService.getInstance().getPacketHandler().resendSlide(senderAddress,message.shortVariable1, message.shortVariable2);
+                System.out.println("Resend slide session:" + message.shortVariable1 + " slice: " + message.shortVariable2);
+                MainService.getInstance().getPacketHandler().resendSlide(senderAddress, message.shortVariable1, message.shortVariable2);
             }
             default -> throw new IllegalArgumentException("Unexpected value: " + message.type);
         }

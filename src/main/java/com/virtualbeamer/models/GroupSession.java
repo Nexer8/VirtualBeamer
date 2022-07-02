@@ -6,7 +6,6 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.ArrayList;
 
 import static com.virtualbeamer.constants.SessionConstants.GROUP_ADDRESS;
 
@@ -98,7 +97,6 @@ public class GroupSession implements Serializable {
                 InetAddress.getByName(GROUP_ADDRESS), MainService.getInstance().getGroupSession().getPort());
         socket.send(packet);
         socket.close();
-
 
 
     }

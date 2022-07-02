@@ -263,12 +263,12 @@ public class MainService {
         globalSession.sendMessage(new Message(CURRENT_SLIDE_NUMBER, currentSlide), address);
     }
 
-    public void sendPacketLostMessage(InetAddress address, Message message) throws IOException {
+    public void sendPacketLostMessage(InetAddress address, Message message) {
         System.out.println(address.getHostAddress() + " " + message.intVariable);
         globalSession.sendMessage(message, address);
     }
 
-    public void sendMissingMessage(InetAddress address, Message message) throws IOException {
+    public void sendMissingMessage(InetAddress address, Message message) {
         globalSession.sendMessage(message, address, PACKET_LOSS_PORT);
     }
 
@@ -553,9 +553,6 @@ public class MainService {
     }
 
 
-
-
-
     public ArrayList<Integer> getGroupIDs() {
         return groupIDs;
     }
@@ -580,13 +577,11 @@ public class MainService {
         groupSession.sendGroupMessage(new Message(NEW_PARTICIPANT, username, participantID, address));
     }
 
-    public void handleMessage(Message message)
-    {
+    public void handleMessage(Message message) {
         this.packetHandler.handlePacket(message);
     }
 
-    public PacketHandler getPacketHandler()
-    {
+    public PacketHandler getPacketHandler() {
         return this.packetHandler;
     }
 }
