@@ -30,6 +30,6 @@ public class Participant implements Serializable {
 
     @Override
     public String toString() {
-        return name;
+        return name + " (" + ID + ")";
     }
 }
