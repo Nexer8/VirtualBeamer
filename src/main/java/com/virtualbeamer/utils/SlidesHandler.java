@@ -23,7 +23,6 @@ public class SlidesHandler {
             DatagramPacket packet = new DatagramPacket(srd.buffer, srd.buffer.length);
             socket.receive(packet);
             byte[] data = packet.getData();
-
             MainService.getInstance().getPacketHandler().setSlidesReceiverData(srd);
             MainService.getInstance().getPacketHandler().handleSlide(data);
             //processReceivedSlideData(data, srd);

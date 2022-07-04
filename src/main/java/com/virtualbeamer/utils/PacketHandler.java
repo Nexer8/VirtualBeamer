@@ -28,6 +28,7 @@ public class PacketHandler extends Thread {
     private SlidesReceiverData srd;
     private final ArrayList<MessageType> bannedMessageType;
 
+
     public PacketHandler() {
         messagesQueue = new ArrayList<>();
         slidesQueue = new ArrayList<>();
@@ -42,8 +43,11 @@ public class PacketHandler extends Thread {
     }
 
     public void handleSlide(byte[] data) {
-        if (!this.slidesQueue.contains(data)) {
-            this.slidesQueue.add(data);
+        if(!this.slidesQueue.contains(data))
+        {
+            byte tmp[] = new byte[MAX_PACKET_SIZE+8];
+            System.arraycopy(data,0,tmp,0,data.length);
+            this.slidesQueue.add(tmp);
         }
     }
 
@@ -93,12 +97,12 @@ public class PacketHandler extends Thread {
             }
     }
 
-    private short getSlideSession(byte[] data) {
+    public static short getSlideSession(byte[] data) {
         return (short) (data[1] & 0xff);
 
     }
 
-    private short getSlideSlice(byte[] data) {
+    public static short getSlideSlice(byte[] data) {
         return (short) (data[5] & 0xff);
     }
 
@@ -114,6 +118,8 @@ public class PacketHandler extends Thread {
 
                 // Slide packet queue handling
                 if (!slidesQueue.isEmpty()) {
+                    System.out.println("-- HANDLING SLIDES --");
+
                     // Copy max 15 element in the temporary queue
                     for (int i = 0; i < Math.min(15, slidesQueue.size()); i++)
                         tempSlidesQueue.add(slidesQueue.get(i));
@@ -126,17 +132,20 @@ public class PacketHandler extends Thread {
                                 && getSlideSlice(tempSlidesQueue.get(i + 1)) - getSlideSlice(tempSlidesQueue.get(i)) > 1) {
                             for (int j = 1; j < getSlideSlice(tempSlidesQueue.get(i + 1)) - getSlideSlice(tempSlidesQueue.get(i)); j++) {
                                 try {
+                                    System.out.println("Slide miss found:" + getSlideSession(tempSlidesQueue.get(i)) + " "+ (getSlideSlice(tempSlidesQueue.get(i)) + j));
+
                                     byte[] packet = new byte[MAX_PACKET_SIZE + 8];
+                                    ServerSocket serverSocket = new ServerSocket(PACKET_LOSS_PORT);
                                     MainService.getInstance().sendPacketLostMessage(
                                             InetAddress.getByName(MainService.getInstance().getGroupSession().getLeaderIPAddress()),
                                             new Message(MessageType.SLIDE_RESEND, getSlideSession(tempSlidesQueue.get(i)),
                                                     (short) (getSlideSlice(tempSlidesQueue.get(i)) + j)));
-                                    ServerSocket serverSocket = new ServerSocket(PACKET_LOSS_PORT);
                                     Socket socket = serverSocket.accept();
                                     ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
                                     in.readFully(packet, 0, MAX_PACKET_SIZE + 8);
                                     tempSlidesQueue.add(packet);
                                     socket.close();
+                                    System.out.println("Slide miss received");
 
                                 } catch (IOException e) {
                                     e.printStackTrace();
@@ -163,6 +172,8 @@ public class PacketHandler extends Thread {
                         slidesQueue.remove(data);
                         processedSlides.add(data);
                     }
+                    System.out.println("-- END HANDLING SLIDES --");
+
                 }
 
                 // Message queue handling
@@ -216,6 +227,7 @@ public class PacketHandler extends Thread {
                         messagesQueue.remove(m);
                         processedMessages.add(m);
                     }
+                    System.out.println("-- END HANDLING message --");
 
                 }
 
