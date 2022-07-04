@@ -5,6 +5,7 @@ import com.virtualbeamer.models.Message;
 import com.virtualbeamer.models.SlidesReceiverData;
 import com.virtualbeamer.services.MainService;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.InetAddress;
@@ -78,7 +79,9 @@ public class PacketHandler extends Thread {
     }
 
     public void addProcessedSlide(byte[] data) {
-        processedSlides.add(data);
+        byte tmp[] = new byte[MAX_PACKET_SIZE+8];
+        System.arraycopy(data,0,tmp,0,data.length);
+        processedSlides.add(tmp);
     }
 
     public void resendMessage(InetAddress address, int packetID) throws IOException {
@@ -134,15 +137,16 @@ public class PacketHandler extends Thread {
                                 try {
                                     System.out.println("Slide miss found:" + getSlideSession(tempSlidesQueue.get(i)) + " "+ (getSlideSlice(tempSlidesQueue.get(i)) + j));
 
-                                    byte[] packet = new byte[MAX_PACKET_SIZE + 8];
                                     ServerSocket serverSocket = new ServerSocket(PACKET_LOSS_PORT);
                                     MainService.getInstance().sendPacketLostMessage(
                                             InetAddress.getByName(MainService.getInstance().getGroupSession().getLeaderIPAddress()),
                                             new Message(MessageType.SLIDE_RESEND, getSlideSession(tempSlidesQueue.get(i)),
                                                     (short) (getSlideSlice(tempSlidesQueue.get(i)) + j)));
                                     Socket socket = serverSocket.accept();
-                                    ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-                                    in.readFully(packet, 0, MAX_PACKET_SIZE + 8);
+                                    DataInputStream in = new DataInputStream(socket.getInputStream());
+                                    int length = in.readInt();
+                                    byte[] packet = new byte[length];
+                                    in.readFully(packet, 0, length);
                                     tempSlidesQueue.add(packet);
                                     socket.close();
                                     System.out.println("Slide miss received");
@@ -170,7 +174,9 @@ public class PacketHandler extends Thread {
                     // Delete the slides from the processing queue and add them to the processed queue
                     for (byte[] data : tempSlidesQueue) {
                         slidesQueue.remove(data);
-                        processedSlides.add(data);
+                        byte tmp[] = new byte[MAX_PACKET_SIZE+8];
+                        System.arraycopy(data,0,tmp,0,data.length);
+                        processedSlides.add(tmp);
                     }
                     System.out.println("-- END HANDLING SLIDES --");
 

@@ -36,7 +36,7 @@ public class GlobalSession implements Serializable {
     public synchronized void sendMessage(byte[] data, InetAddress address, int port) throws IOException {
         System.out.println("DEBUG SLIDE: " + address + " " + port);
         try (Socket socket = new Socket(address, port)) {
-            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             out.writeInt(data.length);
             out.write(data);
         }
