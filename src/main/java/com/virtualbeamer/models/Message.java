@@ -14,6 +14,7 @@ public class Message implements Serializable {
     public int packetID;
     public short shortVariable1;
     public short shortVariable2;
+    public Participant participant;
 
     public Message(MessageType type) {
         this.type = type;
@@ -58,11 +59,14 @@ public class Message implements Serializable {
         this.ipAddress = ipAddress;
     }
 
-    public Message(MessageType type, GroupSession session, int intVariable, String stringVariable, InetAddress ipAddress) {
+    public Message(MessageType type, Participant participant) {
+        this.type = type;
+        this.participant = participant;
+    }
+
+    public Message(MessageType type, GroupSession session, Participant participant) {
         this.type = type;
         this.session = session;
-        this.intVariable = intVariable;
-        this.stringVariable = stringVariable;
-        this.ipAddress = ipAddress;
+        this.participant = participant;
     }
 }

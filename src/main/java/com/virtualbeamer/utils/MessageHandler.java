@@ -2,6 +2,7 @@ package com.virtualbeamer.utils;
 
 import com.virtualbeamer.constants.AppConstants;
 import com.virtualbeamer.models.Message;
+import com.virtualbeamer.models.Participant;
 import com.virtualbeamer.services.MainService;
 
 import java.io.BufferedInputStream;
@@ -81,19 +82,19 @@ public class MessageHandler {
             }
             case SESSION_DETAILS -> MainService.getInstance().addSessionData(message.session);
             case JOIN_SESSION -> {
-                System.out.println(message.stringVariable + " joined the session.");
+                System.out.println(message.participant.name + " joined the session.");
                 if (MainService.getInstance().getParticipantsNames().isEmpty() &&
                         !MainService.getInstance().getSlides().isEmpty()) {
                     MainService.getInstance().sendSlides(senderAddress);
                 }
-                MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
-                MainService.getInstance().addListGroupID(message.intVariable);
-                MainService.getInstance().multicastNewParticipant(message.stringVariable, message.intVariable, message.ipAddress);
+                MainService.getInstance().addParticipant(message.participant);
+                MainService.getInstance().addListGroupID(message.participant.ID);
+                MainService.getInstance().multicastNewParticipant(message.participant);
             }
             case NEW_PARTICIPANT -> {
                 if (MainService.getInstance().getUserType() == AppConstants.UserType.VIEWER) {
-                    MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
-                    MainService.getInstance().addListGroupID(message.intVariable);
+                    MainService.getInstance().addParticipant(message.participant);
+                    MainService.getInstance().addListGroupID(message.participant.ID);
 
                     if (MainService.getInstance().getSlides() != null
                             && !MainService.getInstance().getSlides().isEmpty()
@@ -104,20 +105,27 @@ public class MessageHandler {
             }
             case COLLECT_USERS_DATA -> MainService.getInstance().sendUsersData(senderAddress);
             case USER_DATA -> {
-                MainService.getInstance().addParticipant(message.stringVariable, message.intVariable, message.ipAddress);
-                MainService.getInstance().addListGroupID(message.intVariable);
+                MainService.getInstance().addParticipant(message.participant);
+                MainService.getInstance().addListGroupID(message.participant.ID);
             }
-            case LEAVE_SESSION -> MainService.getInstance().deleteParticipant(message.stringVariable);
+            case LEAVE_SESSION -> {
+                MainService.getInstance().deleteParticipant(message.participant);
+                MainService.getInstance().multicastDeleteParticipant(message.participant);
+            }
+            case DELETE_PARTICIPANT -> MainService.getInstance().deleteParticipant(message.participant);
             case COORD -> {
                 MainService.getInstance().stopCrashDetection();
                 MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
-                MainService.getInstance().updateSessionData(
-                        message.session, message.stringVariable, message.ipAddress, message.intVariable, true);
+                MainService.getInstance().updateSessionData(message.session, message.participant, true);
                 MainService.getInstance().startCrashDetection();
             }
             case ELECT -> {
                 MainService.getInstance().stopCrashDetection();
-                MainService.getInstance().deleteParticipant(MainService.getInstance().getCurrentLeaderName());
+                MainService.getInstance().deleteParticipant(new Participant(
+                        MainService.getInstance().getCurrentLeaderName(),
+                        MainService.getInstance().getCurrentLeaderID(),
+                        InetAddress.getByName(MainService.getInstance().getCurrentLeaderIP())
+                ));
                 if (MainService.getInstance().getID() < message.intVariable) {
                     MainService.getInstance().sendStopElection(senderAddress);
                 }
@@ -138,17 +146,16 @@ public class MessageHandler {
             }
             case CHANGE_LEADER -> {
                 MainService.getInstance().stopCrashDetection();
-                MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
-                MainService.getInstance().updateSessionData(
-                        message.session, message.stringVariable, message.ipAddress, message.intVariable, false);
+                MainService.getInstance().updatePreviousLeaderIP(message.participant.ipAddress.getHostAddress());
+                MainService.getInstance().updateSessionData(message.session, message.participant, false);
                 MainService.getInstance().startCrashDetection();
             }
             case PASS_LEADERSHIP -> {
                 MainService.getInstance().stopCrashDetection();
-                MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
+                MainService.getInstance().updatePreviousLeaderIP(message.participant.ipAddress.getHostAddress());
                 MainService.getInstance().updateSessionData(
-                        message.session, message.stringVariable, message.ipAddress, message.intVariable, false);
-                MainService.getInstance().multicastNewLeader(MainService.getInstance().getUsername());
+                        message.session, message.participant, false);
+                MainService.getInstance().multicastNewLeader(message.participant);
                 MainService.getInstance().startCrashDetection();
             }
             case MESSAGE_RESEND -> {

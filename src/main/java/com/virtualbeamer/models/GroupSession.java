@@ -65,10 +65,10 @@ public class GroupSession implements Serializable {
         return leaderName;
     }
 
-    public void setLeaderData(String leaderName, InetAddress leaderAddress, int leaderID) {
-        this.leaderName = leaderName;
-        this.leaderIPAddress = leaderAddress.getHostAddress();
-        this.leaderID = leaderID;
+    public void setLeaderData(Participant leader) {
+        this.leaderName = leader.name;
+        this.leaderIPAddress = leader.ipAddress.getHostAddress();
+        this.leaderID = leader.ID;
     }
 
     @Override

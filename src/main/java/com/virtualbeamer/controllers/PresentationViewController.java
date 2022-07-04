@@ -1,5 +1,6 @@
 package com.virtualbeamer.controllers;
 
+import com.virtualbeamer.models.Participant;
 import com.virtualbeamer.services.MainService;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -35,7 +36,7 @@ public class PresentationViewController implements Initializable {
     private Button nextSlideButton;
 
     @FXML
-    private ComboBox<String> participants;
+    private ComboBox<Participant> participants;
 
     @FXML
     private Button previousSlideButton;
@@ -183,9 +184,10 @@ public class PresentationViewController implements Initializable {
 
     @FXML
     public void giveControl() {
-        String userName = participants.getValue();
-        if (userName != null) {
-            user.setGroupLeader(userName);
+        Participant participant = participants.getValue();
+        System.out.println(participant.name + " " + participant.ID + " " + participant.ipAddress);
+        if (participant != null) {
+            user.setGroupLeader(participant);
         }
     }
 
@@ -254,12 +256,12 @@ public class PresentationViewController implements Initializable {
     private void initializeParticipantsComboBox() {
         participants.setCellFactory(lv -> new ListCell<>() {
             @Override
-            public void updateItem(String item, boolean empty) {
+            public void updateItem(Participant item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText("Participants");
                 } else {
-                    setText(item);
+                    setText(String.valueOf(item));
                     setDisable(user.getUserType() == VIEWER);
                 }
             }
