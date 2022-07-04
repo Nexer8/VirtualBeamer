@@ -1,8 +1,11 @@
 package com.virtualbeamer.models;
 
+import com.virtualbeamer.services.MainService;
+
 import java.io.*;
 import java.net.*;
 
+import static com.virtualbeamer.constants.MessageType.PASS_LEADERSHIP;
 import static com.virtualbeamer.constants.SessionConstants.*;
 
 public class GlobalSession implements Serializable {
@@ -29,6 +32,15 @@ public class GlobalSession implements Serializable {
             out.writeObject(message);
         } catch (IOException e) {
             System.out.println("Failed to send message to " + address.getHostAddress() + ":" + port);
+            if (message.type == PASS_LEADERSHIP) {
+                try {
+                    MainService.getInstance().showParticipantUnavailableAlert(message.participant.name);
+                    MainService.getInstance().deleteParticipant(message.participant);
+                    MainService.getInstance().multicastDeleteParticipant(message.participant);
+                } catch (Exception ex) {
+                    System.out.println("Failed to delete participant " + message.participant.name);
+                }
+            }
         }
         System.out.println("Responded to Hello message!");
     }

@@ -9,11 +9,11 @@ public class Message implements Serializable {
     final public MessageType type;
     public GroupSession session;
     public int intVariable;
-    public String stringVariable;
     public InetAddress ipAddress;
     public int packetID;
     public short shortVariable1;
     public short shortVariable2;
+    public Participant participant;
 
     public Message(MessageType type) {
         this.type = type;
@@ -35,10 +35,6 @@ public class Message implements Serializable {
         this.shortVariable2 = shortVariable2;
     }
 
-    public Message(MessageType type, String stringVariable) {
-        this.type = type;
-        this.stringVariable = stringVariable;
-    }
 
     public Message(MessageType type, InetAddress ipAddress) {
         this.type = type;
@@ -51,18 +47,14 @@ public class Message implements Serializable {
         this.ipAddress = ipAddress;
     }
 
-    public Message(MessageType type, String stringVariable, int intVariable, InetAddress ipAddress) {
+    public Message(MessageType type, Participant participant) {
         this.type = type;
-        this.stringVariable = stringVariable;
-        this.intVariable = intVariable;
-        this.ipAddress = ipAddress;
+        this.participant = participant;
     }
 
-    public Message(MessageType type, GroupSession session, int intVariable, String stringVariable, InetAddress ipAddress) {
+    public Message(MessageType type, GroupSession session, Participant participant) {
         this.type = type;
         this.session = session;
-        this.intVariable = intVariable;
-        this.stringVariable = stringVariable;
-        this.ipAddress = ipAddress;
+        this.participant = participant;
     }
 }

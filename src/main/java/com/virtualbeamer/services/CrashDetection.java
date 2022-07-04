@@ -1,6 +1,7 @@
 package com.virtualbeamer.services;
 
 import com.virtualbeamer.constants.SessionConstants;
+import com.virtualbeamer.models.Participant;
 import com.virtualbeamer.utils.Helpers;
 
 import java.io.IOException;
@@ -38,7 +39,8 @@ public class CrashDetection extends Thread {
                     try {
                         MainService.getInstance().sendCOORD();
                         MainService.getInstance().updateSessionData(MainService.getInstance().getGroupSession(),
-                                MainService.getInstance().getUsername(), Helpers.getInetAddress(), MainService.getInstance().getID(), true);
+                                new Participant(MainService.getInstance().getUsername(),
+                                        MainService.getInstance().getID(), Helpers.getInetAddress()), true);
                         electSent = false;
                     } catch (IOException e) {
                         e.printStackTrace();
