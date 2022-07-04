@@ -22,12 +22,9 @@
         <BorderPane style="-fx-background-color: #002d40;" BorderPane.alignment="CENTER">
             <left>
                 <HBox>
-                    <MenuBar>
-                        <Menu mnemonicParsing="false" text="Navigate">
-                            <MenuItem mnemonicParsing="false" onAction="#exitSession" text="Exit session"/>
-                        </Menu>
-                    </MenuBar>
-                    <Button mnemonicParsing="false" onMousePressed="#loadPresentation" text="Load"/>
+                    <Button fx:id="loadPresentationButton" mnemonicParsing="false"
+                            onAction="#loadPresentation" text="Load presentation"/>
+                    <Button mnemonicParsing="false" onMousePressed="#exitSession" text="Exit session"/>
                 </HBox>
             </left>
             <right>
