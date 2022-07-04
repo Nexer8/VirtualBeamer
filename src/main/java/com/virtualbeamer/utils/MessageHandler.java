@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.*;
 import java.time.Instant;
-import java.util.Collections;
+import java.util.Comparator;
 
 public class MessageHandler {
     public static void collectAndProcessMultipleMessages(DatagramSocket socket, byte[] buffer)
@@ -88,13 +88,11 @@ public class MessageHandler {
                     MainService.getInstance().sendSlides(senderAddress);
                 }
                 MainService.getInstance().addParticipant(message.participant);
-                MainService.getInstance().addListGroupID(message.participant.ID);
                 MainService.getInstance().multicastNewParticipant(message.participant);
             }
             case NEW_PARTICIPANT -> {
                 if (MainService.getInstance().getUserType() == AppConstants.UserType.VIEWER) {
                     MainService.getInstance().addParticipant(message.participant);
-                    MainService.getInstance().addListGroupID(message.participant.ID);
 
                     if (MainService.getInstance().getSlides() != null
                             && !MainService.getInstance().getSlides().isEmpty()
@@ -104,10 +102,7 @@ public class MessageHandler {
                 }
             }
             case COLLECT_USERS_DATA -> MainService.getInstance().sendUsersData(senderAddress);
-            case USER_DATA -> {
-                MainService.getInstance().addParticipant(message.participant);
-                MainService.getInstance().addListGroupID(message.participant.ID);
-            }
+            case USER_DATA -> MainService.getInstance().addParticipant(message.participant);
             case LEAVE_SESSION -> {
                 MainService.getInstance().deleteParticipant(message.participant);
                 MainService.getInstance().multicastDeleteParticipant(message.participant);
@@ -132,8 +127,8 @@ public class MessageHandler {
             }
             case STOP_ELECT -> MainService.getInstance().stopElection();
             case START_AGREEMENT_PROCESS -> {
-                int mID = MainService.getInstance().getGroupIDs().isEmpty() ? MainService.getInstance().getID()
-                        : Collections.min(MainService.getInstance().getGroupIDs());
+                int mID = MainService.getInstance().getParticipants().isEmpty() ? MainService.getInstance().getID() :
+                        MainService.getInstance().getParticipants().stream().min(Comparator.comparing(v -> v.ID)).get().ID;
 
                 if (mID < message.intVariable) {
                     MainService.getInstance().sendStopAgreementProcess(senderAddress, message.ipAddress);

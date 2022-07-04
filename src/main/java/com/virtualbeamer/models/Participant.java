@@ -5,9 +5,9 @@ import java.net.InetAddress;
 import java.util.Objects;
 
 public class Participant implements Serializable {
-    public String name;
-    public int ID;
-    public InetAddress ipAddress;
+    public final String name;
+    public final int ID;
+    public final InetAddress ipAddress;
 
     public Participant(String name, int ID, InetAddress ipAddress) {
         this.name = name;

@@ -34,8 +34,6 @@ public class MainService {
     private final ObservableList<String> groupSessionsInfo = FXCollections.observableArrayList();
     private final ObservableList<Participant> participantsNames = FXCollections.observableArrayList();
     private final List<Participant> participants = new ArrayList<>();
-    private final ArrayList<Integer> groupIDs = new ArrayList<>();
-
     private final GlobalSession globalSession;
     private GroupSession groupSession;
     private GroupReceiver groupReceiver;
@@ -157,7 +155,6 @@ public class MainService {
     }
 
     public void joinSession(String name) throws IOException {
-        this.groupIDs.clear();
         groupSession = getGroupSession(name);
         groupSession.setPort(getGroupSession(name).getPort());
         System.out.println("Leader: " + groupSession.getLeaderInfo() + " " + getGroupSession(name).getPort());
@@ -173,9 +170,8 @@ public class MainService {
         collectUsersData();
 
         int id;
-        if (!this.groupIDs.isEmpty()) {
-            Collections.sort(groupIDs);
-            id = groupIDs.get(groupIDs.size() - 1) + 1;
+        if (!participants.isEmpty()) {
+            id = participants.stream().max(Comparator.comparing(v -> v.ID)).get().ID + 1;
         } else {
             id = 1;
         }
@@ -220,6 +216,7 @@ public class MainService {
 
     private void cleanUpSessionData() {
         participantsNames.clear();
+        participants.clear();
         slides.clear();
         currentSlide = 0;
         user.setUserType(AppConstants.UserType.VIEWER);
@@ -410,7 +407,6 @@ public class MainService {
             if (!afterCrash) {
                 addParticipant(new Participant(groupSession.getLeaderName(),
                         groupSession.getLeaderID(), InetAddress.getByName(groupSession.getLeaderIPAddress())));
-                addListGroupID(groupSession.getLeaderID());
             }
         } else {
             user.setUserType(AppConstants.UserType.VIEWER);
@@ -457,6 +453,10 @@ public class MainService {
         return participantsNames;
     }
 
+    public List<Participant> getParticipants() {
+        return participants;
+    }
+
     public String getUsername() {
         return user.getUsername();
     }
@@ -497,7 +497,8 @@ public class MainService {
 
     public synchronized void agreeOnSlidesSender(InetAddress senderAddress) {
         if (!agreementMessageSent.containsKey(senderAddress) || !agreementMessageSent.get(senderAddress)) {
-            int mID = groupIDs.isEmpty() ? user.getID() : Collections.min(groupIDs);
+            int mID = participants.isEmpty() ? user.getID() :
+                    participants.stream().min(Comparator.comparing(v -> v.ID)).get().ID;
             for (var participant : participants) {
                 globalSession.sendMessage(new Message(START_AGREEMENT_PROCESS,
                         mID, senderAddress), participant.ipAddress);
@@ -531,10 +532,6 @@ public class MainService {
         agreementMessageSent.remove(viewerAddress);
     }
 
-    public synchronized void addListGroupID(int id) {
-        groupIDs.add(id);
-    }
-
     public void stopCrashDetection() {
         try {
             System.out.println("Stopped crash detection");
@@ -553,11 +550,6 @@ public class MainService {
 
     public void sendImAlive() throws IOException {
         groupSession.sendGroupMessage(new Message(IM_ALIVE));
-    }
-
-
-    public ArrayList<Integer> getGroupIDs() {
-        return groupIDs;
     }
 
     public void setLastImAlive(long lastImAlive) {

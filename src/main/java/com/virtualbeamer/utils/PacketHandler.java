@@ -46,7 +46,7 @@ public class PacketHandler extends Thread {
     public void handleSlide(byte[] data) {
         if(!this.slidesQueue.contains(data))
         {
-            byte tmp[] = new byte[MAX_PACKET_SIZE+8];
+            byte[] tmp = new byte[MAX_PACKET_SIZE+8];
             System.arraycopy(data,0,tmp,0,data.length);
             this.slidesQueue.add(tmp);
         }
@@ -79,7 +79,7 @@ public class PacketHandler extends Thread {
     }
 
     public void addProcessedSlide(byte[] data) {
-        byte tmp[] = new byte[MAX_PACKET_SIZE+8];
+        byte[] tmp = new byte[MAX_PACKET_SIZE+8];
         System.arraycopy(data,0,tmp,0,data.length);
         processedSlides.add(tmp);
     }
@@ -174,7 +174,7 @@ public class PacketHandler extends Thread {
                     // Delete the slides from the processing queue and add them to the processed queue
                     for (byte[] data : tempSlidesQueue) {
                         slidesQueue.remove(data);
-                        byte tmp[] = new byte[MAX_PACKET_SIZE+8];
+                        byte[] tmp = new byte[MAX_PACKET_SIZE+8];
                         System.arraycopy(data,0,tmp,0,data.length);
                         processedSlides.add(tmp);
                     }

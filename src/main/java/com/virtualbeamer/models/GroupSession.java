@@ -78,7 +78,7 @@ public class GroupSession implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
         GroupSession that = (GroupSession) o;
-        return name.equals(that.name);
+        return name.equals(that.name) && port == that.port;
     }
 
     public synchronized void sendGroupMessage(Message message) throws IOException {
