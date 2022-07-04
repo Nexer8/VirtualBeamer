@@ -96,6 +96,15 @@ public class PresentationViewController implements Initializable {
         }
     }
 
+    public void showParticipantUnavailableAlert(String name) {
+        Alert alert = new Alert(Alert.AlertType.WARNING, name + " is no longer available!");
+        alert.initOwner(slidePane.getScene().getWindow());
+        alert.getDialogPane().getStylesheets().add((Objects.requireNonNull(
+                getClass().getResource("/styles/dialog.css"))).toExternalForm());
+        alert.setHeaderText("Cannot pass control!");
+        alert.showAndWait();
+    }
+
     private void updatePresentationStatus() {
         presentationStatus.setText((user.getCurrentSlide() + 1) + " / " + user.getSlides().size());
         presentationStatus.setVisible(true);
@@ -185,7 +194,6 @@ public class PresentationViewController implements Initializable {
     @FXML
     public void giveControl() {
         Participant participant = participants.getValue();
-        System.out.println(participant.name + " " + participant.ID + " " + participant.ipAddress);
         if (participant != null) {
             user.setGroupLeader(participant);
         }
