@@ -34,6 +34,7 @@ public class MainService {
     private final ObservableList<String> groupSessionsInfo = FXCollections.observableArrayList();
     private final ObservableList<Participant> participantsNames = FXCollections.observableArrayList();
     private final List<Participant> participants = new ArrayList<>();
+    private final List<Participant> availabilityConfirmedParticipants = new ArrayList<>();
     private final GlobalSession globalSession;
     private GroupSession groupSession;
     private GroupReceiver groupReceiver;
@@ -372,6 +373,10 @@ public class MainService {
         Platform.runLater(() -> participantsNames.remove(participant));
     }
 
+    public synchronized void addAvailabilityConfirmedParticipant(Participant participant) {
+        availabilityConfirmedParticipants.add(participant);
+    }
+
     public void multicastDeleteParticipant(Participant participant) throws IOException {
         groupSession.sendGroupMessage(new Message(DELETE_PARTICIPANT, participant));
     }
@@ -497,11 +502,12 @@ public class MainService {
 
     public synchronized void agreeOnSlidesSender(InetAddress senderAddress) {
         if (!agreementMessageSent.containsKey(senderAddress) || !agreementMessageSent.get(senderAddress)) {
-            int mID = participants.isEmpty() ? user.getID() :
+            int minID = participants.isEmpty() ? user.getID() :
                     participants.stream().min(Comparator.comparing(v -> v.ID)).get().ID;
+
             for (var participant : participants) {
                 globalSession.sendMessage(new Message(START_AGREEMENT_PROCESS,
-                        mID, senderAddress), participant.ipAddress);
+                        minID, senderAddress), participant.ipAddress);
             }
             agreementMessageSent.put(senderAddress, true);
 
@@ -510,7 +516,7 @@ public class MainService {
                 @Override
                 public void run() {
                     try {
-                        if (user.getID() == mID) {
+                        if (user.getID() == minID) {
                             sendSlides(senderAddress);
                         }
                         agreementMessageSent.put(senderAddress, false);
@@ -586,5 +592,44 @@ public class MainService {
 
     public PacketHandler getPacketHandler() {
         return this.packetHandler;
+    }
+
+    public void checkParticipantsAvailability() throws InterruptedException {
+        availabilityConfirmedParticipants.clear();
+        for (var participant : participants) {
+            globalSession.sendMessage(new Message(CHECK_AVAILABILITY, groupSession), participant.ipAddress);
+        }
+
+        int counter = 0;
+        boolean allAvailable = false;
+        while (counter < CHECK_AVAILABILITY_TIMEOUT / CHECK_AVAILABILITY_INTERVAL) {
+            Thread.sleep(CHECK_AVAILABILITY_INTERVAL);
+            if (availabilityConfirmedParticipants.size() == participants.size()) {
+                allAvailable = true;
+                break;
+            }
+            counter++;
+        }
+
+        if (!allAvailable) {
+            for (var participant : participants) {
+                if (!availabilityConfirmedParticipants.contains(participant)) {
+                    deleteParticipant(participant);
+                    try {
+                        multicastDeleteParticipant(participant);
+                    } catch (IOException e) {
+                        System.out.println("Failed to multicast delete participant");
+                    }
+                }
+            }
+        }
+    }
+
+    public void confirmAvailability(InetAddress senderAddress) {
+        globalSession.sendMessage(new Message(CONFIRM_AVAILABILITY), senderAddress);
+    }
+
+    public void requestSlides(InetAddress senderAddress) {
+        globalSession.sendMessage(new Message(REQUEST_SLIDES), senderAddress);
     }
 }

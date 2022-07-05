@@ -13,6 +13,8 @@ import java.net.*;
 import java.time.Instant;
 import java.util.Comparator;
 
+import static com.virtualbeamer.constants.SessionConstants.*;
+
 public class MessageHandler {
     public static void collectAndProcessMultipleMessages(DatagramSocket socket, byte[] buffer)
             throws IOException, ClassNotFoundException {
@@ -70,18 +72,46 @@ public class MessageHandler {
             }
             case CURRENT_SLIDE_NUMBER, NEXT_SLIDE, PREVIOUS_SLIDE -> {
                 if (MainService.getInstance().getUserType() != AppConstants.UserType.PRESENTER) {
-                    while (MainService.getInstance().getSlides().size() < message.intVariable + 1) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            System.out.println("Waiting for slides to be received before setting the slide!");
+                    boolean slidesAvailable = true;
+                    if (MainService.getInstance().getSlides().size() < message.intVariable + 1) {
+                        slidesAvailable = false;
+                        int counter = 0;
+                        while (counter < SLIDES_AVAILABILITY_TIMEOUT / SLIDES_AVAILABILITY_INTERVAL) {
+                            try {
+                                Thread.sleep(SLIDES_AVAILABILITY_INTERVAL);
+                            } catch (InterruptedException e) {
+                                System.out.println("Slides availability check interrupted!");
+                            }
+                            if (MainService.getInstance().getSlides().size() >= message.intVariable + 1) {
+                                slidesAvailable = true;
+                                break;
+                            }
+                            counter++;
                         }
                     }
-                    MainService.getInstance().setCurrentSlide(message.intVariable);
+
+                    if (slidesAvailable) {
+                        MainService.getInstance().setCurrentSlide(message.intVariable);
+                    } else {
+                        MainService.getInstance().requestSlides(senderAddress);
+                    }
                 }
             }
             case SESSION_DETAILS -> MainService.getInstance().addSessionData(message.session);
+            case CHECK_AVAILABILITY -> {
+                if (MainService.getInstance().getGroupSession().equals(message.session)) {
+                    MainService.getInstance().confirmAvailability(senderAddress);
+                }
+            }
+            case CONFIRM_AVAILABILITY ->
+                    MainService.getInstance().addAvailabilityConfirmedParticipant(message.participant);
             case JOIN_SESSION -> {
+                try {
+                    MainService.getInstance().checkParticipantsAvailability();
+                } catch (Exception e) {
+                    System.out.println("Error checking participants availability!");
+                }
+
                 System.out.println(message.participant.name + " joined the session.");
                 if (MainService.getInstance().getParticipantsNames().isEmpty() &&
                         !MainService.getInstance().getSlides().isEmpty()) {
@@ -90,6 +120,7 @@ public class MessageHandler {
                 MainService.getInstance().addParticipant(message.participant);
                 MainService.getInstance().multicastNewParticipant(message.participant);
             }
+            case REQUEST_SLIDES -> MainService.getInstance().sendSlides(senderAddress);
             case NEW_PARTICIPANT -> {
                 if (MainService.getInstance().getUserType() == AppConstants.UserType.VIEWER) {
                     MainService.getInstance().addParticipant(message.participant);
@@ -127,10 +158,10 @@ public class MessageHandler {
             }
             case STOP_ELECT -> MainService.getInstance().stopElection();
             case START_AGREEMENT_PROCESS -> {
-                int mID = MainService.getInstance().getParticipants().isEmpty() ? MainService.getInstance().getID() :
+                int minID = MainService.getInstance().getParticipants().isEmpty() ? MainService.getInstance().getID() :
                         MainService.getInstance().getParticipants().stream().min(Comparator.comparing(v -> v.ID)).get().ID;
 
-                if (mID < message.intVariable) {
+                if (minID != message.intVariable) {
                     MainService.getInstance().sendStopAgreementProcess(senderAddress, message.ipAddress);
                 }
             }

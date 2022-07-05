@@ -17,4 +17,8 @@ public class SessionConstants {
     public static final int CRASH_DETECTION_TIMEOUT = 3 * IM_ALIVE_PERIODICITY;
     public static final int MESSAGE_QUEUE_FLUSH = 2000;
     public static final int PORT_TIMELINESS = 3;
+    public static final int CHECK_AVAILABILITY_TIMEOUT = 2000;
+    public static final int CHECK_AVAILABILITY_INTERVAL = 100;
+    public static final int SLIDES_AVAILABILITY_TIMEOUT = 5000;
+    public static final int SLIDES_AVAILABILITY_INTERVAL = 200;
 }
