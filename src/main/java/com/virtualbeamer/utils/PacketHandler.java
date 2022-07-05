@@ -36,7 +36,7 @@ public class PacketHandler extends Thread {
         processedMessages = new ArrayList<>();
         processedSlides = new ArrayList<>();
         bannedMessageType = new ArrayList<>();
-        bannedMessageType.add(MessageType.IM_ALIVE);
+        //bannedMessageType.add(MessageType.IM_ALIVE);
     }
 
     public void setSlidesReceiverData(SlidesReceiverData srd) {
