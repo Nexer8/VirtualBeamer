@@ -135,7 +135,6 @@ public class MainService {
         groupSession.setPort(groupPort);
         System.out.println("Username: " + user.getUsername());
         groupSession.setLeaderData(new Participant(user.getUsername(), user.getID(), Helpers.getInetAddress()));
-        groupSession.updatePreviousLeaderIpAddress();
         groupReceiver = new GroupReceiver(groupPort);
         groupReceiver.start();
         groupSessions.add(groupSession);

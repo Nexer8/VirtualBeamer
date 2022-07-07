@@ -38,10 +38,12 @@ public class CrashDetection extends Thread {
                 public void run() {
                     try {
                         MainService.getInstance().sendCOORD();
+                        MainService.getInstance().updatePreviousLeaderIP(MainService.getInstance().getCurrentLeaderIP());
                         MainService.getInstance().updateSessionData(MainService.getInstance().getGroupSession(),
                                 new Participant(MainService.getInstance().getUsername(),
                                         MainService.getInstance().getID(), Helpers.getInetAddress()), true);
                         electSent = false;
+                        MainService.getInstance().startCrashDetection();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -75,6 +77,7 @@ public class CrashDetection extends Thread {
                                     + (instant.getEpochSecond() - MainService.getInstance().getLastImAlive()));
                             if (MainService.getInstance().getLastImAlive() != 0 && instant.getEpochSecond()
                                     - MainService.getInstance().getLastImAlive() > CRASH_DETECTION_TIMEOUT / 1000) {
+                                MainService.getInstance().stopCrashDetection();
                                 electLeader();
                             }
                         } catch (IOException e) {

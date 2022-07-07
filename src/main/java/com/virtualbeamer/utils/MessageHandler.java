@@ -124,7 +124,7 @@ public class MessageHandler {
                 MainService.getInstance().multicastNewParticipant(message.participant);
 
                 if (MainService.getInstance().getGroupSession().getPreviousLeaderIpAddress() != null
-                        && MainService.getInstance().getGroupSession().getPreviousLeaderIpAddress().equals(senderAddress.toString())) {
+                        && MainService.getInstance().getGroupSession().getPreviousLeaderIpAddress().equals(senderAddress.getHostAddress())) {
                     MainService.getInstance().setGroupLeader(message.participant);
                 }
             }

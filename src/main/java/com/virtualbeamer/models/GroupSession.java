@@ -15,7 +15,7 @@ public class GroupSession implements Serializable {
     private String leaderName;
     private String leaderIPAddress;
     private int leaderID;
-    private String[] previousLeaderIPAddress;
+    private String previousLeaderIPAddress;
 
     public String getName() {
         return name;
@@ -37,24 +37,17 @@ public class GroupSession implements Serializable {
         return leaderIPAddress;
     }
 
-    public void updatePreviousLeaderIpAddress() {
-        previousLeaderIPAddress[0] = previousLeaderIPAddress[1];
-        previousLeaderIPAddress[1] = leaderIPAddress;
-    }
-
-    public void updatePreviousLeaderIpAddress(String leaderIPAddress) {
-        previousLeaderIPAddress[0] = previousLeaderIPAddress[1];
-        previousLeaderIPAddress[1] = leaderIPAddress;
+     public void updatePreviousLeaderIpAddress(String leaderIPAddress) {
+        previousLeaderIPAddress = leaderIPAddress;
     }
 
     public String getPreviousLeaderIpAddress() {
-        return previousLeaderIPAddress[0];
+        return previousLeaderIPAddress;
     }
 
     public GroupSession(String name) {
         this.name = name;
         this.port = 0;
-        this.previousLeaderIPAddress = new String[2];
     }
 
     public String getLeaderInfo() {
