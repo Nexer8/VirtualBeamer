@@ -272,7 +272,7 @@ public class MainService {
     }
 
     public void sendMissingSlide(InetAddress address, byte[] data) throws IOException {
-        globalSession.sendMessage(data, address, PACKET_LOSS_PORT);
+        globalSession.sendMessage(data, address, SLIDE_PACKET_LOSS_PORT);
     }
 
     public void sendSlides(InetAddress senderAddress) throws IOException {
@@ -296,7 +296,6 @@ public class MainService {
     }
 
     public void sendDeleteSession() {
-        stopCrashDetection();
         for (var participant : participants) {
             globalSession.sendMessage(new Message(DELETE_SESSION, groupSession), participant.ipAddress);
         }

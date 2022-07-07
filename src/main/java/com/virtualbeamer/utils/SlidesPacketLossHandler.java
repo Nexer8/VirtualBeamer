@@ -7,7 +7,6 @@ import com.virtualbeamer.services.MainService;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -16,23 +15,23 @@ import java.util.Comparator;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static com.virtualbeamer.constants.SessionConstants.MESSAGE_QUEUE_FLUSH;
-import static com.virtualbeamer.constants.SessionConstants.PACKET_LOSS_PORT;
-import static com.virtualbeamer.utils.MessageHandler.handleMessage;
+import static com.virtualbeamer.constants.SessionConstants.*;
 import static com.virtualbeamer.utils.PacketCreator.MAX_PACKET_SIZE;
 import static com.virtualbeamer.utils.SlidesHandler.processReceivedSlideData;
 
 public class SlidesPacketLossHandler extends Thread {
 
     public static final int MAX_ELEMENTS_TO_COPY = 15;
+    private final ServerSocket serverSocket;
     private final ArrayList<byte[]> slidesQueue;
     private final ArrayList<byte[]> processedSlides;
     private Timer queueFlushTimer;
     private SlidesReceiverData srd;
 
-    public SlidesPacketLossHandler() {
+    public SlidesPacketLossHandler() throws IOException {
         slidesQueue = new ArrayList<>();
         processedSlides = new ArrayList<>();
+        serverSocket = new ServerSocket(SLIDE_PACKET_LOSS_PORT);
     }
 
     public void setSlidesReceiverData(SlidesReceiverData srd) {
@@ -98,7 +97,6 @@ public class SlidesPacketLossHandler extends Thread {
                                 try {
                                     System.out.println("Slide miss found:" + getSlideSession(tempSlidesQueue.get(i)) + " " + (getSlideSlice(tempSlidesQueue.get(i)) + j));
 
-                                    ServerSocket serverSocket = new ServerSocket(PACKET_LOSS_PORT);
                                     MainService.getInstance().sendPacketLostMessage(
                                             InetAddress.getByName(MainService.getInstance().getGroupSession().getLeaderIPAddress()),
                                             new Message(MessageType.SLIDE_RESEND, getSlideSession(tempSlidesQueue.get(i)),

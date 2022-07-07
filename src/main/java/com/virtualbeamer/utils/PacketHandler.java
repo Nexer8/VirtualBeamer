@@ -18,6 +18,7 @@ public class PacketHandler extends Thread {
 
     public static final int MAX_ELEMENTS_TO_COPY = 15;
     private Timer queueFlushTimer;
+    private final ServerSocket serverSocket;
 
     private final ArrayList<Message> messagesQueue;
 
@@ -25,11 +26,12 @@ public class PacketHandler extends Thread {
     private final ArrayList<MessageType> bannedMessageType;
 
 
-    public PacketHandler() {
+    public PacketHandler() throws IOException {
         messagesQueue = new ArrayList<>();
         processedMessages = new ArrayList<>();
         bannedMessageType = new ArrayList<>();
         //bannedMessageType.add(MessageType.IM_ALIVE);
+        serverSocket = new ServerSocket(PACKET_LOSS_PORT);
     }
 
     public void handlePacket(Message message) throws IOException {
@@ -71,7 +73,6 @@ public class PacketHandler extends Thread {
                 int size;
                 ArrayList<Message> tempMessageQueue = new ArrayList<>();
 
-
                 // Message queue handling
                 if (!messagesQueue.isEmpty()) {
                     System.out.println("-- HANDLING MESSAGE --");
@@ -91,7 +92,6 @@ public class PacketHandler extends Thread {
                                     MainService.getInstance().sendPacketLostMessage(InetAddress.getByName(
                                                     MainService.getInstance().getGroupSession().getLeaderIPAddress()),
                                             new Message(MessageType.MESSAGE_RESEND, tempMessageQueue.get(i).packetID + j));
-                                    ServerSocket serverSocket = new ServerSocket(PACKET_LOSS_PORT);
                                     Socket socket = serverSocket.accept();
                                     ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
