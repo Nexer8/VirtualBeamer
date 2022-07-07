@@ -73,7 +73,6 @@ public class PacketHandler extends Thread {
         }
 
         return 0;
-
     }
 
     public void addProcessedSlide(byte[] data) {
@@ -100,7 +99,6 @@ public class PacketHandler extends Thread {
 
     public static short getSlideSession(byte[] data) {
         return (short) (data[1] & 0xff);
-
     }
 
     public static short getSlideSlice(byte[] data) {
@@ -112,7 +110,6 @@ public class PacketHandler extends Thread {
         queueFlushTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-
                 int size;
                 ArrayList<byte[]> tempSlidesQueue = new ArrayList<>();
                 ArrayList<Message> tempMessageQueue = new ArrayList<>();
@@ -148,13 +145,11 @@ public class PacketHandler extends Thread {
                                     tempSlidesQueue.add(packet);
                                     socket.close();
                                     System.out.println("Slide miss received");
-
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
                             }
                         }
-
                     }
                     tempSlidesQueue.sort(new PacketSliceComparator());
 
@@ -177,7 +172,6 @@ public class PacketHandler extends Thread {
                         processedSlides.add(tmp);
                     }
                     System.out.println("-- END HANDLING SLIDES --");
-
                 }
 
                 // Message queue handling
@@ -207,7 +201,6 @@ public class PacketHandler extends Thread {
                                     tempMessageQueue.add(message);
                                     System.out.println("Packet " + message.packetID + " received!");
                                     socket.close();
-
                                 } catch (IOException | ClassNotFoundException e) {
                                     e.printStackTrace();
                                 }
@@ -260,7 +253,6 @@ class PacketSliceComparator implements Comparator<byte[]> {
         }
 
         return session1 - session2;
-
     }
 }
 
