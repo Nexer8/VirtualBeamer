@@ -341,6 +341,7 @@ public class MainService {
                 throw new RuntimeException(e);
             }
         });
+        startSendingPeriodicalHELLO();
     }
 
     public void setSlides(BufferedImage[] slides) throws IOException {
