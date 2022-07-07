@@ -20,7 +20,7 @@ public class SlidesSender implements Serializable {
         DatagramPacket packet = new DatagramPacket(data, data.length,
                 InetAddress.getByName(GROUP_ADDRESS), port);
         socket.send(packet);
-        MainService.getInstance().getPacketHandler().addProcessedSlide(data);
+        MainService.getInstance().getSlidesPacketLossHandler().addProcessedSlide(data);
     }
 
     public synchronized void unicast(ObservableList<BufferedImage> slides, InetAddress address) throws IOException {

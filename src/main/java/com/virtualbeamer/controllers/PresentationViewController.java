@@ -48,7 +48,7 @@ public class PresentationViewController implements Initializable {
     private VBox progressIndicator;
 
     @FXML
-    private MenuItem loadPresentationButton;
+    private Button loadPresentationButton;
 
     @FXML
     private Button giveControlButton;

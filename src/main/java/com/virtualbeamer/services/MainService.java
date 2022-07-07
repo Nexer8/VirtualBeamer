@@ -53,6 +53,7 @@ public class MainService {
     private static ScheduledFuture<?> handler;
 
     private PacketHandler packetHandler;
+    private SlidesPacketLossHandler slidesPacketLossHandler;
 
     private static volatile int helloCounter = 0;
 
@@ -73,6 +74,9 @@ public class MainService {
         lastImAlive = 0;
         packetHandler = new PacketHandler();
         packetHandler.start();
+
+        slidesPacketLossHandler = new SlidesPacketLossHandler();
+        slidesPacketLossHandler.start();
     }
 
     public static void startSendingPeriodicalHELLO() {
@@ -586,6 +590,10 @@ public class MainService {
 
     public PacketHandler getPacketHandler() {
         return this.packetHandler;
+    }
+
+    public SlidesPacketLossHandler getSlidesPacketLossHandler() {
+        return this.slidesPacketLossHandler;
     }
 
     public void checkParticipantsAvailability() throws InterruptedException {
