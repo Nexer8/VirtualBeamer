@@ -100,8 +100,10 @@ public class MessageHandler {
             case SESSION_DETAILS -> MainService.getInstance().addSessionData(message.session);
             case CHECK_AVAILABILITY -> {
                 if (MainService.getInstance().getGroupSession().equals(message.session)) {
+                    System.out.println("This is my session!");
                     MainService.getInstance().confirmAvailability(senderAddress);
                 }
+                System.out.println("This may not be my session!");
             }
             case CONFIRM_AVAILABILITY ->
                     MainService.getInstance().addAvailabilityConfirmedParticipant(message.participant);

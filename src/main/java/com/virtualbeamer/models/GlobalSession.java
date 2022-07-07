@@ -5,6 +5,7 @@ import com.virtualbeamer.services.MainService;
 import java.io.*;
 import java.net.*;
 
+import static com.virtualbeamer.constants.MessageType.CHECK_AVAILABILITY;
 import static com.virtualbeamer.constants.MessageType.PASS_LEADERSHIP;
 import static com.virtualbeamer.constants.SessionConstants.*;
 
@@ -30,6 +31,10 @@ public class GlobalSession implements Serializable {
         try (Socket socket = new Socket(address, port)) {
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
             out.writeObject(message);
+
+            if (message.type == CHECK_AVAILABILITY) {
+                System.out.println("Check availability message sent to " + address + ":" + port);
+            }
         } catch (IOException e) {
             System.out.println("Failed to send message to " + address.getHostAddress() + ":" + port);
             if (message.type == PASS_LEADERSHIP) {

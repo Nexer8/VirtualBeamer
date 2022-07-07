@@ -53,7 +53,6 @@ public class PacketHandler extends Thread {
         }
 
         return 0;
-
     }
 
     public void resendMessage(InetAddress address, int packetID) throws IOException {
@@ -69,7 +68,6 @@ public class PacketHandler extends Thread {
         queueFlushTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-
                 int size;
                 ArrayList<Message> tempMessageQueue = new ArrayList<>();
 
@@ -101,7 +99,6 @@ public class PacketHandler extends Thread {
                                     tempMessageQueue.add(message);
                                     System.out.println("Packet " + message.packetID + " received!");
                                     socket.close();
-
                                 } catch (IOException | ClassNotFoundException e) {
                                     e.printStackTrace();
                                 }

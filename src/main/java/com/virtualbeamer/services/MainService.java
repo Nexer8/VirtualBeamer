@@ -345,6 +345,7 @@ public class MainService {
                 throw new RuntimeException(e);
             }
         });
+        startSendingPeriodicalHELLO();
     }
 
     public void setSlides(BufferedImage[] slides) throws IOException {
@@ -596,26 +597,38 @@ public class MainService {
         return this.slidesPacketLossHandler;
     }
 
-    public void checkParticipantsAvailability() throws InterruptedException {
+    public void checkParticipantsAvailability() {
         availabilityConfirmedParticipants.clear();
         for (var participant : participants) {
             globalSession.sendMessage(new Message(CHECK_AVAILABILITY, groupSession), participant.ipAddress);
         }
 
-        int counter = 0;
         boolean allAvailable = false;
-        while (counter < CHECK_AVAILABILITY_TIMEOUT / CHECK_AVAILABILITY_INTERVAL) {
-            Thread.sleep(CHECK_AVAILABILITY_INTERVAL);
-            if (availabilityConfirmedParticipants.size() == participants.size()) {
-                allAvailable = true;
-                break;
-            }
-            counter++;
+
+        try (ServerSocket socket = new ServerSocket(CHECK_PARTICIPANT_AVAILABILITY_PORT)) {
+            socket.setSoTimeout(SO_TIMEOUT);
+            collectAndProcessMultipleUnicastMessages(socket);
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error while checking availability of participants");
         }
+
+        try {
+            Thread.sleep(CHECK_AVAILABILITY_TIMEOUT);
+        } catch (InterruptedException e) {
+            System.out.println("Checking participants availability interrupted.");
+        }
+
+        if (availabilityConfirmedParticipants.size() == participants.size()) {
+            System.out.println("All participants are available!");
+            allAvailable = true;
+        }
+
+        System.out.println("All participants are available: " + allAvailable);
 
         if (!allAvailable) {
             for (var participant : participants) {
                 if (!availabilityConfirmedParticipants.contains(participant)) {
+                    System.out.println("Participant " + participant.ipAddress + " is not available!");
                     deleteParticipant(participant);
                     try {
                         multicastDeleteParticipant(participant);
@@ -628,7 +641,7 @@ public class MainService {
     }
 
     public void confirmAvailability(InetAddress senderAddress) {
-        globalSession.sendMessage(new Message(CONFIRM_AVAILABILITY), senderAddress);
+        globalSession.sendMessage(new Message(CONFIRM_AVAILABILITY), senderAddress, CHECK_PARTICIPANT_AVAILABILITY_PORT);
     }
 
     public void requestSlides(InetAddress senderAddress) {

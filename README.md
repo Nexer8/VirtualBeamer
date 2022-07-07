@@ -65,7 +65,7 @@ docker build -t <image_name> .
 #### Run app instance
 
 ```bash
-docker run --expose 1000-15000 -d --network <network_name> --ip 192.168.1.10 <image_name>
+docker run --name <container_name> --expose 1000-15000 -d --network <network_name> --ip 192.168.1.10 <image_name>
 ```
 
 It is possible to run multiple instances of the app by executing the above command, but it is important to change the IP address.
