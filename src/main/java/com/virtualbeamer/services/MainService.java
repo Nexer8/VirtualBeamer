@@ -82,10 +82,10 @@ public class MainService {
                 instance.cleanUpSessionsData();
 
                 for (int port : portAvailabilityHistory.keySet()) {
-                    if (!portAvailabilityHistory.get(port).get(0)
-                            && !portAvailabilityHistory.get(port).get(1)
-                            && !portAvailabilityHistory.get(port).get(2)) {
+                    if (!portAvailabilityHistory.get(port).contains(true)) {
                         portAvailabilityHistory.remove(port);
+                    } else {
+                        portAvailabilityHistory.get(port).add(false);
                     }
                 }
                 instance.sendHelloMessage();
@@ -120,7 +120,7 @@ public class MainService {
         user.setID(0);
         groupSession.setName(sessionName);
 
-        while (helloCounter < 3) {
+        while (helloCounter < PORT_TIMELINESS) {
             Thread.sleep(200);
         }
 
@@ -153,6 +153,12 @@ public class MainService {
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("No ids received.");
         }
+
+        try {
+            Thread.sleep(COLLECT_USERS_DATA_TIMEOUT);
+        } catch (InterruptedException e) {
+            System.out.println("Collecting users data interrupted.");
+        }
     }
 
     public void joinSession(String name) throws IOException {
@@ -183,11 +189,6 @@ public class MainService {
                 Helpers.getInetAddress())), InetAddress.getByName(groupSession.getLeaderIPAddress()));
 
         startCrashDetection();
-
-        if (groupSession.getPreviousLeaderIpAddress() != null
-                && groupSession.getPreviousLeaderIpAddress().equals(Helpers.getInetAddress().getHostAddress())) {
-            sendChangeLeader();
-        }
     }
 
     public void sendUsersData(InetAddress senderAddress) {
@@ -212,7 +213,7 @@ public class MainService {
     }
 
     public void multicastNewLeader(Participant newLeader) throws IOException {
-        globalSession.multicast(new Message(CHANGE_LEADER, groupSession, newLeader));
+        groupSession.sendGroupMessage(new Message(CHANGE_LEADER, groupSession, newLeader));
     }
 
     private void cleanUpSessionData() {
@@ -383,8 +384,8 @@ public class MainService {
 
     private CircularFifoQueue<Boolean> getCircularFifoQueue() {
         CircularFifoQueue<Boolean> queue = new CircularFifoQueue<>(PORT_TIMELINESS);
-        for (int i = 0; i < 3; i++) {
-            queue.add(false);
+        for (int i = 0; i < PORT_TIMELINESS; i++) {
+            queue.add(true);
         }
         return queue;
     }
@@ -484,11 +485,6 @@ public class MainService {
 
     public void sendCOORD() throws IOException {
         groupSession.sendGroupMessage(new Message(COORD,
-                groupSession, new Participant(user.getUsername(), user.getID(), Helpers.getInetAddress())));
-    }
-
-    public void sendChangeLeader() throws IOException {
-        globalSession.multicast(new Message(CHANGE_LEADER,
                 groupSession, new Participant(user.getUsername(), user.getID(), Helpers.getInetAddress())));
     }
 

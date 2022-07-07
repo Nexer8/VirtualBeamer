@@ -44,21 +44,18 @@ public class PacketHandler extends Thread {
     }
 
     public void handleSlide(byte[] data) {
-        if(!this.slidesQueue.contains(data))
-        {
-            byte[] tmp = new byte[MAX_PACKET_SIZE+8];
-            System.arraycopy(data,0,tmp,0,data.length);
+        if (!this.slidesQueue.contains(data)) {
+            byte[] tmp = new byte[MAX_PACKET_SIZE + 8];
+            System.arraycopy(data, 0, tmp, 0, data.length);
             this.slidesQueue.add(tmp);
         }
     }
 
     public void handlePacket(Message message) throws IOException {
-        if (!bannedMessageType.contains(message.type))
-        {
+        if (!bannedMessageType.contains(message.type)) {
             if (!this.messagesQueue.contains(message))
                 this.messagesQueue.add(message);
-        }
-        else
+        } else
             handleMessage(message, InetAddress.getByName(
                     MainService.getInstance().getGroupSession().getLeaderIPAddress()));
     }
@@ -79,8 +76,8 @@ public class PacketHandler extends Thread {
     }
 
     public void addProcessedSlide(byte[] data) {
-        byte[] tmp = new byte[MAX_PACKET_SIZE+8];
-        System.arraycopy(data,0,tmp,0,data.length);
+        byte[] tmp = new byte[MAX_PACKET_SIZE + 8];
+        System.arraycopy(data, 0, tmp, 0, data.length);
         processedSlides.add(tmp);
     }
 
@@ -135,7 +132,7 @@ public class PacketHandler extends Thread {
                                 && getSlideSlice(tempSlidesQueue.get(i + 1)) - getSlideSlice(tempSlidesQueue.get(i)) > 1) {
                             for (int j = 1; j < getSlideSlice(tempSlidesQueue.get(i + 1)) - getSlideSlice(tempSlidesQueue.get(i)); j++) {
                                 try {
-                                    System.out.println("Slide miss found:" + getSlideSession(tempSlidesQueue.get(i)) + " "+ (getSlideSlice(tempSlidesQueue.get(i)) + j));
+                                    System.out.println("Slide miss found:" + getSlideSession(tempSlidesQueue.get(i)) + " " + (getSlideSlice(tempSlidesQueue.get(i)) + j));
 
                                     ServerSocket serverSocket = new ServerSocket(PACKET_LOSS_PORT);
                                     MainService.getInstance().sendPacketLostMessage(
@@ -174,8 +171,8 @@ public class PacketHandler extends Thread {
                     // Delete the slides from the processing queue and add them to the processed queue
                     for (byte[] data : tempSlidesQueue) {
                         slidesQueue.remove(data);
-                        byte[] tmp = new byte[MAX_PACKET_SIZE+8];
-                        System.arraycopy(data,0,tmp,0,data.length);
+                        byte[] tmp = new byte[MAX_PACKET_SIZE + 8];
+                        System.arraycopy(data, 0, tmp, 0, data.length);
                         processedSlides.add(tmp);
                     }
                     System.out.println("-- END HANDLING SLIDES --");

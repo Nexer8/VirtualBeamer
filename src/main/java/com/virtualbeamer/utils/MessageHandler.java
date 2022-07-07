@@ -113,12 +113,20 @@ public class MessageHandler {
                 }
 
                 System.out.println(message.participant.name + " joined the session.");
-                if (MainService.getInstance().getParticipantsNames().isEmpty() &&
-                        !MainService.getInstance().getSlides().isEmpty()) {
-                    MainService.getInstance().sendSlides(senderAddress);
+                if (!MainService.getInstance().getSlides().isEmpty()) {
+                    if (MainService.getInstance().getParticipantsNames().isEmpty()
+                            || (MainService.getInstance().getGroupSession().getPreviousLeaderIpAddress() != null
+                            && MainService.getInstance().getGroupSession().getPreviousLeaderIpAddress().equals(senderAddress.toString()))) {
+                        MainService.getInstance().sendSlides(senderAddress);
+                    }
                 }
                 MainService.getInstance().addParticipant(message.participant);
                 MainService.getInstance().multicastNewParticipant(message.participant);
+
+                if (MainService.getInstance().getGroupSession().getPreviousLeaderIpAddress() != null
+                        && MainService.getInstance().getGroupSession().getPreviousLeaderIpAddress().equals(senderAddress.toString())) {
+                    MainService.getInstance().setGroupLeader(message.participant);
+                }
             }
             case REQUEST_SLIDES -> MainService.getInstance().sendSlides(senderAddress);
             case NEW_PARTICIPANT -> {

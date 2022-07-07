@@ -21,4 +21,5 @@ public class SessionConstants {
     public static final int CHECK_AVAILABILITY_INTERVAL = 100;
     public static final int SLIDES_AVAILABILITY_TIMEOUT = 5000;
     public static final int SLIDES_AVAILABILITY_INTERVAL = 200;
+    public static final int COLLECT_USERS_DATA_TIMEOUT = 2000;
 }
