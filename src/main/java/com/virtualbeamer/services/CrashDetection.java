@@ -76,7 +76,6 @@ public class CrashDetection extends Thread {
                             if (MainService.getInstance().getLastImAlive() != 0 && instant.getEpochSecond()
                                     - MainService.getInstance().getLastImAlive() > CRASH_DETECTION_TIMEOUT / 1000) {
                                 electLeader();
-                                MainService.getInstance().stopCrashDetection();
                             }
                         } catch (IOException e) {
                             e.printStackTrace();

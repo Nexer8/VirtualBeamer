@@ -20,6 +20,7 @@ import static com.virtualbeamer.utils.SlidesHandler.processReceivedSlideData;
 
 public class PacketHandler extends Thread {
 
+    public static final int MAX_ELEMENTS_TO_COPY = 15;
     private final ArrayList<Message> messagesQueue;
     private final ArrayList<byte[]> slidesQueue;
 
@@ -121,13 +122,13 @@ public class PacketHandler extends Thread {
                     System.out.println("-- HANDLING SLIDES --");
 
                     // Copy max 15 element in the temporary queue
-                    for (int i = 0; i < Math.min(15, slidesQueue.size()); i++)
+                    for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, slidesQueue.size()); i++)
                         tempSlidesQueue.add(slidesQueue.get(i));
 
                     // Find missing slides and retrieve them from leader
                     size = tempSlidesQueue.size();
                     tempSlidesQueue.sort(new PacketSliceComparator());
-                    for (int i = 0; i < Math.min(15, size) - 1; i++) {
+                    for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, size) - 1; i++) {
                         if (getSlideSession(tempSlidesQueue.get(i)) == getSlideSession(tempSlidesQueue.get(i + 1))
                                 && getSlideSlice(tempSlidesQueue.get(i + 1)) - getSlideSlice(tempSlidesQueue.get(i)) > 1) {
                             for (int j = 1; j < getSlideSlice(tempSlidesQueue.get(i + 1)) - getSlideSlice(tempSlidesQueue.get(i)); j++) {
@@ -158,7 +159,7 @@ public class PacketHandler extends Thread {
                     tempSlidesQueue.sort(new PacketSliceComparator());
 
                     // Handle the slides buffer with no missing packets
-                    for (int i = 0; i < Math.min(15, tempSlidesQueue.size()); i++) {
+                    for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, tempSlidesQueue.size()); i++) {
                         try {
                             System.out.println("Handling slide ID " + getSlideSession(tempSlidesQueue.get(i))
                                     + " " + getSlideSlice(tempSlidesQueue.get(i)));
@@ -183,13 +184,13 @@ public class PacketHandler extends Thread {
                 if (!messagesQueue.isEmpty()) {
                     System.out.println("-- HANDLING MESSAGE --");
                     // Copy max 15 element in the temporary queue
-                    for (int i = 0; i < Math.min(15, messagesQueue.size()); i++)
+                    for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, messagesQueue.size()); i++)
                         tempMessageQueue.add(messagesQueue.get(i));
 
                     // Find missing messages and retrieve them from leader
                     size = tempMessageQueue.size();
                     tempMessageQueue.sort(new MessageComparator());
-                    for (int i = 0; i < Math.min(15, size) - 1; i++) {
+                    for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, size) - 1; i++) {
                         if (tempMessageQueue.get(i + 1).packetID - tempMessageQueue.get(i).packetID > 1) {
                             for (int j = 1; j < tempMessageQueue.get(i + 1).packetID - tempMessageQueue.get(i).packetID; j++) {
                                 try {
@@ -215,7 +216,7 @@ public class PacketHandler extends Thread {
                     }
 
                     // Handle the messages with new packets
-                    for (int i = 0; i < Math.min(15, tempMessageQueue.size()); i++) {
+                    for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, tempMessageQueue.size()); i++) {
                         try {
                             System.out.println("Handling packet ID " + tempMessageQueue.get(i).packetID);
                             handleMessage(tempMessageQueue.get(i), InetAddress.getByName(
@@ -231,7 +232,6 @@ public class PacketHandler extends Thread {
                         processedMessages.add(m);
                     }
                     System.out.println("-- END HANDLING message --");
-
                 }
 
                 // Delete messages from the processed queues

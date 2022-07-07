@@ -202,14 +202,13 @@ public class MainService {
     }
 
     public void setGroupLeader(Participant newLeader) {
+        stopCrashDetection();
+        user.setUserType(AppConstants.UserType.VIEWER);
+        startCrashDetection();
         globalSession.sendMessage(new Message(PASS_LEADERSHIP, groupSession, newLeader), newLeader.ipAddress);
-        if (participants.contains(newLeader)) {
-            System.out.println("Leader: " + newLeader.name);
-            System.out.println("ID: " + newLeader.ID);
-            System.out.println("IP: " + newLeader.ipAddress);
-            stopCrashDetection();
-            user.setUserType(AppConstants.UserType.VIEWER);
-        }
+        System.out.println("Leader: " + newLeader.name);
+        System.out.println("ID: " + newLeader.ID);
+        System.out.println("IP: " + newLeader.ipAddress);
     }
 
     public void multicastNewLeader(Participant newLeader) throws IOException {

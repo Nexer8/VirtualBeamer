@@ -135,8 +135,8 @@ public class MessageHandler {
 
                     if (MainService.getInstance().getSlides() != null
                             && !MainService.getInstance().getSlides().isEmpty()
-                            && !message.ipAddress.equals(Helpers.getInetAddress())) {
-                        MainService.getInstance().agreeOnSlidesSender(message.ipAddress);
+                            && !message.participant.ipAddress.equals(Helpers.getInetAddress())) {
+                        MainService.getInstance().agreeOnSlidesSender(message.participant.ipAddress);
                     }
                 }
             }
@@ -149,7 +149,7 @@ public class MessageHandler {
             case DELETE_PARTICIPANT -> MainService.getInstance().deleteParticipant(message.participant);
             case COORD -> {
                 MainService.getInstance().stopCrashDetection();
-                MainService.getInstance().updatePreviousLeaderIP(message.ipAddress.getHostAddress());
+                MainService.getInstance().updatePreviousLeaderIP(message.participant.ipAddress.getHostAddress());
                 MainService.getInstance().updateSessionData(message.session, message.participant, true);
                 MainService.getInstance().startCrashDetection();
             }
