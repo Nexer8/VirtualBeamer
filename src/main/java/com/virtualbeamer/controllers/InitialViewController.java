@@ -52,6 +52,7 @@ public class InitialViewController implements Initializable {
     public void joinSession(MouseEvent mouseEvent) throws IOException {
         user.setUserType(VIEWER);
         user.setUsername(usernameEditTextField.getText());
+        MainService.getInstance().getSlides().clear();
         MainService.stopSendingPeriodicalHELLO();
         String session = ongoingSessions.getSelectionModel().getSelectedItem().substring(0,
                 ongoingSessions.getSelectionModel().getSelectedItem().indexOf(":"));
