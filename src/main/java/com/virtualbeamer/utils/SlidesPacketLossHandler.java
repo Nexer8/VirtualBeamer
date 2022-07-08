@@ -7,21 +7,19 @@ import com.virtualbeamer.services.MainService;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
-import static com.virtualbeamer.constants.SessionConstants.MESSAGE_QUEUE_FLUSH;
-import static com.virtualbeamer.constants.SessionConstants.SLIDE_LOSS_PORT;
-import static com.virtualbeamer.utils.MessageHandler.handleMessage;
+import static com.virtualbeamer.constants.SessionConstants.*;
 import static com.virtualbeamer.utils.PacketCreator.MAX_PACKET_SIZE;
 import static com.virtualbeamer.utils.SlidesHandler.processReceivedSlideData;
 
 public class SlidesPacketLossHandler extends Thread {
 
     public static final int MAX_ELEMENTS_TO_COPY = 15;
+    private final ServerSocket serverSocket;
     private final ArrayList<byte[]> slidesQueue;
     private final ArrayList<byte[]> processedSlides;
     private Timer queueFlushTimer;
@@ -33,6 +31,7 @@ public class SlidesPacketLossHandler extends Thread {
         slidesQueue = new ArrayList<>();
         processedSlides = new ArrayList<>();
         serverSocket = new ServerSocket(SLIDE_LOSS_PORT);
+
     }
 
     public void setSlidesReceiverData(SlidesReceiverData srd) {

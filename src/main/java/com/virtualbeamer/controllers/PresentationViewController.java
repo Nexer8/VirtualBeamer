@@ -48,7 +48,7 @@ public class PresentationViewController implements Initializable {
     private VBox progressIndicator;
 
     @FXML
-    private Button loadPresentationButton;
+    private MenuItem loadPresentationButton;
 
     @FXML
     private Button giveControlButton;
@@ -60,6 +60,7 @@ public class PresentationViewController implements Initializable {
     private void exitSession() throws IOException {
         cleanUpView();
         MainService.getInstance().stopCrashDetection();
+
         if (user.getUserType() == PRESENTER) {
             user.sendDeleteSession();
         } else {

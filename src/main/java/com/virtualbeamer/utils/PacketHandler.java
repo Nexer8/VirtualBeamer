@@ -18,7 +18,7 @@ public class PacketHandler extends Thread {
 
     public static final int MAX_ELEMENTS_TO_COPY = 15;
     private Timer queueFlushTimer;
-    private ServerSocket serverSocket;
+    private final ServerSocket serverSocket;
 
     private final ArrayList<Message> messagesQueue;
 
@@ -35,6 +35,7 @@ public class PacketHandler extends Thread {
         serverSocket = new ServerSocket(PACKET_LOSS_PORT);
 
         //bannedMessageType.add(MessageType.IM_ALIVE);
+        serverSocket = new ServerSocket(PACKET_LOSS_PORT);
     }
 
     public void handlePacket(Message message) throws IOException {
@@ -72,7 +73,6 @@ public class PacketHandler extends Thread {
         while (true) {
             int size;
             ArrayList<Message> tempMessageQueue = new ArrayList<>();
-
 
             // Message queue handling
             if (!messagesQueue.isEmpty()) {
