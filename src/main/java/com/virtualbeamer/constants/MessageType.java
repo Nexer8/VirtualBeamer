@@ -26,4 +26,5 @@ public enum MessageType {
     CHECK_AVAILABILITY,
     CONFIRM_AVAILABILITY,
     REQUEST_SLIDES,
+    FAKE_PACKET
 }

@@ -18,23 +18,28 @@ public class PacketHandler extends Thread {
 
     public static final int MAX_ELEMENTS_TO_COPY = 15;
     private Timer queueFlushTimer;
+    private ServerSocket serverSocket;
 
     private final ArrayList<Message> messagesQueue;
 
     private final ArrayList<Message> processedMessages;
     private final ArrayList<MessageType> bannedMessageType;
 
+    private int lastPacketID;
 
-    public PacketHandler() {
+    public PacketHandler() throws IOException {
         messagesQueue = new ArrayList<>();
         processedMessages = new ArrayList<>();
         bannedMessageType = new ArrayList<>();
+        lastPacketID = 1;
+        serverSocket = new ServerSocket(PACKET_LOSS_PORT);
+
         //bannedMessageType.add(MessageType.IM_ALIVE);
     }
 
     public void handlePacket(Message message) throws IOException {
         if (!bannedMessageType.contains(message.type)) {
-            if (!this.messagesQueue.contains(message))
+            if (!this.messagesQueue.contains(message) && !this.processedMessages.contains(message))
                 this.messagesQueue.add(message);
         } else
             handleMessage(message, InetAddress.getByName(
@@ -64,72 +69,88 @@ public class PacketHandler extends Thread {
     }
 
     public void run() {
-        queueFlushTimer = new Timer(false);
-        queueFlushTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                int size;
-                ArrayList<Message> tempMessageQueue = new ArrayList<>();
+        while (true) {
+            int size;
+            ArrayList<Message> tempMessageQueue = new ArrayList<>();
 
 
-                // Message queue handling
-                if (!messagesQueue.isEmpty()) {
-                    System.out.println("-- HANDLING MESSAGE --");
-                    // Copy max 15 element in the temporary queue
-                    for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, messagesQueue.size()); i++)
-                        tempMessageQueue.add(messagesQueue.get(i));
+            // Message queue handling
+            if (!messagesQueue.isEmpty()) {
+                System.out.println("-- HANDLING MESSAGE --");
+                // Copy max 15 element in the temporary queue
+                Message fakeMessage = new Message(MessageType.FAKE_PACKET);
+                fakeMessage.setPacketID(lastPacketID);
+                tempMessageQueue.add(fakeMessage);
+                for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, messagesQueue.size()); i++){
+                    tempMessageQueue.add(messagesQueue.get(i));
+                }
 
-                    // Find missing messages and retrieve them from leader
-                    size = tempMessageQueue.size();
-                    tempMessageQueue.sort(new MessageComparator());
-                    for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, size) - 1; i++) {
-                        if (tempMessageQueue.get(i + 1).packetID - tempMessageQueue.get(i).packetID > 1) {
-                            for (int j = 1; j < tempMessageQueue.get(i + 1).packetID - tempMessageQueue.get(i).packetID; j++) {
-                                try {
-                                    System.out.println("Packet miss found:" + j + tempMessageQueue.get(i).packetID);
+                // Find missing messages and retrieve them from leader
+                size = tempMessageQueue.size();
+                tempMessageQueue.sort(new MessageComparator());
+                for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, size) - 1; i++) {
+                    if (tempMessageQueue.get(i + 1).packetID - tempMessageQueue.get(i).packetID > 1) {
+                        for (int j = 1; j < tempMessageQueue.get(i + 1).packetID - tempMessageQueue.get(i).packetID; j++) {
+                            try {
+                                System.out.println("Packet miss found:" + (j + tempMessageQueue.get(i).packetID));
 
-                                    MainService.getInstance().sendPacketLostMessage(InetAddress.getByName(
-                                                    MainService.getInstance().getGroupSession().getLeaderIPAddress()),
-                                            new Message(MessageType.MESSAGE_RESEND, tempMessageQueue.get(i).packetID + j));
-                                    ServerSocket serverSocket = new ServerSocket(PACKET_LOSS_PORT);
-                                    Socket socket = serverSocket.accept();
-                                    ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+                                MainService.getInstance().sendPacketLostMessage(InetAddress.getByName(
+                                                MainService.getInstance().getGroupSession().getLeaderIPAddress()),
+                                        new Message(MessageType.MESSAGE_RESEND, tempMessageQueue.get(i).packetID + j));
+                                Socket socket = serverSocket.accept();
+                                ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
-                                    Message message = (Message) in.readObject();
-                                    tempMessageQueue.add(message);
-                                    System.out.println("Packet " + message.packetID + " received!");
-                                    socket.close();
-                                } catch (IOException | ClassNotFoundException e) {
-                                    e.printStackTrace();
-                                }
+                                Message message = (Message) in.readObject();
+                                tempMessageQueue.add(message);
+                                System.out.println("Packet " + message.packetID + " received!");
+                                socket.close();
+                            } catch (IOException | ClassNotFoundException e) {
+                                e.printStackTrace();
                             }
                         }
                     }
+                }
 
-                    // Handle the messages with new packets
-                    for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, tempMessageQueue.size()); i++) {
-                        try {
+                tempMessageQueue.sort(new MessageComparator());
+                // Handle the messages with new packets
+                for (int i = 0; i < Math.min(MAX_ELEMENTS_TO_COPY, tempMessageQueue.size()); i++) {
+                    try {
+
+                        if (tempMessageQueue.get(i).type != MessageType.FAKE_PACKET) {
                             System.out.println("Handling packet ID " + tempMessageQueue.get(i).packetID);
                             handleMessage(tempMessageQueue.get(i), InetAddress.getByName(
                                     MainService.getInstance().getGroupSession().getLeaderIPAddress()));
-                        } catch (IOException e) {
-                            e.printStackTrace();
                         }
-                    }
 
-                    // Delete the messages from the processing queue and add them to the processed queue
-                    for (Message m : tempMessageQueue) {
+                        if (i == Math.min(MAX_ELEMENTS_TO_COPY, tempMessageQueue.size()) - 1)
+                            lastPacketID = tempMessageQueue.get(i).packetID;
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                // Delete the messages from the processing queue and add them to the processed queue
+                for (Message m : tempMessageQueue) {
+                    if (m.type != MessageType.FAKE_PACKET) {
                         messagesQueue.remove(m);
                         processedMessages.add(m);
                     }
-                    System.out.println("-- END HANDLING message --");
                 }
-
-                // Delete messages from the processed queues
-                if (processedMessages.size() > 100)
-                    processedMessages.subList(0, 20).clear();
+                System.out.println("-- END HANDLING message --");
             }
-        }, 0, MESSAGE_QUEUE_FLUSH);
+
+            // Delete messages from the processed queues
+            if (processedMessages.size() > 100)
+                processedMessages.subList(0, 20).clear();
+
+            try {
+                Thread.sleep(MESSAGE_QUEUE_FLUSH);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 }
 

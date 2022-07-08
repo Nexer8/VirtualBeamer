@@ -59,7 +59,7 @@ public class PresentationViewController implements Initializable {
     @FXML
     private void exitSession() throws IOException {
         cleanUpView();
-
+        MainService.getInstance().stopCrashDetection();
         if (user.getUserType() == PRESENTER) {
             user.sendDeleteSession();
         } else {

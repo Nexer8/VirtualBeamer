@@ -19,6 +19,10 @@ public class Message implements Serializable {
         this.type = type;
     }
 
+    public void setPacketID(int packetID) {
+        this.packetID = packetID;
+    }
+
     public Message(MessageType type, GroupSession session) {
         this.type = type;
         this.session = session;
