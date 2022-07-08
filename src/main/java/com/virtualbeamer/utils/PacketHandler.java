@@ -35,7 +35,6 @@ public class PacketHandler extends Thread {
         serverSocket = new ServerSocket(PACKET_LOSS_PORT);
 
         //bannedMessageType.add(MessageType.IM_ALIVE);
-        serverSocket = new ServerSocket(PACKET_LOSS_PORT);
     }
 
     public void handlePacket(Message message) throws IOException {

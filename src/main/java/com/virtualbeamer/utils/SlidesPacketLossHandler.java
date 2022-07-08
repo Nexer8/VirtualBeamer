@@ -24,7 +24,6 @@ public class SlidesPacketLossHandler extends Thread {
     private final ArrayList<byte[]> processedSlides;
     private Timer queueFlushTimer;
     private SlidesReceiverData srd;
-    private ServerSocket serverSocket;
 
 
     public SlidesPacketLossHandler() throws IOException {
